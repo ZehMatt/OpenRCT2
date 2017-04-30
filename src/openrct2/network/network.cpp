@@ -2015,7 +2015,7 @@ void Network::Server_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket
 	if (commandCommand == GAME_COMMAND_PLACE_SCENERY) {
 		if (
 			ticks - connection.Player->LastPlaceSceneryTime < ACTION_COOLDOWN_TIME_PLACE_SCENERY &&
-			// Incase SDL_GetTicks() wraps after ~49 days, ignore larger logged times.
+			// In case platform_get_ticks() wraps after ~49 days, ignore larger logged times.
 			ticks > connection.Player->LastPlaceSceneryTime
 		) {
 			if (!(group->CanPerformCommand(MISC_COMMAND_TOGGLE_SCENERY_CLUSTER))) {
