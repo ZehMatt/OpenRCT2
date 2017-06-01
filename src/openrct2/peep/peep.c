@@ -131,7 +131,7 @@ static sint32 peep_empty_container_extra_flag(rct_peep* peep);
 static sint32 peep_should_find_bench(rct_peep* peep);
 static void peep_stop_purchase_thought(rct_peep* peep, uint8 ride_type);
 static void sub_693BAB(rct_peep* peep);
-static sint32 sub_693C9E(rct_peep *peep);
+static sint32 peep_perform_next_action(rct_peep *peep);
 static void peep_spend_money(rct_peep *peep, money16 *peep_expend_type, money32 amount);
 static void peep_set_has_ridden(rct_peep *peep, sint32 rideIndex);
 static bool peep_has_ridden(rct_peep *peep, sint32 rideIndex);
@@ -2204,7 +2204,7 @@ static void peep_update_sitting(rct_peep* peep){
 		if (!checkForPath(peep))return;
 		//691541
 
-		sub_693C9E(peep);
+		peep_perform_next_action(peep);
 		if (!(_unk_F1EE18 & F1EE18_DESTINATION_REACHED)) return;
 
 		sint32 ebx = peep->var_37 & 0x7;
@@ -4872,7 +4872,7 @@ static void peep_update_queuing(rct_peep* peep){
 		return;
 	}
 
-	sub_693C9E(peep);
+	peep_perform_next_action(peep);
 	if (peep->action < 0xFE)return;
 	if (peep->sprite_type == PEEP_SPRITE_TYPE_NORMAL) {
 		if (peep->time_in_queue >= 2000 && (0xFFFF & scenario_rand()) <= 119){
@@ -5004,7 +5004,7 @@ static void peep_update_watering(rct_peep* peep){
 	if (peep->sub_state == 0){
 		if (!checkForPath(peep))return;
 
-		sub_693C9E(peep);
+		peep_perform_next_action(peep);
 		if (!(_unk_F1EE18 & F1EE18_DESTINATION_REACHED)) return;
 
 		peep->sprite_direction = (peep->var_37 & 3) << 3;
@@ -5060,7 +5060,7 @@ static void peep_update_emptying_bin(rct_peep* peep){
 	if (peep->sub_state == 0){
 		if (!checkForPath(peep))return;
 
-		sub_693C9E(peep);
+		peep_perform_next_action(peep);
 		if (!(_unk_F1EE18 & F1EE18_DESTINATION_REACHED)) return;
 
 		peep->sprite_direction = (peep->var_37 & 3) << 3;
@@ -5198,7 +5198,7 @@ static void peep_update_picked(rct_peep* peep){
  */
 static void peep_update_leaving_park(rct_peep* peep){
 	if (peep->var_37 != 0){
-		sub_693C9E(peep);
+		peep_perform_next_action(peep);
 		if (!(_unk_F1EE18 & F1EE18_OUTSIDE_PARK)) return;
 		peep_sprite_remove(peep);
 		return;
@@ -5220,7 +5220,7 @@ static void peep_update_leaving_park(rct_peep* peep){
 
 	window_invalidate_by_class(WC_GUEST_LIST);
 
-	sub_693C9E(peep);
+	peep_perform_next_action(peep);
 	if (!(_unk_F1EE18 & F1EE18_OUTSIDE_PARK)) return;
 	peep_sprite_remove(peep);
 }
@@ -5233,7 +5233,7 @@ static void peep_update_watching(rct_peep* peep){
 	if (peep->sub_state == 0){
 		if (!checkForPath(peep))return;
 
-		sub_693C9E(peep);
+		peep_perform_next_action(peep);
 		if (!(_unk_F1EE18 & F1EE18_DESTINATION_REACHED)) return;
 
 		peep->destination_x = peep->x;
@@ -5317,7 +5317,7 @@ static void peep_update_watching(rct_peep* peep){
 */
 static void peep_update_entering_park(rct_peep* peep){
 	if (peep->var_37 != 1){
-		sub_693C9E(peep);
+		peep_perform_next_action(peep);
 		if ((_unk_F1EE18 & F1EE18_OUTSIDE_PARK)) {
 			decrement_guests_heading_for_park();
 			peep_sprite_remove(peep);
@@ -5723,7 +5723,7 @@ static void peep_update_using_bin(rct_peep* peep){
 	if (peep->sub_state == 0){
 		if (!checkForPath(peep))return;
 
-		sub_693C9E(peep);
+		peep_perform_next_action(peep);
 		if (!(_unk_F1EE18 & F1EE18_DESTINATION_REACHED)) return;
 
 		peep->sub_state = 1;
@@ -5897,7 +5897,7 @@ static void peep_update_heading_to_inspect(rct_peep* peep){
 
 		if (!checkForPath(peep))return;
 
-		sub_693C9E(peep);
+		peep_perform_next_action(peep);
 
 		if (!(_unk_F1EE18 & F1EE18_RIDE_EXIT) &&
 			!(_unk_F1EE18 & F1EE18_RIDE_ENTRANCE)
@@ -6014,7 +6014,7 @@ static void peep_update_answering(rct_peep* peep){
 
 		if (!checkForPath(peep))return;
 
-		sub_693C9E(peep);
+		peep_perform_next_action(peep);
 
 		if (!(_unk_F1EE18 & F1EE18_RIDE_EXIT) &&
 			!(_unk_F1EE18 & F1EE18_RIDE_ENTRANCE)
@@ -6288,7 +6288,7 @@ static void peep_update_patrolling(rct_peep* peep){
 
 	if (!checkForPath(peep))return;
 
-	sub_693C9E(peep);
+	peep_perform_next_action(peep);
 	if (!(_unk_F1EE18 & F1EE18_DESTINATION_REACHED)) return;
 
 	if ((peep->next_var_29 & 0x18) == 8){
@@ -6463,7 +6463,7 @@ static void peep_update_walking(rct_peep* peep){
 		}
 	}
 
-	sub_693C9E(peep);
+	peep_perform_next_action(peep);
 	if (!(_unk_F1EE18 & F1EE18_DESTINATION_REACHED)) return;
 
 	if ((peep->next_var_29 & 0x18) == 8){
@@ -10439,7 +10439,7 @@ static sint32 guest_path_finding(rct_peep* peep)
  *
  *  rct2: 0x00693C9E
  */
-static sint32 sub_693C9E(rct_peep *peep)
+static sint32 peep_perform_next_action(rct_peep *peep)
 {
 	_unk_F1EE18 = 0;
 	uint8 previousAction = peep->action;
