@@ -77,6 +77,8 @@ extern "C" {
 
 #pragma comment(lib, "Ws2_32.lib")
 
+using namespace OpenRCT2;
+
 Network gNetwork;
 
 enum {
