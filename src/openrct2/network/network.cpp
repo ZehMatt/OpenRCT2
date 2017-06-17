@@ -595,9 +595,18 @@ const char* Network::FormatChat(NetworkPlayer* fromplayer, const char* text)
     return formatted;
 }
 
-void Network::SendPacketToClients(NetworkPacket& packet, bool front)
+void Network::SendPacketToClients(NetworkPacket& packet, bool front, bool gameCmd)
 {
     for (auto it = client_connection_list.begin(); it != client_connection_list.end(); it++) {
+
+        if (gameCmd) {
+            // If marked as game command we can not send the packet to connections that are not fully connected.
+            // Sending the packet would cause the client to store a command that is behind the tick where he starts,
+            // which would be essentially never executed. The clients do not require commands before the server has not sent the map data.
+            if ((*it)->Player == nullptr) {
+                continue;
+            }
+        }
         (*it)->QueuePacket(NetworkPacket::Duplicate(packet), front);
     }
 }
@@ -1122,7 +1131,7 @@ void Network::Server_Send_GAMECMD(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx
     std::unique_ptr<NetworkPacket> packet(NetworkPacket::Allocate());
     *packet << (uint32)NETWORK_COMMAND_GAMECMD << (uint32)gCurrentTicks << eax << (ebx | GAME_COMMAND_FLAG_NETWORKED)
             << ecx << edx << esi << edi << ebp << playerid << callback;
-    SendPacketToClients(*packet);
+    SendPacketToClients(*packet, false, true);
 }
 
 void Network::Server_Send_TICK()
@@ -1324,17 +1333,36 @@ void Network::ProcessPacket(NetworkConnection& connection, NetworkPacket& packet
 void Network::ProcessGameCommandQueue()
 {
     while (game_command_queue.begin() != game_command_queue.end()) {
-        // If our tick is higher than the command tick we are in trouble.
-        assert(game_command_queue.begin()->tick >= gCurrentTicks);
-
-        if (game_command_queue.begin()->tick != gCurrentTicks)
-            return;
 
         // run all the game commands at the current tick
         const GameCommand& gc = (*game_command_queue.begin());
+
+        // If our tick is higher than the command tick we are in trouble.
+        if (mode == NETWORK_MODE_CLIENT) {
+
+            if (game_command_queue.begin()->tick < gCurrentTicks) {
+                // Having old command from a tick where we have not been active yet or malicious server,
+                // the command is useless so lets not keep it.
+                game_command_queue.erase(game_command_queue.begin());
+
+                log_warning("Discarding game command from tick behind current tick, CMD: %08X, CMD Tick: %08X, Current Tick: %08X\n",
+                            gc.esi,
+                            gc.tick,
+                            gCurrentTicks);
+
+                // At this point we should not return, would add the possibility to skip commands this tick.
+                continue;
+            }
+
+            if (game_command_queue.begin()->tick != gCurrentTicks)
+                return;
+        }
+
+        // run all the game commands at the current tick
         if (GetPlayerID() == gc.playerid) {
             game_command_callback = game_command_callback_get_callback(gc.callback);
         }
+
         game_command_playerid = gc.playerid;
         sint32 command = gc.esi;
         money32 cost = game_do_command_p(command, (sint32*)&gc.eax, (sint32*)&gc.ebx, (sint32*)&gc.ecx, (sint32*)&gc.edx, (sint32*)&gc.esi, (sint32*)&gc.edi, (sint32*)&gc.ebp);

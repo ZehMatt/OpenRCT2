@@ -56,7 +56,7 @@ extern "C" {
 // This define specifies which version of network stream current build uses.
 // It is used for making sure only compatible builds get connected, even within
 // single OpenRCT2 version.
-#define NETWORK_STREAM_VERSION "13"
+#define NETWORK_STREAM_VERSION "15"
 #define NETWORK_STREAM_ID OPENRCT2_VERSION "-" NETWORK_STREAM_VERSION
 
 #ifdef __cplusplus
@@ -113,7 +113,7 @@ public:
     std::vector<std::unique_ptr<NetworkGroup>>::iterator GetGroupIteratorByID(uint8 id);
     NetworkGroup* GetGroupByID(uint8 id);
     static const char* FormatChat(NetworkPlayer* fromplayer, const char* text);
-    void SendPacketToClients(NetworkPacket& packet, bool front = false);
+    void SendPacketToClients(NetworkPacket& packet, bool front = false, bool gameCmd = false);
     bool CheckSRAND(uint32 tick, uint32 srand0);
     void KickPlayer(sint32 playerId);
     void SetPassword(const char* password);
