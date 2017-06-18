@@ -35,7 +35,7 @@ void Logging::flushCategory(GroupData& group)
 {
 	char outFile[255];
 	if(group.rotation > 0)
-		sprintf_s(outFile, "%zd_%s", group.rotation, group.logFileName);
+		sprintf_s(outFile, "%u_%s", group.rotation, group.logFileName);
 
 	FILE *fpOut = fopen(group.rotation > 0 ? outFile : group.logFileName, "wt");
 	if (!fpOut)

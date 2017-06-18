@@ -16,25 +16,43 @@
 
 #pragma once
 
+#include "Logging.h"
+#include <map>
+#include <string>
+
 #include "../common.h"
+#include "HistoryBuffer.h"
 
-typedef enum LogCategory {
-	LOG_GROUP_GENERAL = 0,
-	LOG_GROUP_SERVER,
-	LOG_GROUP_CLIENT,
-} LogCategory;
+class Logging
+{
+private:
+	struct MessageEntry
+	{
+		std::string msg;
+		uint32 tick;
+		uint32 repeat;
+		time_t timestamp;
+	};
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+	struct GroupData
+	{
+		char logFileName[255];
+		uint32 counter;
+		uint32 rotation;
+		HistoryBuffer<MessageEntry> entries;
+	};
 
-	void log_init(LogCategory cat, uint32 historySize, const char *logFile);
-	void log_rotate(LogCategory cat);
-	void log_flush(LogCategory cat);
-	void log_flush_all();
-	void log_msg(LogCategory cat, const char *fmt, ...);
-	void log_msg_network(const char *fmt, ...);
+	std::map<LogCategory, GroupData> _groups;
 
-#ifdef __cplusplus
-}
-#endif // __cplusplus
+public:
+	Logging();
+
+	void initLog(LogCategory cat, size_t historySize, const char *logFile);
+	void flushCategory(LogCategory cat);
+	void flushCategory(GroupData& group);
+
+	void flushAll();
+	void rotate(LogCategory cat);
+	void log(LogCategory cat, const char *fmt, ...);
+	void log_va(LogCategory cat, const char *fmt, va_list args);
+};
