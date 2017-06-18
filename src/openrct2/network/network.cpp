@@ -122,6 +122,7 @@ Network::Network()
     server_command_handlers[NETWORK_COMMAND_GAMEINFO] = &Network::Server_Handle_GAMEINFO;
     server_command_handlers[NETWORK_COMMAND_TOKEN] = &Network::Server_Handle_TOKEN;
     server_command_handlers[NETWORK_COMMAND_OBJECTS] = &Network::Server_Handle_OBJECTS;
+	server_command_handlers[NETWORK_COMMAND_DESYNC] = &Network::Server_Handle_DESYNC;
     OpenSSL_add_all_algorithms();
 }
 
@@ -529,6 +530,10 @@ void Network::UpdateClient()
             char str_desync[256];
             format_string(str_desync, 256, STR_MULTIPLAYER_DESYNC, NULL);
             window_network_status_open(str_desync, NULL);
+
+			log_rotate(LOG_GROUP_CLIENT);
+			Client_Send_DESYNC();
+
             if (!gConfigNetwork.stay_connected) {
                 Close();
             }
@@ -632,16 +637,201 @@ bool Network::CheckSRAND(uint32 tick, uint32 srand0)
         // Check that the server and client sprite hashes match
         const char *client_sprite_hash = sprite_checksum();
         const bool sprites_mismatch = server_sprite_hash[0] != '\0' && strcmp(client_sprite_hash, server_sprite_hash);
+#ifdef DEBUG_DESYNC
+		if (sprites_mismatch)
+		{
+			for (size_t i = 0; i < MAX_SPRITES; i++)
+			{
+				rct_sprite *serverSprite = &_serverSprites[i];
+				rct_sprite *clientSprite = get_sprite(i);
+
+				rct_sprite copy = *clientSprite;
+				copy.unknown.sprite_left = copy.unknown.sprite_right = copy.unknown.sprite_top = copy.unknown.sprite_bottom = 0;
+
+				CompareSprite(clientSprite, serverSprite);
+			}
+		}
+#endif
         // Check PRNG values and sprite hashes, if exist
         if ((srand0 != server_srand0) || sprites_mismatch) {
-#ifdef DEBUG_DESYNC
-            dbg_report_desync(tick, srand0, server_srand0, client_sprite_hash, server_sprite_hash);
-#endif
+
+			log_msg_network("!! DESYNC !! Tick: %d, Client Hash: %s, Server Hash: %s, Client Rand: %08X, Server Rand: %08X - %s\n",
+					tick,
+					client_sprite_hash,
+					((server_sprite_hash[0] != '\0') ? server_sprite_hash : "<NONE:0>"),
+					srand0,
+					server_srand0,
+					(sprites_mismatch ? "Sprite hash mismatch" : "scenario rand mismatch"));
+
             return false;
         }
     }
     return true;
 }
+
+#ifdef DEBUG_DESYNC 
+
+#define COMPARE_SPRITE_FIELD(cl, sv, f) \
+	if (cl->##f != sv->##f) { \
+		log_msg_network("Sprite(%08X) member mismatch: %s (offset: %08X, data (CL) %08X != (SV) %08X, size: %d)\n", cl->unknown.sprite_index, #f, offsetof(rct_sprite, f), (uint32)cl->##f, (uint32)sv->##f, sizeof(rct_sprite::##f)); \
+		return; \
+	}
+
+void Network::CompareSprite(rct_sprite *cl, rct_sprite *sv)
+{
+	COMPARE_SPRITE_FIELD(cl, sv, unknown.sprite_identifier);
+	if (cl->unknown.sprite_identifier == SPRITE_IDENTIFIER_VEHICLE)
+	{
+
+	}
+	else if (cl->unknown.sprite_identifier == SPRITE_IDENTIFIER_PEEP)
+	{
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_01);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.next_in_quadrant);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.next);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.previous);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.linked_list_type_offset);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_height_negative);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_index);            // 0x0A
+		COMPARE_SPRITE_FIELD(cl, sv, peep.flags);           // 0x0C
+		COMPARE_SPRITE_FIELD(cl, sv, peep.x);                       // 0x0E
+		COMPARE_SPRITE_FIELD(cl, sv, peep.y);                       // 0x10
+		COMPARE_SPRITE_FIELD(cl, sv, peep.z);                       // 0x12
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_width);             // 0x14
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_height_positive);   // 0x15
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_left);             // 0x16
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_top);              // 0x18
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_right);            // 0x1A
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_bottom);           // 0x1C
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_direction);         // 0x1E
+		for (size_t n = 0; n < 3; n++) {
+			COMPARE_SPRITE_FIELD(cl, sv, peep.pad_1F[n]); 
+		}
+		COMPARE_SPRITE_FIELD(cl, sv, peep.name_string_idx);  // 0x22
+		COMPARE_SPRITE_FIELD(cl, sv, peep.next_x);                  // 0x24
+		COMPARE_SPRITE_FIELD(cl, sv, peep.next_y);                  // 0x26
+		COMPARE_SPRITE_FIELD(cl, sv, peep.next_z);                   // 0x28
+		COMPARE_SPRITE_FIELD(cl, sv, peep.next_var_29);              // 0x29
+		COMPARE_SPRITE_FIELD(cl, sv, peep.outside_of_park);          // 0x2A
+		COMPARE_SPRITE_FIELD(cl, sv, peep.state);                    // 0x2B
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sub_state);                // 0x2C
+		COMPARE_SPRITE_FIELD(cl, sv, peep.sprite_type);              // 0x2D
+		COMPARE_SPRITE_FIELD(cl, sv, peep.type);                     // 0x2E
+		COMPARE_SPRITE_FIELD(cl, sv, peep.no_of_rides);          // 0x2F
+		COMPARE_SPRITE_FIELD(cl, sv, peep.tshirt_colour);            // 0x30
+		COMPARE_SPRITE_FIELD(cl, sv, peep.trousers_colour);          // 0x31
+		COMPARE_SPRITE_FIELD(cl, sv, peep.destination_x);           // 0x32 Location that the peep is trying to get to
+		COMPARE_SPRITE_FIELD(cl, sv, peep.destination_y);           // 0x34
+		COMPARE_SPRITE_FIELD(cl, sv, peep.destination_tolerence);    // 0x36 How close to destination before next action/state 0 = exact
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_37);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.energy);                   // 0x38
+		COMPARE_SPRITE_FIELD(cl, sv, peep.energy_growth_rate);       // 0x39
+		COMPARE_SPRITE_FIELD(cl, sv, peep.happiness);                // 0x3A
+		COMPARE_SPRITE_FIELD(cl, sv, peep.happiness_growth_rate);    // 0x3B
+		COMPARE_SPRITE_FIELD(cl, sv, peep.nausea);                   // 0x3C
+		COMPARE_SPRITE_FIELD(cl, sv, peep.nausea_growth_rate);       // 0x3D
+		COMPARE_SPRITE_FIELD(cl, sv, peep.hunger);                   // 0x3E
+		COMPARE_SPRITE_FIELD(cl, sv, peep.thirst);                   // 0x3F
+		COMPARE_SPRITE_FIELD(cl, sv, peep.bathroom);                 // 0x40
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_41);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_42);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.intensity);                // 0x43 The max intensity is stored in the first 4 bits, and the min intensity in the second 4 bits
+		COMPARE_SPRITE_FIELD(cl, sv, peep.nausea_tolerance);         // 0x44
+		//COMPARE_SPRITE_FIELD(cl, sv, peep.window_invalidate_flags);  // 0x45
+		COMPARE_SPRITE_FIELD(cl, sv, peep.paid_on_drink);          // 0x46
+		COMPARE_SPRITE_FIELD(cl, sv, peep.ride_types_been_on[16]);   // 0x48
+		COMPARE_SPRITE_FIELD(cl, sv, peep.item_extra_flags);        // 0x58
+		COMPARE_SPRITE_FIELD(cl, sv, peep.photo2_ride_ref);          // 0x5C
+		COMPARE_SPRITE_FIELD(cl, sv, peep.photo3_ride_ref);          // 0x5D
+		COMPARE_SPRITE_FIELD(cl, sv, peep.photo4_ride_ref);          // 0x5E
+		for (size_t n = 0; n < 0x09; n++) {
+			COMPARE_SPRITE_FIELD(cl, sv, peep.pad_5F[n]);   // 0x5F
+		}
+		COMPARE_SPRITE_FIELD(cl, sv, peep.current_ride);             // 0x68
+		COMPARE_SPRITE_FIELD(cl, sv, peep.current_ride_station);     // 0x69
+		COMPARE_SPRITE_FIELD(cl, sv, peep.current_train);            // 0x6A
+		COMPARE_SPRITE_FIELD(cl, sv, peep.time_to_sitdown);     //0x6B
+		COMPARE_SPRITE_FIELD(cl, sv, peep.special_sprite);           // 0x6D
+		COMPARE_SPRITE_FIELD(cl, sv, peep.action_sprite_type);       // 0x6E
+		COMPARE_SPRITE_FIELD(cl, sv, peep.next_action_sprite_type);    // 0x6F
+		COMPARE_SPRITE_FIELD(cl, sv, peep.action_sprite_image_offset); // 0x70
+		COMPARE_SPRITE_FIELD(cl, sv, peep.action);                   // 0x71
+		COMPARE_SPRITE_FIELD(cl, sv, peep.action_frame);             // 0x72
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_73);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.next_in_queue);       // 0x74
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_76);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.pad_77);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.direction);    //Direction ?
+		COMPARE_SPRITE_FIELD(cl, sv, peep.interaction_ride_index);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.time_in_queue);           // 0x7A
+		for (size_t n = 0; n < 32; n++) {
+			COMPARE_SPRITE_FIELD(cl, sv, peep.rides_been_on[n]);   // 0x7C
+		}
+		COMPARE_SPRITE_FIELD(cl, sv, peep.id)                      // 0x9C
+		COMPARE_SPRITE_FIELD(cl, sv, peep.cash_in_pocket);          // 0xA0
+		COMPARE_SPRITE_FIELD(cl, sv, peep.cash_spent);              // 0xA4
+		COMPARE_SPRITE_FIELD(cl, sv, peep.time_in_park);             // 0xA8
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_AC);                    // 0xAC
+		COMPARE_SPRITE_FIELD(cl, sv, peep.previous_ride);             // 0xAD
+		COMPARE_SPRITE_FIELD(cl, sv, peep.previous_ride_time_out);   // 0xAE
+		for (size_t n = 0; n < PEEP_MAX_THOUGHTS; n++) {
+			COMPARE_SPRITE_FIELD(cl, sv, peep.thoughts[n].type);   // 0xB0
+			COMPARE_SPRITE_FIELD(cl, sv, peep.thoughts[n].item);   
+			COMPARE_SPRITE_FIELD(cl, sv, peep.thoughts[n].var_2);   
+			COMPARE_SPRITE_FIELD(cl, sv, peep.thoughts[n].var_3);   
+		}
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_C4);                   // 0xC4 has something to do with peep falling, see peep.checkForPath
+		COMPARE_SPRITE_FIELD(cl, sv, peep.guest_heading_to_ride_id);     // 0xC5
+		COMPARE_SPRITE_FIELD(cl, sv, peep.peep_is_lost_countdown);   // 0xC6
+		COMPARE_SPRITE_FIELD(cl, sv, peep.photo1_ride_ref);          // 0xC7
+		COMPARE_SPRITE_FIELD(cl, sv, peep.peep_flags);              // 0xC8
+
+		COMPARE_SPRITE_FIELD(cl, sv, peep.pathfind_goal.x);        // 0xCC
+		COMPARE_SPRITE_FIELD(cl, sv, peep.pathfind_goal.y);        // 
+		COMPARE_SPRITE_FIELD(cl, sv, peep.pathfind_goal.z);        // 
+		COMPARE_SPRITE_FIELD(cl, sv, peep.pathfind_goal.direction);        // 
+		for (size_t n = 0; n < 4; n++) {
+			COMPARE_SPRITE_FIELD(cl, sv, peep.pathfind_history[n].x);  // 0xD0
+			COMPARE_SPRITE_FIELD(cl, sv, peep.pathfind_history[n].y);  //
+			COMPARE_SPRITE_FIELD(cl, sv, peep.pathfind_history[n].z);  // 
+			COMPARE_SPRITE_FIELD(cl, sv, peep.pathfind_history[n].direction);  // 
+		}
+		COMPARE_SPRITE_FIELD(cl, sv, peep.no_action_frame_no);       // 0xE0
+		COMPARE_SPRITE_FIELD(cl, sv, peep.litter_count);             // 0xE1
+		COMPARE_SPRITE_FIELD(cl, sv, peep.time_on_ride);         // 0xE2
+		COMPARE_SPRITE_FIELD(cl, sv, peep.disgusting_count);         // 0xE3
+		COMPARE_SPRITE_FIELD(cl, sv, peep.paid_to_enter);          // 0xE4
+		COMPARE_SPRITE_FIELD(cl, sv, peep.paid_on_rides);          // 0xE6
+		COMPARE_SPRITE_FIELD(cl, sv, peep.paid_on_food);           // 0xE8
+		COMPARE_SPRITE_FIELD(cl, sv, peep.paid_on_souvenirs);      // 0xEA
+		COMPARE_SPRITE_FIELD(cl, sv, peep.no_of_food);               // 0xEC
+		COMPARE_SPRITE_FIELD(cl, sv, peep.no_of_drinks);             // 0xED
+		COMPARE_SPRITE_FIELD(cl, sv, peep.no_of_souvenirs);          // 0xEE
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_EF);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.voucher_type);             // 0xF0
+		COMPARE_SPRITE_FIELD(cl, sv, peep.voucher_arguments);        // 0xF1 ride_id or string_offset_id
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_F2);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.angriness);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.var_F4);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.days_in_queue);            // 0xF5
+		COMPARE_SPRITE_FIELD(cl, sv, peep.balloon_colour);           // 0xF6
+		COMPARE_SPRITE_FIELD(cl, sv, peep.umbrella_colour);          // 0xF7
+		COMPARE_SPRITE_FIELD(cl, sv, peep.hat_colour);               // 0xF8
+		COMPARE_SPRITE_FIELD(cl, sv, peep.favourite_ride);           // 0xF9
+		COMPARE_SPRITE_FIELD(cl, sv, peep.favourite_ride_rating);    // 0xFA
+		COMPARE_SPRITE_FIELD(cl, sv, peep.pad_FB);
+		COMPARE_SPRITE_FIELD(cl, sv, peep.item_standard_flags);     // 0xFC
+	}
+	else if (cl->unknown.sprite_identifier == SPRITE_IDENTIFIER_MISC)
+	{
+
+	}
+	else if (cl->unknown.sprite_identifier == SPRITE_IDENTIFIER_LITTER)
+	{
+
+	}
+}
+#endif 
 
 void Network::KickPlayer(sint32 playerId)
 {
@@ -1152,9 +1342,20 @@ void Network::Server_Send_TICK()
     // Send flags always, so we can understand packet structure on the other end,
     // and allow for some expansion.
     *packet << flags;
+
     if (flags & NETWORK_TICK_FLAG_CHECKSUMS) {
         packet->WriteString(sprite_checksum());
+
+		for (size_t i = 0; i < MAX_SPRITES; i++)
+		{
+			rct_sprite *sprite = get_sprite(i);
+			rct_sprite copy = *sprite;
+			copy.unknown.sprite_left = copy.unknown.sprite_right = copy.unknown.sprite_top = copy.unknown.sprite_bottom = 0;
+
+			packet->Write((const uint8*)sprite, sizeof(rct_sprite));
+		}
     }
+
     SendPacketToClients(*packet);
 }
 
@@ -1173,6 +1374,13 @@ void Network::Client_Send_PING()
     std::unique_ptr<NetworkPacket> packet(NetworkPacket::Allocate());
     *packet << (uint32)NETWORK_COMMAND_PING;
     server_connection->QueuePacket(std::move(packet));
+}
+
+void Network::Client_Send_DESYNC()
+{
+	std::unique_ptr<NetworkPacket> packet(NetworkPacket::Allocate());
+	*packet << (uint32)NETWORK_COMMAND_DESYNC;
+	server_connection->QueuePacket(std::move(packet));
 }
 
 void Network::Server_Send_PING()
@@ -1685,6 +1893,11 @@ void Network::Server_Handle_OBJECTS(NetworkConnection& connection, NetworkPacket
     Server_Send_PLAYERLIST();
 }
 
+void Network::Server_Handle_DESYNC(NetworkConnection& connection, NetworkPacket& packet)
+{
+	log_rotate(LOG_GROUP_SERVER);
+}
+
 void Network::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacket& packet)
 {
     if (connection.AuthStatus != NETWORK_AUTH_OK) {
@@ -2074,6 +2287,11 @@ void Network::Client_Handle_TICK(NetworkConnection& connection, NetworkPacket& p
             {
                 safe_strcpy(server_sprite_hash, text, sizeof(server_sprite_hash));
             }
+
+			for (size_t i = 0; i < MAX_SPRITES; i++)
+			{
+				_serverSprites[i] = *(rct_sprite*)packet.Read(sizeof(rct_sprite));
+			}
         }
     }
     game_commands_processed_this_tick = 0;

@@ -569,9 +569,6 @@ static sint32 scenario_create_ducks()
 #ifndef DEBUG_DESYNC 
 uint32 scenario_rand()
 #else
-static FILE *fp = NULL;
-static const char *realm = "LC";
-
 uint32 dbg_scenario_rand(const char *file, const char *function, const uint32 line, const void *data)
 #endif
 {
@@ -580,30 +577,7 @@ uint32 dbg_scenario_rand(const char *file, const char *function, const uint32 li
     gScenarioSrand1 = ror32(originalSrand0, 3);
 
 #ifdef DEBUG_DESYNC
-    if (fp == NULL)
-    {
-        if (network_get_mode() == NETWORK_MODE_SERVER)
-        {
-            fp = fopen("server_rand.txt", "wt");
-            realm = "SV";
-        }
-        else if (network_get_mode() == NETWORK_MODE_CLIENT)
-        {
-            fp = fopen("client_rand.txt", "wt");
-            realm = "CL";
-        }
-        else
-        {
-            if (fp)
-                fclose(fp);
-            fp = NULL;
-            realm = "LC";
-        }
-    }
-    if (fp)
-    {
-        fprintf(fp, "Tick: %d, Rand: %08X - REF: %s:%u %s (%p)\n", gCurrentTicks, gScenarioSrand1, file, line, function, data);
-    }
+    log_msg_network("Rand: %08X - REF: %s:%u %s (%p)\n", gScenarioSrand1, file, line, function, data);
     if (!gInUpdateCode) {
         log_warning("scenario_rand called from outside game update");
         assert(false);
@@ -612,37 +586,6 @@ uint32 dbg_scenario_rand(const char *file, const char *function, const uint32 li
 
     return gScenarioSrand1;
 }
-
-#ifdef DEBUG_DESYNC 
-void dbg_report_desync(uint32 tick, uint32 srand0, uint32 server_srand0, const char *clientHash, const char *serverHash)
-{
-    if (fp == NULL)
-    {
-        if (network_get_mode() == NETWORK_MODE_SERVER)
-        {
-            fp = fopen("server_rand.txt", "wt");
-            realm = "SV";
-        }
-        else if (network_get_mode() == NETWORK_MODE_CLIENT)
-        {
-            fp = fopen("client_rand.txt", "wt");
-            realm = "CL";
-        }
-    }
-    if (fp)
-    {
-        const bool sprites_mismatch = serverHash[0] != '\0' && strcmp(clientHash, serverHash);
-
-        fprintf(fp, "[%s] !! DESYNC !! Tick: %d, Client Hash: %s, Server Hash: %s, Client Rand: %08X, Server Rand: %08X - %s\n", realm, 
-                tick, 
-                clientHash, 
-                ( (serverHash[0] != '\0') ? serverHash : "<NONE:0>" ),
-                srand0,
-                server_srand0,
-                (sprites_mismatch ? "Sprite hash mismatch" : "scenario rand mismatch"));
-    }
-}
-#endif
 
 uint32 scenario_rand_max(uint32 max)
 {

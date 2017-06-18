@@ -1416,7 +1416,13 @@ void game_load_or_quit_no_save_prompt()
  */
 void game_init_all(sint32 mapSize)
 {
+	bool updateState = gInUpdateCode;
+
     gInUpdateCode = true;
+
+	log_init(LOG_GROUP_GENERAL, 100000, "general.txt");
+	log_init(LOG_GROUP_SERVER, 300000, "server.txt");
+	log_init(LOG_GROUP_CLIENT, 300000, "client.txt");
 
     map_init(mapSize);
     park_init();
@@ -1431,7 +1437,7 @@ void game_init_all(sint32 mapSize)
     news_item_init_queue();
     user_string_clear_all();
 
-    gInUpdateCode = false;
+    gInUpdateCode = updateState;
 
     window_new_ride_init_vars();
     window_guest_list_init_vars_a();

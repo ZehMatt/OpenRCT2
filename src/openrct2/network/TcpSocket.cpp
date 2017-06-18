@@ -519,6 +519,18 @@ namespace Convert
     {
         return ntohs(value);
     }
+
+	uint32 NetworkToHost32(uint32 value)
+	{
+		return ntohl(value);
+	}
+
+	uint32 HostToNetwork32(uint32 value)
+	{
+		return htonl(value);
+	}
+
+
 }
 
 #endif

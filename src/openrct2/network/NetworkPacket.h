@@ -24,7 +24,7 @@
 class NetworkPacket final
 {
 public:
-    uint16                              Size = 0;
+    uint32                              Size = 0;
     std::shared_ptr<std::vector<uint8>> Data = std::make_shared<std::vector<uint8>>();
     size_t                              BytesTransferred = 0;
     size_t                              BytesRead = 0;

@@ -21,6 +21,8 @@
 #include "common.h"
 #include "scenario/scenario.h"
 
+#include "core/Logging.h"
+
 enum GAME_COMMAND {
     GAME_COMMAND_SET_RIDE_APPEARANCE,
     GAME_COMMAND_SET_LAND_HEIGHT,

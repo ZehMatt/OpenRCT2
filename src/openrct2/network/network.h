@@ -115,7 +115,10 @@ public:
     static const char* FormatChat(NetworkPlayer* fromplayer, const char* text);
     void SendPacketToClients(NetworkPacket& packet, bool front = false, bool gameCmd = false);
     bool CheckSRAND(uint32 tick, uint32 srand0);
-    void KickPlayer(sint32 playerId);
+#ifdef DEBUG_DESYNC
+	void CompareSprite(rct_sprite *cs, rct_sprite *ss);
+#endif
+	void KickPlayer(sint32 playerId);
     void SetPassword(const char* password);
     void ShutdownClient();
     NetworkGroup* AddGroup();
@@ -150,7 +153,8 @@ public:
     void Server_Send_TICK();
     void Server_Send_PLAYERLIST();
     void Client_Send_PING();
-    void Server_Send_PING();
+	void Client_Send_DESYNC();
+	void Server_Send_PING();
     void Server_Send_PINGLIST();
     void Server_Send_SETDISCONNECTMSG(NetworkConnection& connection, const char* msg);
     void Server_Send_GAMEINFO(NetworkConnection& connection);
@@ -235,6 +239,7 @@ private:
     std::string _chatLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
     std::string _serverLogPath;
     std::string _serverLogFilenameFormat = "-%Y%m%d-%H%M%S.txt";
+	rct_sprite _serverSprites[MAX_SPRITES];
     OpenRCT2::IPlatformEnvironment * _env;
 
     void UpdateServer();
@@ -266,6 +271,7 @@ private:
     void Server_Handle_TOKEN(NetworkConnection& connection, NetworkPacket& packet);
     void Client_Handle_OBJECTS(NetworkConnection& connection, NetworkPacket& packet);
     void Server_Handle_OBJECTS(NetworkConnection& connection, NetworkPacket& packet);
+	void Server_Handle_DESYNC(NetworkConnection& connection, NetworkPacket& packet);
 
     uint8 * save_for_network(size_t &out_size, const std::vector<const ObjectRepositoryItem *> &objects) const;
 };

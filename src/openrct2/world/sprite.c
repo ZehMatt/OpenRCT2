@@ -211,6 +211,8 @@ const char * sprite_checksum()
         {
             rct_sprite copy = *sprite;
             copy.unknown.sprite_left = copy.unknown.sprite_right = copy.unknown.sprite_top = copy.unknown.sprite_bottom = 0;
+			if (copy.unknown.sprite_identifier == SPRITE_IDENTIFIER_PEEP)
+				copy.peep.window_invalidate_flags = 0;
 
             if (EVP_DigestUpdate(gHashCTX, &copy, sizeof(rct_sprite)) <= 0)
             {

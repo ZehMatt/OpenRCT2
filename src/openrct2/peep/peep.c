@@ -534,6 +534,8 @@ sint32 peep_get_staff_count()
  */
 void peep_update_all()
 {
+	log_msg_network("%s()\n", __FUNCTION__);
+
     sint32 i;
     uint16 spriteIndex;
     rct_peep* peep;
@@ -565,6 +567,7 @@ void peep_update_all()
  *  rct2: 0x0069BC9A
  */
 static uint8 peep_assess_surroundings(sint16 center_x, sint16 center_y, sint16 center_z){
+	log_msg_network("%s()\n", __FUNCTION__);
     if ((map_element_height(center_x, center_y) & 0xFFFF) > center_z)
         return PEEP_THOUGHT_TYPE_NONE;
 
@@ -671,6 +674,7 @@ static uint8 peep_assess_surroundings(sint16 center_x, sint16 center_y, sint16 c
  *  rct2: 0x0068F9A9
  */
 static void peep_update_hunger(rct_peep *peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->hunger >= 3){
         peep->hunger -= 2;
         peep->energy_growth_rate = min(peep->energy_growth_rate + 2, 255);
@@ -683,6 +687,7 @@ static void peep_update_hunger(rct_peep *peep){
  *  rct2: 0x0068F93E
  */
 static void peep_leave_park(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep->guest_heading_to_ride_id = 0xFF;
     if (peep->peep_flags & PEEP_FLAGS_LEAVING_PARK){
         if (peep->peep_is_lost_countdown < 60){
@@ -710,6 +715,7 @@ static void peep_leave_park(rct_peep* peep){
  */
 static void peep_decide_whether_to_leave_park(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->energy_growth_rate >= 33) {
         peep->energy_growth_rate -= 2;
     }
@@ -892,6 +898,8 @@ static const uint8 peep_extra_item_containers[] = {
  */
 static void sub_68F41A(rct_peep *peep, sint32 index)
 {
+	log_msg_network("%s(%08X, %d)\n", __FUNCTION__, peep->id, index);
+
     if (peep->type == PEEP_TYPE_STAFF){
         if (peep->staff_type != STAFF_TYPE_SECURITY)
             return;
@@ -1353,6 +1361,7 @@ static void sub_68F41A(rct_peep *peep, sint32 index)
  * Set peep state to falling if path below has gone missing, return 1 if current path is valid, 0 if peep starts falling
  */
 static sint32 checkForPath(rct_peep *peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep->var_C4++;
     if ((peep->var_C4 & 0xF) != (peep->sprite_index & 0xF)){
         // This condition makes the check happen less often so the peeps hover for a short,
@@ -1387,6 +1396,7 @@ static sint32 checkForPath(rct_peep *peep){
 
 static uint8 peep_get_action_sprite_type(rct_peep* peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->action >= PEEP_ACTION_NONE_1){ // PEEP_ACTION_NONE_1 or PEEP_ACTION_NONE_2
         return PeepSpecialSpriteToSpriteTypeMap[peep->special_sprite];
     } else if (peep->action < countof(PeepActionToSpriteTypeMap)) {
@@ -1403,6 +1413,7 @@ static uint8 peep_get_action_sprite_type(rct_peep* peep)
 *  rct2: 0x00693B58
 */
 void peep_update_current_action_sprite_type(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->sprite_type >= countof(g_peep_animation_entries)) {
         return;
     }
@@ -1424,6 +1435,7 @@ void peep_update_current_action_sprite_type(rct_peep* peep){
 
 /* 0x00693BE5 */
 void peep_switch_to_special_sprite(rct_peep* peep, uint8 special_sprite_id){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (special_sprite_id == peep->special_sprite)return;
 
     peep->special_sprite = special_sprite_id;
@@ -1441,6 +1453,7 @@ void peep_switch_to_special_sprite(rct_peep* peep, uint8 special_sprite_id){
 */
 void remove_peep_from_ride(rct_peep* peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->state == PEEP_STATE_QUEUING) {
         remove_peep_from_queue(peep);
     }
@@ -1451,6 +1464,7 @@ void remove_peep_from_ride(rct_peep* peep)
 }
 
 static void peep_state_reset(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep_decrement_num_riders(peep);
     peep->state = PEEP_STATE_1;
     peep_window_state_update(peep);
@@ -1464,6 +1478,7 @@ static void peep_state_reset(rct_peep* peep){
  * Check if lost.
  */
 static void peep_check_if_lost(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!(peep->peep_flags & PEEP_FLAGS_LOST)){
         if (gRideCount < 2) return;
         peep->peep_flags ^= PEEP_FLAGS_21;
@@ -1485,6 +1500,7 @@ static void peep_check_if_lost(rct_peep* peep){
 * Check if cant find ride.
 */
 static void peep_check_cant_find_ride(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->guest_heading_to_ride_id == 0xFF)
         return;
 
@@ -1514,6 +1530,7 @@ static void peep_check_cant_find_ride(rct_peep* peep){
 * Check if cant find exit.
 */
 static void peep_check_cant_find_exit(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!(peep->peep_flags & PEEP_FLAGS_LEAVING_PARK))
         return;
 
@@ -1549,6 +1566,7 @@ const rct_xy16 word_981D7C[4] = {
  * @param peep (esi)
  */
 static sint32 peep_update_action(sint16* x, sint16* y, sint16* xy_distance, rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     _unk_F1AEF0 = peep->action_sprite_image_offset;
     if (peep->action == 0xFE){
         peep->action = 0xFF;
@@ -1643,6 +1661,7 @@ static sint32 peep_update_action(sint16* x, sint16* y, sint16* xy_distance, rct_
 * Decreases rider count if on/entering a ride.
 */
 void peep_decrement_num_riders(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->state == PEEP_STATE_ON_RIDE
         || peep->state == PEEP_STATE_ENTERING_RIDE){
 
@@ -1654,6 +1673,7 @@ void peep_decrement_num_riders(rct_peep* peep){
 
 /* Part of 0x0069B8CC rct2: 0x0069BC31 */
 static void set_sprite_type(rct_peep* peep, uint8 type){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->sprite_type == type)return;
 
     peep->sprite_type = type;
@@ -1731,6 +1751,7 @@ item_pref_t item_order_preference[] = {
  */
 void peep_update_sprite_type(rct_peep* peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (
         peep->sprite_type == PEEP_SPRITE_TYPE_BALLOON &&
         (peep_rand() & 0xFFFF) <= 327
@@ -1823,6 +1844,7 @@ void peep_update_sprite_type(rct_peep* peep)
  */
 void peep_window_state_update(rct_peep* peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_window* w = window_find_by_number(WC_PEEP, peep->sprite_index);
     if (w != NULL)
         window_event_invalidate_call(w);
@@ -1844,6 +1866,7 @@ void peep_window_state_update(rct_peep* peep)
 
 void peep_pickup(rct_peep* peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     remove_peep_from_ride(peep);
     invalidate_sprite_2((rct_sprite*)peep);
 
@@ -1858,6 +1881,8 @@ void peep_pickup_abort(rct_peep* peep, sint32 old_x)
 {
     if (!peep)
         return;
+
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
 
     if (peep->state != PEEP_STATE_PICKED)
         return;
@@ -1883,6 +1908,8 @@ bool peep_pickup_place(rct_peep* peep, sint32 x, sint32 y, sint32 z, bool apply)
 {
     if (!peep)
         return false;
+
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
 
     rct_map_element *mapElement = map_get_path_element_at(x / 32, y / 32, z);
 
@@ -2017,6 +2044,7 @@ void game_command_pickup_guest(sint32* eax, sint32* ebx, sint32* ecx, sint32* ed
  *  rct2: 0x0069A535
  */
 void peep_sprite_remove(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     remove_peep_from_ride(peep);
     invalidate_sprite_2((rct_sprite*)peep);
 
@@ -2046,6 +2074,7 @@ void peep_sprite_remove(rct_peep* peep){
  * New function removes peep from park existence. Works with staff.
  */
 void peep_remove(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->type == PEEP_TYPE_GUEST){
         if (peep->outside_of_park == 0){
             decrement_guests_in_park();
@@ -2063,6 +2092,7 @@ void peep_remove(rct_peep* peep){
  *  rct2: 0x690028
  */
 static void peep_update_falling(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->action == PEEP_ACTION_DROWNING){
         // Check to see if we are ready to drown.
         sint16 x, y, xy_distance;
@@ -2176,6 +2206,7 @@ static void peep_update_falling(rct_peep* peep){
  *  rct2: 0x00691677
  */
 static void peep_try_get_up_from_sitting(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     // Eats all food first
     if (peep_has_food(peep))return;
 
@@ -2210,6 +2241,7 @@ static const rct_xy16 _981F2C[] = {
  *  rct2: 0x0069152B
  */
 static void peep_update_sitting(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->sub_state == 0){
         if (!checkForPath(peep))return;
         //691541
@@ -2310,6 +2342,7 @@ static void peep_update_sitting(rct_peep* peep){
  */
 void remove_peep_from_queue(rct_peep* peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     uint8 cur_station = peep->current_ride_station;
@@ -2336,6 +2369,7 @@ void remove_peep_from_queue(rct_peep* peep)
  *  rct2: 0x00691C6E
  */
 static rct_vehicle* peep_choose_car_from_ride(rct_peep* peep, rct_ride* ride, uint8* car_array, uint8 car_array_size){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     uint8 chosen_car = peep_rand();
     if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_HAS_G_FORCES)
         && ((chosen_car & 0xC) != 0xC)){
@@ -2361,6 +2395,7 @@ static rct_vehicle* peep_choose_car_from_ride(rct_peep* peep, rct_ride* ride, ui
  *  rct2: 0x00691CD1
  */
 static void peep_choose_seat_from_car(rct_peep* peep, rct_ride* ride, rct_vehicle* vehicle){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     uint8 chosen_seat = vehicle->next_free_seat;
 
     if (ride->mode == RIDE_MODE_FORWARD_ROTATION ||
@@ -2383,6 +2418,7 @@ static void peep_choose_seat_from_car(rct_peep* peep, rct_ride* ride, rct_vehicl
  *  rct2: 0x00691D27
  */
 static void peep_go_to_ride_entrance(rct_peep* peep, rct_ride* ride){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint32 x = ride->entrances[peep->current_ride_station] & 0xFF;
     sint32 y = ride->entrances[peep->current_ride_station] >> 8;
     sint32 z = ride->station_heights[peep->current_ride_station];
@@ -2434,6 +2470,7 @@ static void peep_go_to_ride_entrance(rct_peep* peep, rct_ride* ride){
  *  rct2: 0x00691A3B
  */
 static void peep_update_ride_sub_state_0(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     if (peep->destination_tolerence != 0){
@@ -2608,6 +2645,7 @@ static const rct_xy16 _981FD4[] = {
  *  rct2: 0x006921D3
  */
 static void peep_update_ride_sub_state_1(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, z, xy_distance;
 
     rct_ride* ride = get_ride(peep->current_ride);
@@ -2813,6 +2851,7 @@ static void peep_update_ride_sub_state_1(rct_peep* peep){
  *  rct2: 0x0069321D
  */
 static void peep_go_to_ride_exit(rct_peep* peep, rct_ride* ride, sint16 x, sint16 y, sint16 z, uint8 exit_direction){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     z += RideData5[ride->type].z;
 
     sprite_move(x, y, z, (rct_sprite*)peep);
@@ -2861,6 +2900,7 @@ static void peep_go_to_ride_exit(rct_peep* peep, rct_ride* ride, sint16 x, sint1
  */
 static void peep_update_ride_sub_state_2_enter_ride(rct_peep* peep, rct_ride* ride)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     money16 ridePrice = ride_get_price(ride);
     if (ridePrice != 0) {
         if ((peep->item_standard_flags & PEEP_ITEM_VOUCHER) &&
@@ -2917,6 +2957,7 @@ static void peep_update_ride_sub_state_2_enter_ride(rct_peep* peep, rct_ride* ri
  *  rct2: 0x00691FD4
  */
 static void peep_update_ride_sub_state_2_rejoin_queue(rct_peep* peep, rct_ride* ride){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, z;
     x = ride->entrances[peep->current_ride_station] & 0xFF;
     y = ride->entrances[peep->current_ride_station] >> 8;
@@ -2967,6 +3008,7 @@ static void peep_update_ride_sub_state_2_rejoin_queue(rct_peep* peep, rct_ride* 
  * separate functions.
  */
 static void peep_update_ride_sub_state_2(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_NO_VEHICLES)){
@@ -3052,6 +3094,7 @@ static void peep_update_ride_sub_state_2(rct_peep* peep){
 }
 
 static void peep_update_ride_sub_state_5(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     rct_vehicle* vehicle = GET_VEHICLE(ride->vehicles[peep->current_train]);
@@ -3109,6 +3152,7 @@ static void peep_update_ride_sub_state_5(rct_peep* peep){
  *  rct2: 0x00693028
  */
 static void peep_update_ride_sub_state_7(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     rct_vehicle* vehicle = GET_VEHICLE(ride->vehicles[peep->current_train]);
@@ -3305,6 +3349,7 @@ static void peep_update_ride_sub_state_7(rct_peep* peep){
  *  rct2: 0x0069376A
  */
 static void peep_update_ride_prepare_for_state_9(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     sint16 x = ride->exits[peep->current_ride_station] & 0xFF;
@@ -3350,6 +3395,7 @@ static void peep_update_ride_prepare_for_state_9(rct_peep* peep){
  *  rct2: 0x0069374F
  */
 static void peep_update_ride_sub_state_8(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
     if (peep_update_action(&x, &y, &xy_distance, peep)){
         invalidate_sprite_2((rct_sprite*)peep);
@@ -3366,6 +3412,7 @@ static void peep_update_ride_sub_state_8(rct_peep* peep){
  *  rct2: 0x0069382E
  */
 static void peep_update_ride_sub_state_9(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
     rct_ride* ride = get_ride(peep->current_ride);
 
@@ -3400,6 +3447,7 @@ static void peep_update_ride_sub_state_9(rct_peep* peep){
  *  rct2: 0x006926AD
  */
 static void peep_update_ride_sub_state_12(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
     rct_ride* ride = get_ride(peep->current_ride);
 
@@ -3464,6 +3512,7 @@ static void peep_update_ride_sub_state_12(rct_peep* peep){
  *  rct2: 0x0069357D
  */
 static void peep_update_ride_sub_state_13(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
     rct_ride* ride = get_ride(peep->current_ride);
 
@@ -3564,6 +3613,7 @@ static void peep_update_ride_sub_state_13(rct_peep* peep){
  *  rct2: 0x006927B3
  */
 static void peep_update_ride_sub_state_14(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
     rct_ride* ride = get_ride(peep->current_ride);
 
@@ -3659,6 +3709,7 @@ static const rct_xy16 _981F1C[] = {
  *  rct2: 0x00692D83
  */
 static void peep_update_ride_sub_state_15(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     if (ride->type != RIDE_TYPE_SPIRAL_SLIDE)
@@ -3748,6 +3799,7 @@ static void peep_update_ride_sub_state_15(rct_peep* peep){
  *  rct2: 0x00692C6B
  */
 static void peep_update_ride_sub_state_16(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
 
     if (peep_update_action(&x, &y, &xy_distance, peep)){
@@ -3835,6 +3887,7 @@ static const uint8 _981FF4[][4] = {
  *  rct2: 0x00692A83
  */
 static void peep_update_ride_sub_state_17(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
 
     if (peep_update_action(&x, &y, &xy_distance, peep)){
@@ -3977,6 +4030,7 @@ static void peep_update_ride_sub_state_17(rct_peep* peep){
  *  rct2: 0x006938D2
  */
 static void peep_update_ride_sub_state_18(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
     rct_ride* ride = get_ride(peep->current_ride);
 
@@ -4032,6 +4086,7 @@ static void peep_update_ride_sub_state_18(rct_peep* peep){
  *  rct2: 0x0069299C
  */
 static void peep_update_ride_sub_state_19(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
 
     if (peep_update_action(&x, &y, &xy_distance, peep)){
@@ -4049,6 +4104,7 @@ static void peep_update_ride_sub_state_19(rct_peep* peep){
  *  rct2: 0x006929BB
  */
 static void peep_update_ride_sub_state_20(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y;
     rct_ride* ride = get_ride(peep->current_ride);
 
@@ -4100,6 +4156,7 @@ static void peep_update_ride_sub_state_20(rct_peep* peep){
  *  rct2: 0x00692935
  */
 static void peep_update_ride_sub_state_21(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
 
     if (peep_update_action(&x, &y, &xy_distance, peep)){
@@ -4131,6 +4188,7 @@ static void peep_update_ride_sub_state_21(rct_peep* peep){
  *  rct2: 0x691A30
  * Used by entering_ride and queueing_front */
 static void peep_update_ride(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     switch (peep->sub_state){
     case 0:
         peep_update_ride_sub_state_0(peep);
@@ -4232,6 +4290,7 @@ static const uint32 loc_992A18[9] = {
  * Also used by inspecting.
  */
 static void peep_update_fixing(sint32 steps, rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     if (ride->type == RIDE_TYPE_NULL)
@@ -4328,6 +4387,7 @@ static void peep_update_fixing(sint32 steps, rct_peep* peep){
  * rct2: 0x006C0EEC
  */
 static bool peep_update_fixing_sub_state_0(rct_ride *ride) {
+	log_msg_network("%s()\n", __FUNCTION__);
     ride->mechanic_status = RIDE_MECHANIC_STATUS_FIXING;
     ride->window_invalidate_flags |= RIDE_INVALIDATE_RIDE_MAINTENANCE;
 
@@ -4338,6 +4398,7 @@ static bool peep_update_fixing_sub_state_0(rct_ride *ride) {
  * rct2: 0x006C0F09
  */
 static bool peep_update_fixing_sub_state_1(bool firstRun, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, tmp_xy_distance;
 
     if (!firstRun) {
@@ -4387,6 +4448,7 @@ static bool peep_update_fixing_sub_state_1(bool firstRun, rct_peep *peep, rct_ri
  * rct2: 0x006C0FD3
  */
 static bool peep_update_fixing_sub_state_2345(bool firstRun, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 tmp_x, tmp_y, tmp_distance;
 
     if (!firstRun) {
@@ -4424,6 +4486,7 @@ static bool peep_update_fixing_sub_state_2345(bool firstRun, rct_peep *peep, rct
  * rct2: 0x006C107B
  */
 static bool peep_update_fixing_sub_state_6(bool firstRun, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 tmp_x, tmp_y, tmp_distance;
 
     if (!firstRun) {
@@ -4467,6 +4530,7 @@ static const rct_xy16 _992A3C[] = {
  * rct2: 0x006C1114
  */
 static bool peep_update_fixing_sub_state_7(bool firstRun, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, tmp_distance;
 
     if (!firstRun) {
@@ -4522,6 +4586,7 @@ static bool peep_update_fixing_sub_state_7(bool firstRun, rct_peep *peep, rct_ri
  * rct2: 0x006C11F5
  */
 static bool peep_update_fixing_sub_state_8(bool firstRun, rct_peep *peep) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 tmp_x, tmp_y, tmp_xy_distance;
 
     if (!firstRun) {
@@ -4547,6 +4612,7 @@ static bool peep_update_fixing_sub_state_8(bool firstRun, rct_peep *peep) {
  * rct2: 0x006C1239
  */
 static bool peep_update_fixing_sub_state_9(bool firstRun, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, tmp_xy_distance;
 
     if (!firstRun) {
@@ -4622,6 +4688,7 @@ static bool peep_update_fixing_sub_state_9(bool firstRun, rct_peep *peep, rct_ri
  * rct2: 0x006C1368
  */
 static bool peep_update_fixing_sub_state_10(bool firstRun, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 tmp_x, tmp_y, tmp_xy_distance;
 
     if (!firstRun) {
@@ -4652,6 +4719,7 @@ static bool peep_update_fixing_sub_state_10(bool firstRun, rct_peep *peep, rct_r
  * rct2: 0x006C13CE
  */
 static bool peep_update_fixing_sub_state_11(bool firstRun, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 tmp_x, tmp_y, tmp_xy_distance;
 
     if (!firstRun) {
@@ -4690,6 +4758,7 @@ static bool peep_update_fixing_sub_state_11(bool firstRun, rct_peep *peep, rct_r
  * rct2: 0x006C1474
  */
 static bool peep_update_fixing_sub_state_12(bool firstRun, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, tmp_xy_distance;
 
     if (!firstRun) {
@@ -4733,6 +4802,7 @@ static bool peep_update_fixing_sub_state_12(bool firstRun, rct_peep *peep, rct_r
  * rct2: 0x006C1504
  */
 static bool peep_update_fixing_sub_state_13(bool firstRun, sint32 steps, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 tmp_x, tmp_y, tmp_xy_distance;
 
     if (!firstRun) {
@@ -4771,6 +4841,7 @@ static bool peep_update_fixing_sub_state_13(bool firstRun, sint32 steps, rct_pee
  * rct2: 0x006C157E
  */
 static bool peep_update_fixing_sub_state_14(bool firstRun, rct_peep *peep, rct_ride *ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, xy_distance;
 
     if (!firstRun) {
@@ -4826,6 +4897,7 @@ static bool peep_update_fixing_sub_state_14(bool firstRun, rct_peep *peep, rct_r
  * rct2: 0x6B7588
  */
 static void peep_update_ride_inspected(sint32 rideIndex) {
+	log_msg_network("%s(%d)\n", __FUNCTION__, rideIndex);
     rct_ride *ride = get_ride(rideIndex);
     ride->lifecycle_flags &= ~RIDE_LIFECYCLE_DUE_INSPECTION;
 
@@ -4839,6 +4911,7 @@ static void peep_update_ride_inspected(sint32 rideIndex) {
  *  rct2: 0x69185D
  */
 static void peep_update_queuing(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!checkForPath(peep)){
         remove_peep_from_queue(peep);
         return;
@@ -4967,6 +5040,7 @@ static const rct_xy16 _9929C8[] = {
  *  rct2: 0x006BF567
  */
 static void peep_update_mowing(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!checkForPath(peep))return;
 
     invalidate_sprite_2((rct_sprite*)peep);
@@ -5013,6 +5087,7 @@ static void peep_update_mowing(rct_peep* peep){
  *  rct2: 0x006BF7E6
  */
 static void peep_update_watering(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep->var_E2 = 0;
     if (peep->sub_state == 0){
         if (!checkForPath(peep))return;
@@ -5068,6 +5143,7 @@ static void peep_update_watering(rct_peep* peep){
  *  rct2: 0x006BF6C9
  */
 static void peep_update_emptying_bin(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep->var_E2 = 0;
 
     if (peep->sub_state == 0){
@@ -5139,6 +5215,7 @@ static void peep_update_emptying_bin(rct_peep* peep){
  *  rct2: 0x6BF641
  */
 static void peep_update_sweeping(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep->var_E2 = 0;
     if (!checkForPath(peep))return;
 
@@ -5175,6 +5252,7 @@ static void peep_update_sweeping(rct_peep* peep){
  *  rct2: 0x6902A2
  */
 static void peep_update_1(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!checkForPath(peep))return;
 
     peep_decrement_num_riders(peep);
@@ -5198,6 +5276,7 @@ static void peep_update_1(rct_peep* peep){
  *  rct2: 0x690009
  */
 static void peep_update_picked(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (gCurrentTicks & 0x1F) return;
     peep->sub_state++;
     if (peep->sub_state == 13){
@@ -5210,6 +5289,7 @@ static void peep_update_picked(rct_peep* peep){
  *  rct2: 0x6914CD
  */
 static void peep_update_leaving_park(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->var_37 != 0){
         peep_perform_next_action(peep);
         if (!(_unk_F1EE18 & F1EE18_OUTSIDE_PARK)) return;
@@ -5243,6 +5323,7 @@ static void peep_update_leaving_park(rct_peep* peep){
  *  rct2: 0x6916D6
  */
 static void peep_update_watching(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->sub_state == 0){
         if (!checkForPath(peep))return;
 
@@ -5329,6 +5410,7 @@ static void peep_update_watching(rct_peep* peep){
 * rct2: 0x691451
 */
 static void peep_update_entering_park(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->var_37 != 1){
         peep_perform_next_action(peep);
         if ((_unk_F1EE18 & F1EE18_OUTSIDE_PARK)) {
@@ -5361,6 +5443,7 @@ static void peep_update_entering_park(rct_peep* peep){
  *  rct2: 0x00690582
  */
 static sint32 peep_update_walking_find_bench(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!peep_should_find_bench(peep))return 0;
 
     rct_map_element* map_element = map_get_first_element_at(peep->next_x / 32, peep->next_y / 32);
@@ -5442,6 +5525,7 @@ static const rct_xy16 _992A4C[] = {
 };
 
 static sint32 peep_update_walking_find_bin(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!peep_has_empty_container(peep)) return 0;
 
     if (peep->next_var_29 & 0x18)return 0;
@@ -5511,6 +5595,7 @@ static sint32 peep_update_walking_find_bin(rct_peep* peep){
  *  rct2: 0x00690848
  */
 static void peep_update_walking_break_scenery(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if(gCheatsDisableVandalism)
         return;
 
@@ -5583,6 +5668,7 @@ static void peep_update_walking_break_scenery(rct_peep* peep){
  */
 static void peep_update_buying(rct_peep* peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!checkForPath(peep))return;
 
     rct_ride* ride = get_ride(peep->current_ride);
@@ -5733,6 +5819,7 @@ static const uint8 item_extra_litter[32] = {
  *  rct2: 0x00691089
  */
 static void peep_update_using_bin(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->sub_state == 0){
         if (!checkForPath(peep))return;
 
@@ -5864,6 +5951,7 @@ static void peep_update_using_bin(rct_peep* peep){
  *  rct2: 0x006C16D7
  */
 static void peep_update_heading_to_inspect(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     if (ride->type == RIDE_TYPE_NULL){
@@ -5977,6 +6065,7 @@ static void peep_update_heading_to_inspect(rct_peep* peep){
  *  rct2: 0x006C0CB8
  */
 static void peep_update_answering(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride* ride = get_ride(peep->current_ride);
 
     if (ride->type == RIDE_TYPE_NULL ||
@@ -6106,6 +6195,7 @@ static const rct_xy16 _992A5C[] = {
  *  rct2: 0x006BF483
  */
 static sint32 peep_update_patrolling_find_watering(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!(peep->staff_orders & STAFF_ORDERS_WATER_FLOWERS))
         return 0;
 
@@ -6171,6 +6261,7 @@ static sint32 peep_update_patrolling_find_watering(rct_peep* peep){
  *  rct2: 0x006BF3A1
  */
 static sint32 peep_update_patrolling_find_bin(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!(peep->staff_orders & STAFF_ORDERS_EMPTY_BINS))
         return 0;
 
@@ -6232,6 +6323,7 @@ static sint32 peep_update_patrolling_find_bin(rct_peep* peep){
  *  rct2: 0x006BF322
  */
 static sint32 peep_update_patrolling_find_grass(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!(peep->staff_orders & STAFF_ORDERS_MOWING))
         return 0;
 
@@ -6263,6 +6355,7 @@ static sint32 peep_update_patrolling_find_grass(rct_peep* peep){
  *  rct2: 0x006BF295
  */
 static sint32 peep_update_patrolling_find_sweeping(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!(peep->staff_orders & STAFF_ORDERS_SWEEPING))
         return 0;
 
@@ -6298,6 +6391,7 @@ static sint32 peep_update_patrolling_find_sweeping(rct_peep* peep){
  *  rct2: 0x006BF1FD
  */
 static void peep_update_patrolling(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
 
     if (!checkForPath(peep))return;
 
@@ -6375,6 +6469,7 @@ static const rct_xy16 _981F4C[] = {
  *  rct2: 0x0069030A
  */
 static void peep_update_walking(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!checkForPath(peep))return;
 
     if (peep->peep_flags & PEEP_FLAGS_WAVING){
@@ -6603,6 +6698,7 @@ static void peep_update_walking(rct_peep* peep){
 
 /* From peep_update */
 static void peep_update_thoughts(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     // Thoughts must always have a gap of at least
     // 220 ticks in age between them. In order to
     // allow this when a thought is new it enters
@@ -6658,6 +6754,7 @@ static void peep_update_thoughts(rct_peep* peep){
  */
 static void peep_update(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->type == PEEP_TYPE_GUEST) {
         if (peep->previous_ride != 255)
             if (++peep->previous_ride_time_out >= 720)
@@ -7126,6 +7223,7 @@ static const uint8 tshirt_colours[] = {
  */
 rct_peep *peep_generate(sint32 x, sint32 y, sint32 z)
 {
+	log_msg_network("%s(%d, %d, %d)\n", __FUNCTION__, x, y, z);
     if (gSpriteListCount[SPRITE_LIST_NULL] < 400)
         return NULL;
 
@@ -7301,6 +7399,7 @@ rct_peep *peep_generate(sint32 x, sint32 y, sint32 z)
 * argument_2 (edx)
 */
 void get_arguments_from_action(rct_peep* peep, uint32 *argument_1, uint32* argument_2){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride *ride;
 
     switch (peep->state){
@@ -7568,6 +7667,7 @@ static sint32 get_face_sprite_offset(rct_peep *peep){
  *  rct2: 0x00698721
  */
 sint32 get_peep_face_sprite_small(rct_peep *peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     return face_sprite_small[get_face_sprite_offset(peep)];
 }
 
@@ -7576,6 +7676,7 @@ sint32 get_peep_face_sprite_small(rct_peep *peep){
  *  rct2: 0x00698721
  */
 sint32 get_peep_face_sprite_large(rct_peep *peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     return face_sprite_large[get_face_sprite_offset(peep)];
 }
 
@@ -7726,6 +7827,7 @@ static sint32 peep_has_empty_container(rct_peep* peep){
 
 /* Simplifies 0x690582. Returns 1 if should find bench*/
 static sint32 peep_should_find_bench(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!(peep->peep_flags & PEEP_FLAGS_LEAVING_PARK)){
         if (peep_has_food(peep)){
             if (peep->hunger < 128 || peep->happiness < 128){
@@ -7754,6 +7856,7 @@ static sint32 peep_should_find_bench(rct_peep* peep){
  */
 void peep_insert_new_thought(rct_peep *peep, uint8 thought_type, uint8 thought_arguments)
 {
+	log_msg_network("%s(%08X, %u, %u)\n", __FUNCTION__, peep->id, thought_type, thought_arguments);
     uint8 action = PeepThoughtToActionMap[thought_type].action;
     if (action != 0xFF && peep->action >= 254){
             peep->action = action;
@@ -7797,7 +7900,7 @@ void peep_insert_new_thought(rct_peep *peep, uint8 thought_type, uint8 thought_a
  * Works for Thirst/Hungry/Low Money/Bathroom
  */
 static void peep_stop_purchase_thought(rct_peep* peep, uint8 ride_type){
-
+	log_msg_network("%s(%08X, %u)\n", __FUNCTION__, peep->id, ride_type);
     uint8 thought_type = PEEP_THOUGHT_TYPE_HUNGRY;
 
     if (!ride_type_has_flag(ride_type, RIDE_TYPE_FLAG_SELLS_FOOD)){
@@ -7861,6 +7964,7 @@ void peep_set_map_tooltip(rct_peep *peep)
 *  rct2: 0x00693BAB
 */
 void peep_switch_to_next_action_sprite_type(rct_peep* peep) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     // TBD: Add nextActionSpriteType as function parameter and make peep->next_action_sprite_type obsolete?
     uint8 nextActionSpriteType = peep->next_action_sprite_type;
     if (nextActionSpriteType != peep->action_sprite_type) {
@@ -7879,6 +7983,7 @@ void peep_switch_to_next_action_sprite_type(rct_peep* peep) {
  *  rct2: 0x00693CBB
  */
 static sint32 peep_update_queue_position(rct_peep* peep, uint8 previous_action){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep->time_in_queue++;
     if (peep->next_in_queue == SPRITE_INDEX_NULL)
         return 0;
@@ -7948,6 +8053,7 @@ static sint32 peep_update_queue_position(rct_peep* peep, uint8 previous_action){
  *  rct2: 0x00693EF2
  */
 static sint32 peep_return_to_center_of_tile(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep->direction ^= (1 << 1);
     peep->destination_x = (peep->x & 0xFFE0) + 16;
     peep->destination_y = (peep->y & 0xFFE0) + 16;
@@ -7960,6 +8066,7 @@ static sint32 peep_return_to_center_of_tile(rct_peep* peep){
  *  rct2: 0x00693f2C
  */
 static sint32 peep_interact_with_entrance(rct_peep* peep, sint16 x, sint16 y, rct_map_element* map_element){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     uint8 entranceType = map_element->properties.entrance.type;
     uint8 rideIndex = map_element->properties.entrance.ride_index;
 
@@ -8211,6 +8318,7 @@ static sint32 peep_interact_with_entrance(rct_peep* peep, sint16 x, sint16 y, rc
  *  rct2: 0x006946D8
  */
 static sint32 peep_footpath_move_forward(rct_peep* peep, sint16 x, sint16 y, rct_map_element* map_element, bool vandalism){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep->next_x = (x & 0xFFE0);
     peep->next_y = (y & 0xFFE0);
     peep->next_z = map_element->base_height;
@@ -8347,7 +8455,7 @@ static sint32 peep_footpath_move_forward(rct_peep* peep, sint16 x, sint16 y, rct
  *  rct2: 0x0069455E
  */
 static sint32 peep_interact_with_path(rct_peep* peep, sint16 x, sint16 y, rct_map_element* map_element){
-
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     // 0x00F1AEE2
     bool vandalism_present = false;
     if (footpath_element_has_path_scenery(map_element) &&
@@ -8465,6 +8573,7 @@ static sint32 peep_interact_with_path(rct_peep* peep, sint16 x, sint16 y, rct_ma
  *  rct2: 0x00693F70
  */
 static sint32 peep_interact_with_shop(rct_peep* peep, sint16 x, sint16 y, rct_map_element* map_element){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     uint8 rideIndex = map_element->properties.track.ride_index;
     rct_ride* ride = get_ride(rideIndex);
 
@@ -8539,6 +8648,7 @@ static sint32 peep_interact_with_shop(rct_peep* peep, sint16 x, sint16 y, rct_ma
  *  rct2: 0x0069524E
  */
 static sint32 peep_move_one_tile(uint8 direction, rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     assert(direction <= 3);
     sint16 x = peep->next_x;
     sint16 y = peep->next_y;
@@ -8565,6 +8675,7 @@ static sint32 peep_move_one_tile(uint8 direction, rct_peep* peep){
  *  rct2: 0x00694C41
  */
 static sint32 guest_surface_path_finding(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x = peep->next_x;
     sint16 y = peep->next_y;
     sint16 z = peep->next_z;
@@ -8860,6 +8971,7 @@ static uint8 footpath_element_destination_in_direction(sint16 x, sint16 y, sint1
  *  rct2: 0x00695225
  */
 static sint32 guest_path_find_aimless(rct_peep* peep, uint8 edges){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep_rand() & 1){
         // If possible go straight
         if (edges & (1 << peep->direction)){
@@ -8881,6 +8993,7 @@ static sint32 guest_path_find_aimless(rct_peep* peep, uint8 edges){
  *  rct2: 0x0069A60A
  */
 static uint8 peep_pathfind_get_max_number_junctions(rct_peep* peep){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (peep->type == PEEP_TYPE_STAFF)
         return 8;
 
@@ -9533,6 +9646,8 @@ static void peep_pathfind_heuristic_search(sint16 x, sint16 y, uint8 z, rct_peep
  */
 sint32 peep_pathfind_choose_direction(sint16 x, sint16 y, uint8 z, rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     // The max number of thin junctions searched - a per-search-path limit.
     _peepPathFindMaxJunctions = peep_pathfind_get_max_number_junctions(peep);
 
@@ -9900,6 +10015,8 @@ static uint8 get_nearest_park_entrance_index(uint16 x, uint16 y)
  */
 static sint32 guest_path_find_entering_park(rct_peep *peep, rct_map_element *map_element, uint8 edges)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     // Send peeps to the nearest park entrance.
     uint8 chosenEntrance = get_nearest_park_entrance_index(peep->next_x, peep->next_y);
 
@@ -9953,6 +10070,8 @@ static uint8 get_nearest_peep_spawn_index(uint16 x, uint16 y)
  *  rct2: 0x0069536C
  */
 static sint32 guest_path_find_leaving_park(rct_peep *peep, rct_map_element *map_element, uint8 edges){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     // Send peeps to the nearest spawn point.
     uint8 chosenSpawn = get_nearest_peep_spawn_index(peep->next_x, peep->next_y);
 
@@ -9986,6 +10105,7 @@ static sint32 guest_path_find_leaving_park(rct_peep *peep, rct_map_element *map_
  *  rct2: 0x00695161
  */
 static sint32 guest_path_find_park_entrance(rct_peep* peep, rct_map_element *map_element, uint8 edges){
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     uint8 entranceNum;
 
     // Resolves already-corrupt guests (e.g. loaded from save)
@@ -10180,6 +10300,7 @@ static void get_ride_queue_end(sint16 *x, sint16 *y, sint16 *z){
  */
 static sint32 guest_path_finding(rct_peep* peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     sint16 x, y, z;
 
     #if defined(DEBUG_LEVEL_1) && DEBUG_LEVEL_1
@@ -10456,6 +10577,7 @@ static sint32 guest_path_finding(rct_peep* peep)
  */
 static sint32 peep_perform_next_action(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     _unk_F1EE18 = 0;
     uint8 previousAction = peep->action;
 
@@ -10572,6 +10694,7 @@ static sint32 peep_perform_next_action(rct_peep *peep)
  */
 static void peep_spend_money(rct_peep *peep, money16 *peep_expend_type, money32 amount)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     assert(!(gParkFlags & PARK_FLAGS_NO_MONEY));
 
     peep->cash_in_pocket = max(0, peep->cash_in_pocket - amount);
@@ -10597,6 +10720,8 @@ static void peep_spend_money(rct_peep *peep, money16 *peep_expend_type, money32 
 
 static void peep_set_has_ridden(rct_peep *peep, sint32 rideIndex)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     peep->rides_been_on[rideIndex / 8] |= 1 << (rideIndex % 8);
     rct_ride *ride = get_ride(rideIndex);
     peep_set_has_ridden_ride_type(peep, ride->type);
@@ -10609,11 +10734,13 @@ static bool peep_has_ridden(rct_peep *peep, sint32 rideIndex)
 
 static void peep_set_has_ridden_ride_type(rct_peep *peep, sint32 rideType)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     peep->ride_types_been_on[rideType / 8] |= 1 << (rideType % 8);
 }
 
 static bool peep_has_ridden_ride_type(rct_peep *peep, sint32 rideType)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     return peep->ride_types_been_on[rideType / 8] & (1 << (rideType % 8));
 }
 
@@ -10624,6 +10751,7 @@ static bool peep_has_ridden_ride_type(rct_peep *peep, sint32 rideType)
  */
 static void peep_on_enter_ride(rct_peep *peep, sint32 rideIndex)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride *ride = get_ride(rideIndex);
 
     // Calculate how satisfying the ride is for the peep. Can range from -140 to +105.
@@ -10662,6 +10790,8 @@ static void peep_on_enter_ride(rct_peep *peep, sint32 rideIndex)
  */
 static void peep_update_favourite_ride(rct_peep *peep, rct_ride *ride)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     peep->peep_flags &= ~PEEP_FLAGS_RIDE_SHOULD_BE_MARKED_AS_FAVOURITE;
     uint8 peepRideRating = clamp(0, (ride->excitement / 4) + peep->happiness, 255);
     if (peepRideRating >= peep->favourite_ride_rating) {
@@ -10674,6 +10804,7 @@ static void peep_update_favourite_ride(rct_peep *peep, rct_ride *ride)
 
 /* rct2: 0x00695555 */
 static sint16 peep_calculate_ride_value_satisfaction(rct_peep* peep, rct_ride* ride) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (gParkFlags & PARK_FLAGS_NO_MONEY){
         return -30;
     }
@@ -10702,6 +10833,7 @@ static sint16 peep_calculate_ride_value_satisfaction(rct_peep* peep, rct_ride* r
  */
 static sint16 peep_calculate_ride_intensity_nausea_satisfaction(rct_peep * peep, rct_ride * ride)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (!ride_has_ratings(ride)) {
         return 70;
     }
@@ -10783,6 +10915,8 @@ static sint16 peep_calculate_ride_intensity_nausea_satisfaction(rct_peep * peep,
  */
 static sint16 peep_calculate_ride_satisfaction(rct_peep *peep, rct_ride *ride)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     sint16 satisfaction = peep_calculate_ride_value_satisfaction(peep, ride);
     satisfaction += peep_calculate_ride_intensity_nausea_satisfaction(peep, ride);
 
@@ -10816,6 +10950,8 @@ static sint16 peep_calculate_ride_satisfaction(rct_peep *peep, rct_ride *ride)
  */
 static void peep_update_ride_nausea_growth(rct_peep *peep, rct_ride *ride)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     uint32 nauseaMultiplier = clamp(64, 256 - peep->happiness_growth_rate, 200);
     uint32 nauseaGrowthRateChange = (ride->nausea * nauseaMultiplier) / 512;
     nauseaGrowthRateChange *= max(128, peep->hunger) / 64;
@@ -10825,6 +10961,8 @@ static void peep_update_ride_nausea_growth(rct_peep *peep, rct_ride *ride)
 
 static bool peep_should_go_on_ride_again(rct_peep *peep, rct_ride *ride)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (!ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_PEEP_WILL_RIDE_AGAIN)) return false;
     if (!ride_has_ratings(ride)) return false;
     if (ride->intensity > RIDE_RATING(10,00) && !gCheatsIgnoreRideIntensity) return false;
@@ -10846,6 +10984,8 @@ static bool peep_should_go_on_ride_again(rct_peep *peep, rct_ride *ride)
 
 static bool peep_should_preferred_intensity_increase(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (gParkFlags & PARK_FLAGS_PREF_LESS_INTENSE_RIDES) return false;
     if (peep->happiness < 200) return false;
 
@@ -10854,6 +10994,8 @@ static bool peep_should_preferred_intensity_increase(rct_peep *peep)
 
 static bool peep_really_liked_ride(rct_peep *peep, rct_ride *ride)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (peep->happiness < 215) return false;
     if (peep->nausea > 120) return false;
     if (!ride_has_ratings(ride)) return false;
@@ -10867,6 +11009,8 @@ static bool peep_really_liked_ride(rct_peep *peep, rct_ride *ride)
  */
 static void peep_on_exit_ride(rct_peep *peep, sint32 rideIndex)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     rct_ride *ride = get_ride(rideIndex);
 
     if (peep->peep_flags & PEEP_FLAGS_RIDE_SHOULD_BE_MARKED_AS_FAVOURITE) {
@@ -10919,6 +11063,8 @@ static void peep_on_exit_ride(rct_peep *peep, sint32 rideIndex)
  */
 static void peep_on_enter_or_exit_ride(rct_peep *peep, sint32 rideIndex, sint32 flags)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (flags & 1) {
         peep_on_exit_ride(peep, rideIndex);
     } else {
@@ -10941,6 +11087,8 @@ static void peep_on_enter_or_exit_ride(rct_peep *peep, sint32 rideIndex, sint32 
  */
 static bool peep_decide_and_buy_item(rct_peep *peep, sint32 rideIndex, sint32 shopItem, money32 price)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     rct_ride* ride = get_ride(rideIndex);
     money32 value;
 
@@ -11179,6 +11327,8 @@ loc_69B221:
  */
 static bool peep_should_use_cash_machine(rct_peep *peep, sint32 rideIndex)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (gParkFlags & PARK_FLAGS_NO_MONEY) return false;
     if (peep->peep_flags & PEEP_FLAGS_LEAVING_PARK) return false;
     if (peep->cash_in_pocket > MONEY(20,00)) return false;
@@ -11199,6 +11349,7 @@ static bool peep_should_use_cash_machine(rct_peep *peep, sint32 rideIndex)
  */
 void peep_reset_pathfind_goal(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
 
     #if defined(DEBUG_LEVEL_1) && DEBUG_LEVEL_1
     if (gPathFindDebug) {
@@ -11214,6 +11365,8 @@ void peep_reset_pathfind_goal(rct_peep *peep)
 
 static bool peep_has_valid_xy(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (peep->x != MAP_LOCATION_NULL) {
         if (peep->x < (256 * 32) && peep->y < (256 * 32)) {
             return true;
@@ -11254,6 +11407,8 @@ static void peep_apply_easter_egg_to_nearby_guests(rct_peep *peep, easter_egg_fu
 
 static void peep_give_passing_peeps_purple_clothes(rct_peep *peep, rct_peep *otherPeep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     otherPeep->tshirt_colour = COLOUR_BRIGHT_PURPLE;
     otherPeep->trousers_colour = COLOUR_BRIGHT_PURPLE;
     invalidate_sprite_2((rct_sprite*)otherPeep);
@@ -11261,6 +11416,8 @@ static void peep_give_passing_peeps_purple_clothes(rct_peep *peep, rct_peep *oth
 
 static void peep_give_passing_peeps_pizza(rct_peep *peep, rct_peep *otherPeep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if ((otherPeep->item_standard_flags & PEEP_ITEM_PIZZA))
         return;
 
@@ -11283,6 +11440,8 @@ static void peep_give_passing_peeps_pizza(rct_peep *peep, rct_peep *otherPeep)
 
 static void peep_make_passing_peeps_sick(rct_peep *peep, rct_peep *otherPeep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (peep == otherPeep)
         return;
     if (otherPeep->state == PEEP_STATE_QUEUING)
@@ -11299,6 +11458,8 @@ static void peep_make_passing_peeps_sick(rct_peep *peep, rct_peep *otherPeep)
 
 static void peep_give_passing_peeps_ice_cream(rct_peep *peep, rct_peep *otherPeep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (peep == otherPeep)
         return;
     if (otherPeep->item_standard_flags & PEEP_ITEM_ICE_CREAM)
@@ -11314,6 +11475,8 @@ static void peep_give_passing_peeps_ice_cream(rct_peep *peep, rct_peep *otherPee
  */
 static void peep_easter_egg_peep_interactions(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (peep->peep_flags & PEEP_FLAGS_PURPLE) {
         peep_apply_easter_egg_to_nearby_guests(peep, &peep_give_passing_peeps_purple_clothes);
     }
@@ -11349,8 +11512,9 @@ static void peep_easter_egg_peep_interactions(rct_peep *peep)
  * @return (CF)
  */
 static bool peep_should_watch_ride(rct_map_element *mapElement) {
-    rct_ride *ride = get_ride(mapElement->properties.track.ride_index);
 
+    rct_ride *ride = get_ride(mapElement->properties.track.ride_index);
+	log_msg_network("%s(%08X)\n", __FUNCTION__, ((rct_sprite*)ride)->unknown.sprite_index);
     // Ghosts are purely this-client-side and should not cause any interaction,
     // as that may lead to a desync.
     if (network_get_mode() != NETWORK_MODE_NONE) {
@@ -11401,6 +11565,8 @@ static bool peep_should_watch_ride(rct_map_element *mapElement) {
  */
 static bool peep_find_ride_to_look_at(rct_peep *peep, uint8 edge, uint8 *rideToView, uint8 *rideSeatToView)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     rct_map_element *mapElement, *surfaceElement;
 
     surfaceElement = map_get_surface_element_at(peep->next_x / 32, peep->next_y / 32);
@@ -11654,6 +11820,7 @@ static bool peep_find_ride_to_look_at(rct_peep *peep, uint8 edge, uint8 *rideToV
 }
 
 bool loc_690FD0(rct_peep *peep, uint8 *rideToView, uint8 *rideSeatToView, rct_map_element *esi) {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride *ride = get_ride(esi->properties.track.ride_index);
 
     *rideToView = esi->properties.track.ride_index;
@@ -11687,6 +11854,7 @@ bool loc_690FD0(rct_peep *peep, uint8 *rideToView, uint8 *rideSeatToView, rct_ma
  */
 static sint32 peep_get_height_on_slope(rct_peep *peep, sint32 x, sint32 y)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     if (x == MAP_LOCATION_NULL)
         return 0;
 
@@ -11709,6 +11877,7 @@ static bool peep_has_voucher_for_free_ride(rct_peep *peep, sint32 rideIndex)
 
 static void peep_reset_ride_heading(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_window *w;
 
     peep->guest_heading_to_ride_id = 255;
@@ -11727,6 +11896,7 @@ static void peep_reset_ride_heading(rct_peep *peep)
  */
 static bool peep_should_go_on_ride(rct_peep *peep, sint32 rideIndex, sint32 entranceNum, sint32 flags)
 {
+	log_msg_network("%s(%08X, %d, %d, %08X)\n", __FUNCTION__, peep->id, rideIndex, entranceNum, flags);
     rct_ride *ride = get_ride(rideIndex);
 
     // Indicates if the peep is about to enter a queue (as opposed to entering an entrance directly from a path)
@@ -11975,6 +12145,7 @@ static bool peep_should_go_on_ride(rct_peep *peep, sint32 rideIndex, sint32 entr
 
 static void peep_ride_is_too_intense(rct_peep *peep, sint32 rideIndex, bool peepAtRide)
 {
+	log_msg_network("%s(%08X, %d)\n", __FUNCTION__, peep->id, rideIndex);
     rct_ride *ride = get_ride(rideIndex);
 
     if (peepAtRide) {
@@ -11989,6 +12160,8 @@ static void peep_ride_is_too_intense(rct_peep *peep, sint32 rideIndex, bool peep
 
 static void peep_chose_not_to_go_on_ride(rct_peep *peep, sint32 rideIndex, bool peepAtRide, bool updateLastRide)
 {
+	log_msg_network("%s(%08X, %d)\n", __FUNCTION__, peep->id, rideIndex);
+
     if (peepAtRide && updateLastRide) {
         peep->previous_ride = rideIndex;
         peep->previous_ride_time_out = 0;
@@ -12006,6 +12179,8 @@ static void peep_chose_not_to_go_on_ride(rct_peep *peep, sint32 rideIndex, bool 
  */
 static void peep_tried_to_enter_full_queue(rct_peep *peep, sint32 rideIndex)
 {
+	log_msg_network("%s(%08X, %d)\n", __FUNCTION__, peep->id, rideIndex);
+
     rct_ride *ride = get_ride(rideIndex);
 
     ride->lifecycle_flags |= RIDE_LIFECYCLE_QUEUE_FULL;
@@ -12019,6 +12194,8 @@ static void peep_tried_to_enter_full_queue(rct_peep *peep, sint32 rideIndex)
 
 static bool peep_should_go_to_shop(rct_peep *peep, sint32 rideIndex, bool peepAtShop)
 {
+	log_msg_network("%s(%08X, %d)\n", __FUNCTION__, peep->id, rideIndex);
+
     rct_ride *ride = get_ride(rideIndex);
 
     // Peeps won't go to the same shop twice in a row.
@@ -12084,6 +12261,7 @@ static bool peep_should_go_to_shop(rct_peep *peep, sint32 rideIndex, bool peepAt
  */
 static void peep_pick_ride_to_go_on(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride *ride;
 
     if (peep->state != PEEP_STATE_WALKING) return;
@@ -12191,6 +12369,7 @@ static void peep_pick_ride_to_go_on(rct_peep *peep)
  */
 static void peep_head_for_nearest_ride_type(rct_peep *peep, sint32 rideType)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride *ride;
 
     if (peep->state != PEEP_STATE_SITTING && peep->state != PEEP_STATE_WATCHING && peep->state != PEEP_STATE_WALKING) {
@@ -12294,6 +12473,7 @@ static void peep_head_for_nearest_ride_type(rct_peep *peep, sint32 rideType)
  */
 static void peep_head_for_nearest_ride_with_flags(rct_peep *peep, sint32 rideTypeFlags)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
     rct_ride *ride;
 
     if (peep->state != PEEP_STATE_SITTING && peep->state != PEEP_STATE_WATCHING && peep->state != PEEP_STATE_WALKING) {
@@ -12485,6 +12665,8 @@ static sint32 peep_compare(const void *sprite_index_a, const void *sprite_index_
  */
 void peep_update_name_sort(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     // Remove peep from sprite list
     uint16 nextSpriteIndex = peep->next;
     uint16 prevSpriteIndex = peep->previous;
@@ -12612,6 +12794,8 @@ void peep_update_names(bool realNames)
 
 static void peep_read_map(rct_peep *peep)
 {
+	log_msg_network("%s(%08X)\n", __FUNCTION__, peep->id);
+
     if (peep->action == PEEP_ACTION_NONE_1 || peep->action == PEEP_ACTION_NONE_2) {
         peep->action = PEEP_ACTION_READ_MAP;
         peep->action_frame = 0;
@@ -12835,6 +13019,7 @@ void pathfind_logging_disable() {
 void peep_autoposition(rct_peep *newPeep)
 {
     // Find a location to place new staff member
+	log_msg_network("%s(%08X)\n", __FUNCTION__, newPeep->id);
 
     newPeep->state = PEEP_STATE_FALLING;
 

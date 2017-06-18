@@ -70,4 +70,7 @@ namespace Convert
 {
     uint16 HostToNetwork(uint16 value);
     uint16 NetworkToHost(uint16 value);
+
+	uint32 HostToNetwork32(uint32 value);
+	uint32 NetworkToHost32(uint32 value);
 }

@@ -58,7 +58,7 @@ sint32 NetworkConnection::ReadPacket()
         InboundPacket.BytesTransferred += readBytes;
         if (InboundPacket.BytesTransferred == sizeof(InboundPacket.Size))
         {
-            InboundPacket.Size = Convert::NetworkToHost(InboundPacket.Size);
+            InboundPacket.Size = Convert::NetworkToHost32(InboundPacket.Size);
             if (InboundPacket.Size == 0) // Can't have a size 0 packet
             {
                 return NETWORK_READPACKET_DISCONNECTED;
@@ -93,7 +93,7 @@ sint32 NetworkConnection::ReadPacket()
 
 bool NetworkConnection::SendPacket(NetworkPacket& packet)
 {
-    uint16 sizen = Convert::HostToNetwork(packet.Size);
+    uint32 sizen = Convert::HostToNetwork32(packet.Size);
     std::vector<uint8> tosend;
     tosend.reserve(sizeof(sizen) + packet.Size);
     tosend.insert(tosend.end(), (uint8*)&sizen, (uint8*)&sizen + sizeof(sizen));
@@ -117,7 +117,7 @@ void NetworkConnection::QueuePacket(std::unique_ptr<NetworkPacket> packet, bool 
 {
     if (AuthStatus == NETWORK_AUTH_OK || !packet->CommandRequiresAuth())
     {
-        packet->Size = (uint16)packet->Data->size();
+        packet->Size = (uint32)packet->Data->size();
         if (front)
         {
             // If the first packet was already partially sent add new packet to second position
