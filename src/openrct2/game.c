@@ -361,6 +361,10 @@ void game_logic_update()
     gInUpdateCode = true;
     ///////////////////////////
 
+    // Separated out processing commands in network_update which could call scenario_rand where gInUpdateCode is false.
+    // All commands that are received are first queued and then executed where gInUpdateCode is set to true.
+    network_process_game_commands();
+
     gScreenAge++;
     if (gScreenAge == 0)
         gScreenAge--;
@@ -573,7 +577,7 @@ sint32 game_do_command_p(sint32 command, sint32 *eax, sint32 *ebx, sint32 *ecx, 
 
             // Do the callback (required for multiplayer to work correctly), but only for top level commands
             if (gGameCommandNestLevel == 1) {
-                if (game_command_callback && !(flags & GAME_COMMAND_FLAG_GHOST)) 
+                if (game_command_callback && !(flags & GAME_COMMAND_FLAG_GHOST))
                 {
                     game_command_callback(*eax, *ebx, *ecx, *edx, *esi, *edi, *ebp);
                     game_command_callback = 0;
