@@ -46,6 +46,8 @@
 #include "ScenarioRepository.h"
 #include "ScenarioSources.h"
 
+#include "../neat/Neat.h"
+
 const rct_string_id ScenarioCategoryStringIds[SCENARIO_CATEGORY_COUNT] = {
     STR_BEGINNER_PARKS,
     STR_CHALLENGING_PARKS,

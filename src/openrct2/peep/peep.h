@@ -203,7 +203,8 @@ enum PEEP_STATE {
     PEEP_STATE_USING_BIN = 20,
     PEEP_STATE_WATERING = 21,
     PEEP_STATE_HEADING_TO_INSPECTION = 22,
-    PEEP_STATE_INSPECTING = 23
+    PEEP_STATE_INSPECTING = 23,
+	PEEP_STATE_MAX,
 };
 
 enum PEEP_ACTION_EVENTS {
@@ -713,6 +714,7 @@ extern rct_xyz16 gPeepPathFindGoalPosition;
 extern bool gPeepPathFindIgnoreForeignQueues;
 extern uint8 gPeepPathFindQueueRideIndex;
 
+void peep_reset_all();
 sint32 peep_get_staff_count();
 sint32 peep_can_be_picked_up(rct_peep* peep);
 void peep_update_all();

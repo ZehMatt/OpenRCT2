@@ -1422,6 +1422,7 @@ void game_init_all(sint32 mapSize)
 {
     gInUpdateCode = true;
 
+	peep_reset_all();
     map_init(mapSize);
     park_init();
     finance_init();

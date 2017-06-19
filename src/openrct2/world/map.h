@@ -138,6 +138,7 @@ enum {
     // The corrupt element type is used for skipping drawing other following
     // elements on a given tile.
     MAP_ELEMENT_TYPE_CORRUPT = (8 << 2),
+	MAP_ELEMENT_TYPE_MAX,
 };
 
 enum {
