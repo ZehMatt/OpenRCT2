@@ -593,6 +593,9 @@ void sprite_set_coordinates(sint16 x, sint16 y, sint16 z, rct_sprite *sprite){
  */
 void sprite_remove(rct_sprite *sprite)
 {
+	if (sprite->unknown.sprite_identifier == SPRITE_IDENTIFIER_NULL)
+		return;
+
     move_sprite_to_list(sprite, SPRITE_LIST_NULL * 2);
     user_string_free(sprite->unknown.name_string_idx);
     sprite->unknown.sprite_identifier = SPRITE_IDENTIFIER_NULL;

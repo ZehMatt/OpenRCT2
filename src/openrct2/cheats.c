@@ -348,7 +348,7 @@ static void cheat_give_all_guests(sint32 object)
     window_invalidate_by_class(WC_PEEP);
 }
 
-static void cheat_remove_all_guests()
+void cheat_remove_all_guests()
 {
     rct_peep *peep;
     rct_vehicle *vehicle;

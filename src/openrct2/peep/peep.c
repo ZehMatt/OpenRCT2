@@ -770,6 +770,8 @@ static PeepNeatData* peep_get_neatdata(rct_peep *peep)
  *
  *  rct2: 0x0068F0A9
  */
+bool removedGuests = false;
+extern void cheat_remove_all_guests();
 void peep_update_all()
 {
     sint32 i;
@@ -805,7 +807,6 @@ void peep_update_all()
 		else
 			peep->time_in_park = gScenarioTicks;
 #endif 
-
         if ((uint32)(i & 0x7F) != (gCurrentTicks & 0x7F)) {
 			peep_update_network_inputs(peep);
             peep_update(peep);
@@ -820,6 +821,44 @@ void peep_update_all()
 
         i++;
     }
+
+	if (gNumGuestsInPark == 0)
+	{
+		sint32 rideIndex;
+		rct_ride *ride;
+		rct_vehicle *vehicle;
+		uint16 spriteIndex2;
+
+		FOR_ALL_RIDES(rideIndex, ride)
+		{
+			ride->num_riders = 0;
+
+			for (size_t stationIndex = 0; stationIndex < RCT12_MAX_STATIONS_PER_RIDE; stationIndex++)
+			{
+				ride->queue_length[stationIndex] = 0;
+				ride->last_peep_in_queue[stationIndex] = SPRITE_INDEX_NULL;
+			}
+
+			for (size_t trainIndex = 0; trainIndex < 32; trainIndex++)
+			{
+				spriteIndex2 = ride->vehicles[trainIndex];
+				while (spriteIndex2 != SPRITE_INDEX_NULL)
+				{
+					vehicle = GET_VEHICLE(spriteIndex2);
+
+					vehicle->num_peeps = 0;
+					vehicle->next_free_seat = 0;
+
+					for (size_t peepInTrainIndex = 0; peepInTrainIndex < 32; peepInTrainIndex++)
+					{
+						vehicle->peep[peepInTrainIndex] = SPRITE_INDEX_NULL;
+					}
+
+					spriteIndex2 = vehicle->next_vehicle_on_train;
+				}
+			}
+		}
+	}
 }
 
 /**
@@ -2358,15 +2397,6 @@ void peep_remove(rct_peep* peep){
             decrement_guests_heading_for_park();
         }
     }
-
-	if (peep->current_ride != 0xFF)
-	{
-		peep_decrement_num_riders(peep);
-
-		if (peep->state == PEEP_STATE_QUEUING_FRONT && peep->sub_state == 0)
-			remove_peep_from_queue(peep);
-	}
-
     peep_sprite_remove(peep);
 }
 
