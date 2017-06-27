@@ -34,6 +34,14 @@ enum {
     NETWORK_STATUS_CONNECTED
 };
 
+enum {
+	NETWORK_COMMANDGROUP_INVALID = 0,
+	NETWORK_COMMANDGROUP_GENERAL = (1 << 1),
+	NETWORK_COMMANDGROUP_PEEPS = (1 << 2),
+	NETWORK_COMMANDGROUP_RIDES = (1 << 3),
+	NETWORK_COMMANDGROUP_ALL = (NETWORK_COMMANDGROUP_GENERAL | NETWORK_COMMANDGROUP_PEEPS | NETWORK_COMMANDGROUP_RIDES),
+};
+
 #define NETWORK_DEFAULT_PORT 11753
 #define MAX_SERVER_DESCRIPTION_LENGTH 256
 
@@ -79,7 +87,6 @@ extern "C" {
 #include "NetworkUser.h"
 #include "TcpSocket.h"
 
-
 enum {
     NETWORK_TICK_FLAG_CHECKSUMS = 1 << 0,
 };
@@ -107,8 +114,10 @@ public:
     uint32 GetServerTick();
     uint8 GetPlayerID();
     void Update();
-    void ProcessGameCommandQueue();
-    std::vector<std::unique_ptr<NetworkPlayer>>::iterator GetPlayerIteratorByID(uint8 id);
+    void ProcessGameCommandQueue(uint32 commandGroup);
+	void ClientCheckDesync();
+
+	std::vector<std::unique_ptr<NetworkPlayer>>::iterator GetPlayerIteratorByID(uint8 id);
     NetworkPlayer* GetPlayerByID(uint8 id);
     std::vector<std::unique_ptr<NetworkGroup>>::iterator GetGroupIteratorByID(uint8 id);
     NetworkGroup* GetGroupByID(uint8 id);
@@ -200,6 +209,7 @@ private:
         uint32 eax, ebx, ecx, edx, esi, edi, ebp;
         uint8 playerid;
         uint8 callback;
+		uint32 commandGroup;
         bool operator<(const GameCommand& comp) const {
             return tick < comp.tick;
         }
@@ -286,7 +296,7 @@ sint32 network_begin_server(sint32 port, const char* address);
 sint32 network_get_mode();
 sint32 network_get_status();
 void network_update();
-void network_process_game_commands();
+void network_process_game_commands(uint32 commandGroup);
 sint32 network_get_authstatus();
 uint32 network_get_server_tick();
 uint8 network_get_current_player_id();

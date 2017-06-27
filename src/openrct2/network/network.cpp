@@ -91,6 +91,83 @@ static void network_get_keys_directory(utf8 *buffer, size_t bufferSize);
 static void network_get_private_key_path(utf8 *buffer, size_t bufferSize, const utf8 * playerName);
 static void network_get_public_key_path(utf8 *buffer, size_t bufferSize, const utf8 * playerName, const utf8 * hash);
 
+const std::map<uint32, uint32> NetworkCommandGroups =
+{
+    { GAME_COMMAND_BALLOON_PRESS, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_BUY_LAND_RIGHTS, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_CHANGE_SURFACE_STYLE, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_CHEAT, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_CLEAR_SCENERY, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_CREATE_RIDE, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_DEMOLISH_RIDE, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_EDIT_LAND_SMOOTH, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_EDIT_SCENARIO_OPTIONS, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_FIRE_STAFF_MEMBER, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_HIRE_NEW_STAFF_MEMBER, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_KICK_PLAYER, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_LOAD_OR_QUIT, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_LOWER_LAND, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_LOWER_WATER, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_MODIFY_GROUPS, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_MODIFY_TILE, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_PICKUP_GUEST, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_PICKUP_STAFF, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_PLACE_BANNER, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_PLACE_LARGE_SCENERY, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_PLACE_MAZE_DESIGN, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_PLACE_PARK_ENTRANCE, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_PLACE_PATH, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_PLACE_PATH_FROM_TRACK, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_PLACE_RIDE_ENTRANCE_OR_EXIT, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_PLACE_SCENERY, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_PLACE_TRACK, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_PLACE_TRACK_DESIGN, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_PLACE_WALL, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_RAISE_LAND, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_RAISE_WATER, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_REMOVE_BANNER, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_REMOVE_LARGE_SCENERY, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_REMOVE_PARK_ENTRANCE, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_REMOVE_PATH, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_REMOVE_RIDE_ENTRANCE_OR_EXIT, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_REMOVE_SCENERY, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_REMOVE_TRACK, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_REMOVE_WALL, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_BANNER_COLOUR, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_BANNER_NAME, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_BANNER_STYLE, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_BRAKES_SPEED, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_SET_CURRENT_LOAN, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_SET_GUEST_NAME, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_SET_LAND_HEIGHT , NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_LAND_HEIGHT, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_LAND_OWNERSHIP, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_LARGE_SCENERY_COLOUR, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_MAZE_TRACK, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_SET_PARK_ENTRANCE_FEE, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_PARK_NAME, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_PARK_OPEN, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_PLAYER_GROUP, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_RESEARCH_FUNDING, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_RIDE_NAME, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_SET_RIDE_PRICE, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_SET_RIDE_SETTING, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_SET_RIDE_STATUS, NETWORK_COMMANDGROUP_RIDES },
+    { GAME_COMMAND_SET_RIDE_VEHICLES, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_SCENERY_COLOUR, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_SIGN_NAME, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_SIGN_STYLE, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_STAFF_COLOUR, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_SET_STAFF_NAME, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_SET_STAFF_ORDER, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_SET_STAFF_PATROL, NETWORK_COMMANDGROUP_PEEPS },
+    { GAME_COMMAND_SET_WALL_COLOUR, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_WATER_HEIGHT, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_START_MARKETING_CAMPAIGN, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_TOGGLE_PAUSE, NETWORK_COMMANDGROUP_GENERAL },
+    { GAME_COMMAND_SET_RIDE_APPEARANCE , NETWORK_COMMANDGROUP_RIDES },
+};
+
 Network::Network()
 {
     wsa_initialized = false;
@@ -1314,19 +1391,23 @@ void Network::ProcessPacket(NetworkConnection& connection, NetworkPacket& packet
     packet.Clear();
 }
 
-void Network::ProcessGameCommandQueue()
+void Network::ProcessGameCommandQueue(uint32 commandGroup)
 {
-    while (game_command_queue.begin() != game_command_queue.end()) {
+    for (auto it = game_command_queue.begin(); it != game_command_queue.end(); ) {
 
-        // run all the game commands at the current tick
         const GameCommand& gc = (*game_command_queue.begin());
+        if ((gc.commandGroup & commandGroup) != commandGroup)
+        {
+            it++;
+            continue;
+        }
 
         if (mode == NETWORK_MODE_CLIENT) {
 
             if (game_command_queue.begin()->tick < gCurrentTicks) {
                 // Having old command from a tick where we have not been active yet or malicious server,
                 // the command is useless so lets not keep it.
-                game_command_queue.erase(game_command_queue.begin());
+                it = game_command_queue.erase(it);
 
                 log_warning("Discarding game command from tick behind current tick, CMD: %08X, CMD Tick: %08X, Current Tick: %08X\n",
                             gc.esi,
@@ -1339,7 +1420,10 @@ void Network::ProcessGameCommandQueue()
 
             // exit the game command processing loop to still have a chance at finding desync.
             if (game_command_queue.begin()->tick != gCurrentTicks)
-                break;
+            {
+                it++;
+                continue;
+            }
         }
 
         if (GetPlayerID() == gc.playerid) {
@@ -1359,8 +1443,11 @@ void Network::ProcessGameCommandQueue()
         {
             game_commands_processed_this_tick++;
             NetworkPlayer* player = GetPlayerByID(gc.playerid);
-            if (!player)
-                return;
+            if (player == nullptr)
+            {
+                it++;
+                continue;
+            }
 
             player->LastAction = NetworkActions::FindCommand(command);
             player->LastActionTime = gc.tick;
@@ -1379,9 +1466,20 @@ void Network::ProcessGameCommandQueue()
             }
         }
 
-        game_command_queue.erase(game_command_queue.begin());
+        it = game_command_queue.erase(it);
     }
 
+    if (mode == NETWORK_MODE_SERVER)
+    {
+        for (const auto& it : client_connection_list)
+        {
+            it->SendQueuedPackets();
+        }
+    }
+}
+
+void Network::ClientCheckDesync()
+{
     // Check synchronisation
     if (mode == NETWORK_MODE_CLIENT && !_desynchronised && !CheckSRAND(gCurrentTicks, gScenarioSrand0)) {
         _desynchronised = true;
@@ -1391,14 +1489,6 @@ void Network::ProcessGameCommandQueue()
         window_network_status_open(str_desync, NULL);
         if (!gConfigNetwork.stay_connected) {
             Close();
-        }
-    }
-
-    if (mode == NETWORK_MODE_SERVER)
-    {
-        for (const auto& it : client_connection_list)
-        {
-            it->SendQueuedPackets();
         }
     }
 }
@@ -1995,6 +2085,9 @@ void Network::Client_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket
     packet >> tick >> args[0] >> args[1] >> args[2] >> args[3] >> args[4] >> args[5] >> args[6] >> playerid >> callback;
 
     GameCommand gc = GameCommand(tick, args, playerid, callback);
+
+    gc.commandGroup = NetworkCommandGroups.at(gc.esi);
+
     game_command_queue.insert(gc);
 }
 
@@ -2059,6 +2152,9 @@ void Network::Server_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket
     }
 
     GameCommand gc = GameCommand(tick, args, playerid, callback);
+
+    gc.commandGroup = NetworkCommandGroups.at(gc.esi);
+
     game_command_queue.insert(gc);
 }
 
@@ -2279,9 +2375,9 @@ void network_update()
     gNetwork.Update();
 }
 
-void network_process_game_commands()
+void network_process_game_commands(uint32 commandGroup)
 {
-    gNetwork.ProcessGameCommandQueue();
+    gNetwork.ProcessGameCommandQueue(commandGroup);
 }
 
 sint32 network_get_mode()

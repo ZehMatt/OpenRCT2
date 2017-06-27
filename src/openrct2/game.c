@@ -312,7 +312,7 @@ void game_update()
         // Special case because we set numUpdates to 0, otherwise in game_logic_update.
         network_update();
 
-        network_process_game_commands();
+        network_process_game_commands(NETWORK_COMMANDGROUP_ALL);
     }
 
     if (!gOpenRCT2Headless)
@@ -390,14 +390,11 @@ void game_logic_update()
         }
     }
 
-    // Separated out processing commands in network_update which could call scenario_rand where gInUpdateCode is false.
-    // All commands that are received are first queued and then executed where gInUpdateCode is set to true.
-    network_process_game_commands();
-
     gScreenAge++;
     if (gScreenAge == 0)
         gScreenAge--;
 
+    network_process_game_commands(NETWORK_COMMANDGROUP_GENERAL);
     sub_68B089();
     scenario_update();
     climate_update();
@@ -405,12 +402,16 @@ void game_logic_update()
     // Temporarily remove provisional paths to prevent peep from interacting with them
     map_remove_provisional_elements();
     map_update_path_wide_flags();
+    network_process_game_commands(NETWORK_COMMANDGROUP_PEEPS);
     peep_update_all();
     map_restore_provisional_elements();
     vehicle_update_all();
     sprite_misc_update_all();
+    network_process_game_commands(NETWORK_COMMANDGROUP_RIDES);
     ride_update_all();
+
     park_update();
+
     research_update();
     ride_ratings_update_all();
     ride_measurements_update();
