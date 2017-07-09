@@ -8689,7 +8689,7 @@ void fix_invalid_vehicle_sprite_sizes()
                     vehicleEntry == NULL ||
                     vehicleEntry == (rct_ride_entry_vehicle*)-1)
                 {
-                    continue;
+                    break;
                 }
 
                 if (vehicle->sprite_width == 0)
