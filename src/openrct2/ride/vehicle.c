@@ -7460,6 +7460,7 @@ loc_6DB41D:
     }
 
     trackType = mapElement->properties.track.type;
+    rideType = get_ride(mapElement->properties.track.ride_index)->type;
     if (trackType != TRACK_ELEM_BRAKES) {
         vehicle->target_seat_rotation = mapElement->properties.track.colour >> 4;
     }
@@ -7469,7 +7470,7 @@ loc_6DB41D:
     if (trackType == TRACK_ELEM_ON_RIDE_PHOTO) {
         vehicle_trigger_on_ride_photo(vehicle, mapElement);
     }
-    if (trackType == TRACK_ELEM_ROTATION_CONTROL_TOGGLE) {
+    if (trackType == TRACK_ELEM_ROTATION_CONTROL_TOGGLE && rideType == RIDE_TYPE_WILD_MOUSE) {
         vehicle->update_flags ^= VEHICLE_UPDATE_FLAG_13;
     }
     if (vehicleEntry->flags_a & VEHICLE_ENTRY_FLAG_A_8) {
