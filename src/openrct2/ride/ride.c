@@ -6381,6 +6381,18 @@ void game_command_callback_ride_construct_placed_back(sint32 eax, sint32 ebx, si
         _rideConstructionState = RIDE_CONSTRUCTION_STATE_0;
     }
 
+    if (_rideConstructionState == RIDE_CONSTRUCTION_STATE_0) 
+    {
+        rct_ride *ride = get_ride(edx & 0xFF);
+        if (ride_are_all_possible_entrances_and_exits_built(ride)) 
+        {
+            rct_window *w = window_find_by_class(WC_RIDE_CONSTRUCTION);
+            if (w != NULL) {
+                window_close(w);
+            }
+        }
+    }
+
     window_ride_construction_do_station_check();
     window_ride_construction_update_active_elements();
 }
@@ -6412,6 +6424,18 @@ void game_command_callback_ride_construct_placed_front(sint32 eax, sint32 ebx, s
     }
     else {
         _rideConstructionState = RIDE_CONSTRUCTION_STATE_0;
+    }
+
+    if (_rideConstructionState == RIDE_CONSTRUCTION_STATE_0)
+    {
+        rct_ride *ride = get_ride(edx & 0xFF);
+        if (ride_are_all_possible_entrances_and_exits_built(ride))
+        {
+            rct_window *w = window_find_by_class(WC_RIDE_CONSTRUCTION);
+            if (w != NULL) {
+                window_close(w);
+            }
+        }
     }
 
     window_ride_construction_do_station_check();

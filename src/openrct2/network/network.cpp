@@ -24,6 +24,7 @@
 extern "C" {
     #include "../platform/platform.h"
     #include "../util/sawyercoding.h"
+    #include "../diagnostic.h"
 }
 
 #include "network.h"
@@ -122,6 +123,7 @@ Network::Network()
     server_command_handlers[NETWORK_COMMAND_GAMEINFO] = &Network::Server_Handle_GAMEINFO;
     server_command_handlers[NETWORK_COMMAND_TOKEN] = &Network::Server_Handle_TOKEN;
     server_command_handlers[NETWORK_COMMAND_OBJECTS] = &Network::Server_Handle_OBJECTS;
+    _commandIndex = 0;
     OpenSSL_add_all_algorithms();
 }
 
@@ -418,9 +420,6 @@ void Network::UpdateServer()
     }
 
     uint32 ticks = platform_get_ticks();
-    if (ticks > last_tick_sent_time + 25) {
-        Server_Send_TICK();
-    }
     if (ticks > last_ping_sent_time + 3000) {
         Server_Send_PING();
         Server_Send_PINGLIST();
@@ -1107,6 +1106,7 @@ void Network::Client_Send_GAMECMD(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx
     std::unique_ptr<NetworkPacket> packet(NetworkPacket::Allocate());
     *packet << (uint32)NETWORK_COMMAND_GAMECMD << (uint32)gCurrentTicks << eax << (ebx | GAME_COMMAND_FLAG_NETWORKED)
             << ecx << edx << esi << edi << ebp << callback;
+
     server_connection->QueuePacket(std::move(packet));
 }
 
@@ -1115,7 +1115,23 @@ void Network::Server_Send_GAMECMD(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx
     std::unique_ptr<NetworkPacket> packet(NetworkPacket::Allocate());
     *packet << (uint32)NETWORK_COMMAND_GAMECMD << (uint32)gCurrentTicks << eax << (ebx | GAME_COMMAND_FLAG_NETWORKED)
             << ecx << edx << esi << edi << ebp << playerid << callback;
+
     SendPacketToClients(*packet, false, true);
+}
+
+void Network::EnqueueGameCommand(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 playerid, uint8 callback)
+{
+    uint32 args[7];
+    args[0] = eax;
+    args[1] = ebx;
+    args[2] = ecx;
+    args[3] = edx;
+    args[4] = esi;
+    args[5] = edi;
+    args[6] = ebp;
+    
+    GameCommand gc = GameCommand(gCurrentTicks, args, playerid, callback, _commandIndex++);
+    game_command_queue.insert(gc);
 }
 
 void Network::Server_Send_TICK()
@@ -1321,7 +1337,8 @@ void Network::ProcessGameCommandQueue()
         // run all the game commands at the current tick
         const GameCommand& gc = (*game_command_queue.begin());
 
-        if (mode == NETWORK_MODE_CLIENT) {
+        if (mode == NETWORK_MODE_CLIENT) 
+        {
 
             if (game_command_queue.begin()->tick < gCurrentTicks) {
                 // Having old command from a tick where we have not been active yet or malicious server,
@@ -1342,18 +1359,19 @@ void Network::ProcessGameCommandQueue()
                 break;
         }
 
-        if (GetPlayerID() == gc.playerid) {
+        if (GetPlayerID() == gc.playerid) 
+        {
             game_command_callback = game_command_callback_get_callback(gc.callback);
         }
 
         game_command_playerid = gc.playerid;
 
-        sint32 command = gc.esi;
-        sint32 flags = gc.ebx;
-        if (mode == NETWORK_MODE_SERVER)
-            flags |= GAME_COMMAND_FLAG_NETWORKED;
+        GAME_COMMAND command = (GAME_COMMAND)gc.esi;
 
-        money32 cost = game_do_command(gc.eax, flags, gc.ecx, gc.edx, gc.esi, gc.edi, gc.ebp);
+        sint32 flags = gc.ebx;
+        flags |= GAME_COMMAND_FLAG_NETWORKED;
+
+        money32 cost = game_do_command(gc.eax, flags, gc.ecx, gc.edx, gc.esi,gc.edi, gc.ebp);
 
         if (cost != MONEY32_UNDEFINED)
         {
@@ -1393,9 +1411,13 @@ void Network::ProcessGameCommandQueue()
             Close();
         }
     }
-
-    if (mode == NETWORK_MODE_SERVER)
+    else if (mode == NETWORK_MODE_SERVER)
     {
+        uint32 ticks = platform_get_ticks();
+        if (ticks > last_tick_sent_time + 25) {
+            Server_Send_TICK();
+        }
+
         for (const auto& it : client_connection_list)
         {
             it->SendQueuedPackets();
@@ -1997,7 +2019,7 @@ void Network::Client_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket
     uint8 callback;
     packet >> tick >> args[0] >> args[1] >> args[2] >> args[3] >> args[4] >> args[5] >> args[6] >> playerid >> callback;
 
-    GameCommand gc = GameCommand(tick, args, playerid, callback);
+    GameCommand gc = GameCommand(tick, args, playerid, callback, _commandIndex++);
     game_command_queue.insert(gc);
 }
 
@@ -2017,7 +2039,6 @@ void Network::Server_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket
     packet >> tick >> args[0] >> args[1] >> args[2] >> args[3] >> args[4] >> args[5] >> args[6] >> callback;
 
     sint32 commandCommand = args[4];
-
     uint32 ticks = platform_get_ticks(); //tick count is different by time last_action_time is set, keep same value.
 
     // Check if player's group permission allows command to run
@@ -2061,7 +2082,7 @@ void Network::Server_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket
         return;
     }
 
-    GameCommand gc = GameCommand(tick, args, playerid, callback);
+    GameCommand gc = GameCommand(tick, args, playerid, callback, _commandIndex++);
     game_command_queue.insert(gc);
 }
 
@@ -2819,6 +2840,11 @@ void network_send_gamecmd(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32
     }
 }
 
+void network_enqueue_game_command(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callback)
+{
+    gNetwork.EnqueueGameCommand(eax, ebx, ecx, edx, esi, edi, ebp, gNetwork.GetPlayerID(), callback);
+}
+
 void network_send_password(const char* password)
 {
     utf8 keyPath[MAX_PATH];
@@ -2933,6 +2959,7 @@ void network_set_pickup_peep(uint8 playerid, rct_peep* peep) { _pickup_peep = pe
 rct_peep* network_get_pickup_peep(uint8 playerid) { return _pickup_peep; }
 void network_set_pickup_peep_old_x(uint8 playerid, sint32 x) { _pickup_peep_old_x = x; }
 sint32 network_get_pickup_peep_old_x(uint8 playerid) { return _pickup_peep_old_x; }
+void network_enqueue_game_command(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callback) {}
 void network_send_chat(const char* text) {}
 void network_send_password(const char* password) {}
 void network_close() {}

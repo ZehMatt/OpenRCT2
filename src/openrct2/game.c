@@ -393,10 +393,6 @@ void game_logic_update()
         }
     }
 
-    // Separated out processing commands in network_update which could call scenario_rand where gInUpdateCode is false.
-    // All commands that are received are first queued and then executed where gInUpdateCode is set to true.
-    network_process_game_commands();
-
     gScreenAge++;
     if (gScreenAge == 0)
         gScreenAge--;
@@ -418,6 +414,10 @@ void game_logic_update()
     ride_ratings_update_all();
     ride_measurements_update();
     news_item_update_current();
+
+    // Separated out processing commands in network_update which could call scenario_rand where gInUpdateCode is false.
+    // All commands that are received are first queued and then executed where gInUpdateCode is set to true.
+    network_process_game_commands();
 
     map_animation_invalidate_all();
     vehicle_sounds_update();
@@ -477,7 +477,7 @@ static sint32 game_check_affordability(sint32 cost)
  */
 sint32 game_do_command(sint32 eax, sint32 ebx, sint32 ecx, sint32 edx, sint32 esi, sint32 edi, sint32 ebp)
 {
-    return game_do_command_p(esi, &eax, &ebx, &ecx, &edx, &esi, &edi, &ebp);
+    return game_do_command_p((GAME_COMMAND)esi, &eax, &ebx, &ecx, &edx, &esi, &edi, &ebp);
 }
 
 /**
@@ -487,11 +487,11 @@ sint32 game_do_command(sint32 eax, sint32 ebx, sint32 ecx, sint32 edx, sint32 es
 * @param flags (ebx)
 * @param command (esi)
 */
-sint32 game_do_command_p(sint32 command, sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *edx, sint32 *esi, sint32 *edi, sint32 *ebp)
+sint32 game_do_command_p(GAME_COMMAND command, sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *edx, sint32 *esi, sint32 *edi, sint32 *ebp)
 {
     sint32 cost, flags;
     sint32 original_ebx, original_edx, original_esi, original_edi, original_ebp;
-
+    
     *esi = command;
     original_ebx = *ebx;
     original_edx = *edx;
@@ -559,10 +559,29 @@ sint32 game_do_command_p(sint32 command, sint32 *eax, sint32 *ebx, sint32 *ecx, 
                 return cost;
             }
 
-            if (network_get_mode() != NETWORK_MODE_NONE && !(flags & GAME_COMMAND_FLAG_NETWORKED) && !(flags & GAME_COMMAND_FLAG_GHOST) && !(flags & GAME_COMMAND_FLAG_5) && gGameCommandNestLevel == 1 /* Send only top-level commands */) {
+            if (network_get_mode() != NETWORK_MODE_NONE && !(flags & GAME_COMMAND_FLAG_GHOST) && !(flags & GAME_COMMAND_FLAG_5)) {
                 if (command != GAME_COMMAND_LOAD_OR_QUIT) { // Disable these commands over the network
-                    network_send_gamecmd(*eax, *ebx, *ecx, *edx, *esi, *edi, *ebp, game_command_callback_get_index(game_command_callback));
-                    if (network_get_mode() == NETWORK_MODE_CLIENT) { // Client sent the command to the server, do not run it locally, just return.  It will run when server sends it
+
+                    sint32 callbackIndex = game_command_callback_get_index(game_command_callback);
+                    if (network_get_mode() == NETWORK_MODE_SERVER) 
+                    {
+                        if (!(flags & GAME_COMMAND_FLAG_NETWORKED))
+                        {
+                            // Queue it up, will be executed at end of tick update, network flag will be attached.
+                            network_enqueue_game_command(*eax, *ebx, *ecx, *edx, *esi, *edi, *ebp, callbackIndex);
+                        }
+                    }
+                    else
+                    {
+                        if (!(flags & GAME_COMMAND_FLAG_NETWORKED))
+                        {
+                            // As a client we send it to the server and return, we have to wait for the flag.
+                            network_send_gamecmd(*eax, *ebx, *ecx, *edx, *esi, *edi, *ebp, callbackIndex);
+                        }
+                    }
+
+                    // Don't execute commands without a round trip.
+                    if(!(flags & GAME_COMMAND_FLAG_NETWORKED)) {
                         game_command_callback = 0;
                         // Decrement nest count
                         gGameCommandNestLevel--;

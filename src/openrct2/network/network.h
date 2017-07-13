@@ -55,7 +55,7 @@ extern "C" {
 // This define specifies which version of network stream current build uses.
 // It is used for making sure only compatible builds get connected, even within
 // single OpenRCT2 version.
-#define NETWORK_STREAM_VERSION "33"
+#define NETWORK_STREAM_VERSION "34"
 #define NETWORK_STREAM_ID OPENRCT2_VERSION "-" NETWORK_STREAM_VERSION
 
 #ifdef __cplusplus
@@ -108,6 +108,7 @@ public:
     uint8 GetPlayerID();
     void Update();
     void ProcessGameCommandQueue();
+    void EnqueueGameCommand(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 playerid, uint8 callback);
     std::vector<std::unique_ptr<NetworkPlayer>>::iterator GetPlayerIteratorByID(uint8 id);
     NetworkPlayer* GetPlayerByID(uint8 id);
     std::vector<std::unique_ptr<NetworkGroup>>::iterator GetGroupIteratorByID(uint8 id);
@@ -192,16 +193,17 @@ private:
 
     struct GameCommand
     {
-        GameCommand(uint32 t, uint32* args, uint8 p, uint8 cb) {
+        GameCommand(uint32 t, uint32* args, uint8 p, uint8 cb, uint32 ci) {
             tick = t; eax = args[0]; ebx = args[1]; ecx = args[2]; edx = args[3];
-            esi = args[4]; edi = args[5]; ebp = args[6]; playerid = p; callback = cb;
+            esi = args[4]; edi = args[5]; ebp = args[6]; playerid = p; callback = cb; commandIndex = ci;
         }
         uint32 tick;
         uint32 eax, ebx, ecx, edx, esi, edi, ebp;
         uint8 playerid;
         uint8 callback;
+        uint32 commandIndex;
         bool operator<(const GameCommand& comp) const {
-            return tick < comp.tick;
+            return tick < comp.tick && commandIndex < comp.commandIndex;
         }
     };
 
@@ -221,6 +223,7 @@ private:
     uint32 server_srand0_tick = 0;
     char server_sprite_hash[EVP_MAX_MD_SIZE + 1];
     uint8 player_id = 0;
+
     std::list<std::unique_ptr<NetworkConnection>> client_connection_list;
     std::multiset<GameCommand> game_command_queue;
     std::vector<uint8> chunk_buffer;
@@ -228,6 +231,7 @@ private:
     bool _desynchronised = false;
     INetworkServerAdvertiser * _advertiser = nullptr;
     uint32 server_connect_time = 0;
+    uint8 _commandIndex = 0;
     uint8 default_group = 0;
     uint32 game_commands_processed_this_tick = 0;
     std::string _chatLogPath;
@@ -322,6 +326,7 @@ void network_set_pickup_peep(uint8 playerid, rct_peep* peep);
 rct_peep* network_get_pickup_peep(uint8 playerid);
 void network_set_pickup_peep_old_x(uint8 playerid, sint32 x);
 sint32 network_get_pickup_peep_old_x(uint8 playerid);
+void network_enqueue_game_command(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callback);
 
 void network_send_map();
 void network_send_chat(const char* text);

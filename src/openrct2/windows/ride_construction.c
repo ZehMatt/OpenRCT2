@@ -653,13 +653,7 @@ static void window_ride_construction_close(rct_window *w)
         rct_ride *ride = get_ride(rideIndex);
         // Auto open shops if required.
         if (ride->mode == RIDE_MODE_SHOP_STALL && gConfigGeneral.auto_open_shops) {
-            // HACK: Until we find a good a way to defer the game command for opening the shop, stop this
-            //       from getting stuck in an infinite loop as opening the ride will try to close this window
-            if (!_autoOpeningShop) {
-                _autoOpeningShop = true;
-                ride_set_status(rideIndex, RIDE_STATUS_OPEN);
-                _autoOpeningShop = false;
-            }
+            ride_set_status(rideIndex, RIDE_STATUS_OPEN);
         }
 
         ride_set_to_default_inspection_interval(rideIndex);
@@ -1661,7 +1655,7 @@ static void window_ride_construction_construct(rct_window *w)
     }
 
     // If client, then we can't update 'next piece selection' code until server sends back command
-    if (network_get_mode() == NETWORK_MODE_CLIENT) {
+    if (network_get_mode() != NETWORK_MODE_NONE) {
         if (_rideConstructionState == RIDE_CONSTRUCTION_STATE_BACK) {
             game_command_callback = game_command_callback_ride_construct_placed_back;
         } else if (_rideConstructionState == RIDE_CONSTRUCTION_STATE_FRONT) {
@@ -4015,7 +4009,7 @@ void ride_construction_tooldown_construct(sint32 screenX, sint32 screenY)
                 if (w != NULL) {
                     if (ride_are_all_possible_entrances_and_exits_built(ride)) {
                         // Clients don't necessarily have any ride built at this point
-                        if (network_get_mode() != NETWORK_MODE_CLIENT) {
+                        if (network_get_mode() == NETWORK_MODE_NONE) {
                             window_close(w);
                         }
                     } else {
