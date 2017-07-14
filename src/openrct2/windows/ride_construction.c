@@ -650,12 +650,6 @@ static void window_ride_construction_close(rct_window *w)
 
     uint8 rideIndex = _currentRideIndex;
     if (ride_try_get_origin_element(rideIndex, NULL)) {
-        rct_ride *ride = get_ride(rideIndex);
-        // Auto open shops if required.
-        if (ride->mode == RIDE_MODE_SHOP_STALL && gConfigGeneral.auto_open_shops) {
-            ride_set_status(rideIndex, RIDE_STATUS_OPEN);
-        }
-
         ride_set_to_default_inspection_interval(rideIndex);
 
         window_ride_main_open(rideIndex);

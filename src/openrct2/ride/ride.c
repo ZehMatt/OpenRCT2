@@ -6383,7 +6383,8 @@ void game_command_callback_ride_construct_placed_back(sint32 eax, sint32 ebx, si
 
     if (_rideConstructionState == RIDE_CONSTRUCTION_STATE_0) 
     {
-        rct_ride *ride = get_ride(edx & 0xFF);
+        sint32 rideIndex = edx & 0xFF;
+        rct_ride *ride = get_ride(rideIndex);
         if (ride_are_all_possible_entrances_and_exits_built(ride)) 
         {
             rct_window *w = window_find_by_class(WC_RIDE_CONSTRUCTION);
@@ -6391,7 +6392,13 @@ void game_command_callback_ride_construct_placed_back(sint32 eax, sint32 ebx, si
                 window_close(w);
             }
         }
+
+        // Auto open shops if required.
+        if (ride->mode == RIDE_MODE_SHOP_STALL && gConfigGeneral.auto_open_shops) {
+            ride_set_status(rideIndex, RIDE_STATUS_OPEN);
+        }
     }
+
 
     window_ride_construction_do_station_check();
     window_ride_construction_update_active_elements();
@@ -6428,13 +6435,19 @@ void game_command_callback_ride_construct_placed_front(sint32 eax, sint32 ebx, s
 
     if (_rideConstructionState == RIDE_CONSTRUCTION_STATE_0)
     {
-        rct_ride *ride = get_ride(edx & 0xFF);
+        sint32 rideIndex = edx & 0xFF;
+        rct_ride *ride = get_ride(rideIndex);
         if (ride_are_all_possible_entrances_and_exits_built(ride))
         {
             rct_window *w = window_find_by_class(WC_RIDE_CONSTRUCTION);
             if (w != NULL) {
                 window_close(w);
             }
+        }
+
+        // Auto open shops if required.
+        if (ride->mode == RIDE_MODE_SHOP_STALL && gConfigGeneral.auto_open_shops) {
+            ride_set_status(rideIndex, RIDE_STATUS_OPEN);
         }
     }
 
