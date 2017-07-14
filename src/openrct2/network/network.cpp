@@ -1128,7 +1128,7 @@ void Network::Client_Send_GAME_ACTION(const IGameAction *action, uint32 flags = 
 	MemoryStream stream;
 	action->Serialise(&stream);
 	packet->Write((uint8*)stream.GetData(), stream.GetLength());
-	server_connection.QueuePacket(std::move(packet));
+	server_connection->QueuePacket(std::move(packet));
 }
 
 void Network::Server_Send_GAME_ACTION(const IGameAction *action, uint32 flags = 0)
@@ -1365,43 +1365,64 @@ void Network::ProcessGameCommandQueue()
                 break;
         }
 
-        if (GetPlayerID() == gc.playerid) {
-            game_command_callback = game_command_callback_get_callback(gc.callback);
-        }
-
-        game_command_playerid = gc.playerid;
-
-        sint32 command = gc.esi;
-        sint32 flags = gc.ebx;
-        if (mode == NETWORK_MODE_SERVER)
-            flags |= GAME_COMMAND_FLAG_NETWORKED;
-
-        money32 cost = game_do_command(gc.eax, flags, gc.ecx, gc.edx, gc.esi, gc.edi, gc.ebp);
-
-        if (cost != MONEY32_UNDEFINED)
+        if (gc.actionType != UINT32_MAX) 
         {
-            game_commands_processed_this_tick++;
-            NetworkPlayer* player = GetPlayerByID(gc.playerid);
-            if (!player)
-                return;
-
-            player->LastAction = NetworkActions::FindCommand(command);
-            player->LastActionTime = platform_get_ticks();
-            player->AddMoneySpent(cost);
-
-            if (mode == NETWORK_MODE_SERVER) {
-
-                if (command == GAME_COMMAND_PLACE_SCENERY) {
-                    player->LastPlaceSceneryTime = player->LastActionTime;
+            IGameAction * action = GameActions::Create(gc.actionType);
+            uint32 flags = gc.parameters->ReadValue<uint32>();
+            action->Deserialise(gc.parameters);
+            GameActionResult result = GameActions::Execute(action, flags | GAME_COMMAND_FLAG_NETWORKED);
+            if (result.Error != GA_ERROR::OK)
+            {
+                game_commands_processed_this_tick++;
+                NetworkPlayer* player = GetPlayerByID(gc.playerid);
+                if (player) {
+                    player->LastAction = NetworkActions::FindCommand(gc.actionType);
+                    player->LastActionTime = platform_get_ticks();
+                    player->AddMoneySpent(result.Cost);
                 }
-                else if (command == GAME_COMMAND_DEMOLISH_RIDE) {
-                    player->LastDemolishRideTime = player->LastActionTime;
-                }
-
-                Server_Send_GAMECMD(gc.eax, gc.ebx, gc.ecx, gc.edx, gc.esi, gc.edi, gc.ebp, gc.playerid, gc.callback);
             }
         }
+        else
+        {
+            // Backwards compatibility for now.
+            if (GetPlayerID() == gc.playerid) {
+                game_command_callback = game_command_callback_get_callback(gc.callback);
+            }
 
+            game_command_playerid = gc.playerid;
+
+            sint32 command = gc.esi;
+            sint32 flags = gc.ebx;
+            if (mode == NETWORK_MODE_SERVER)
+                flags |= GAME_COMMAND_FLAG_NETWORKED;
+
+            money32 cost = game_do_command(gc.eax, flags, gc.ecx, gc.edx, gc.esi, gc.edi, gc.ebp);
+
+            if (cost != MONEY32_UNDEFINED)
+            {
+                game_commands_processed_this_tick++;
+                NetworkPlayer* player = GetPlayerByID(gc.playerid);
+                if (!player)
+                    return;
+
+                player->LastAction = NetworkActions::FindCommand(command);
+                player->LastActionTime = platform_get_ticks();
+                player->AddMoneySpent(cost);
+
+                if (mode == NETWORK_MODE_SERVER) {
+
+                    if (command == GAME_COMMAND_PLACE_SCENERY) {
+                        player->LastPlaceSceneryTime = player->LastActionTime;
+                    }
+                    else if (command == GAME_COMMAND_DEMOLISH_RIDE) {
+                        player->LastDemolishRideTime = player->LastActionTime;
+                    }
+
+                    Server_Send_GAMECMD(gc.eax, gc.ebx, gc.ecx, gc.edx, gc.esi, gc.edi, gc.ebp, gc.playerid, gc.callback);
+                }
+            }
+        }
+   
         game_command_queue.erase(game_command_queue.begin());
     }
 
@@ -2050,7 +2071,7 @@ void Network::Server_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPa
 
 	//tick count is different by time last_action_time is set, keep same value
 	// Check if player's group permission allows command to run
-	uint32 ticks = SDL_GetTicks();
+	uint32 ticks = platform_get_ticks();
 	NetworkGroup* group = GetGroupByID(connection.Player->Group);
 	if (!group || (group && !group->CanPerformCommand(commandType))) {
 		Server_Send_SHOWERROR(connection, STR_CANT_DO_THIS, STR_PERMISSION_DENIED);
@@ -2107,7 +2128,7 @@ void Network::Server_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPa
 	}
 
 	connection.Player->LastAction = NetworkActions::FindCommand(commandType);
-	connection.Player->LastActionTime = SDL_GetTicks();
+	connection.Player->LastActionTime = platform_get_ticks();
 	connection.Player->AddMoneySpent(result.Cost);
 
 	if (commandType == GAME_COMMAND_PLACE_SCENERY) {
