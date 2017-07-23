@@ -43,6 +43,7 @@ extern "C"
 
 #ifndef DISABLE_NETWORK
 sint32  gNetworkStart = NETWORK_MODE_NONE;
+bool gNetworkStartP2P = false;
 char gNetworkStartHost[128];
 sint32  gNetworkStartPort = NETWORK_DEFAULT_PORT;
 char* gNetworkStartAddress = nullptr;
@@ -92,6 +93,7 @@ static exitcode_t HandleCommandEdit(CommandLineArgEnumerator * enumerator);
 static exitcode_t HandleCommandIntro(CommandLineArgEnumerator * enumerator);
 static exitcode_t HandleCommandHost(CommandLineArgEnumerator * enumerator);
 static exitcode_t HandleCommandJoin(CommandLineArgEnumerator * enumerator);
+static exitcode_t HandleCommandJoinP2P(CommandLineArgEnumerator * enumerator);
 static exitcode_t HandleCommandSetRCT2(CommandLineArgEnumerator * enumerator);
 static exitcode_t HandleCommandScanObjects(CommandLineArgEnumerator * enumerator);
 
@@ -126,6 +128,7 @@ const CommandLineCommand CommandLine::RootCommands[]
 #ifndef DISABLE_NETWORK
     DefineCommand("host",     "<uri>",                  StandardOptions, HandleCommandHost   ),
     DefineCommand("join",     "<hostname>",             StandardOptions, HandleCommandJoin   ),
+    DefineCommand("joinp2p",     "<steamid64>",         StandardOptions, HandleCommandJoinP2P),
 #endif
     DefineCommand("set-rct2", "<path>",                 StandardOptions, HandleCommandSetRCT2),
     DefineCommand("convert",  "<source> <destination>", StandardOptions, CommandLine::HandleCommandConvert),
@@ -315,9 +318,33 @@ exitcode_t HandleCommandJoin(CommandLineArgEnumerator * enumerator)
 
     gNetworkStart = NETWORK_MODE_CLIENT;
     gNetworkStartPort = _port;
+    gNetworkStartP2P = false;
     String::Set(gNetworkStartHost, sizeof(gNetworkStartHost), hostname);
     return EXITCODE_CONTINUE;
 }
+
+exitcode_t HandleCommandJoinP2P(CommandLineArgEnumerator * enumerator)
+{
+    exitcode_t result = CommandLine::HandleCommandDefault();
+    if (result != EXITCODE_CONTINUE)
+    {
+        return result;
+    }
+
+    const char * hostname;
+    if (!enumerator->TryPopString(&hostname))
+    {
+        Console::Error::WriteLine("Expected a steamid64 to the server to connect to.");
+        return EXITCODE_FAIL;
+    }
+
+    gNetworkStart = NETWORK_MODE_CLIENT;
+    gNetworkStartPort = _port;
+    gNetworkStartP2P = true;
+    String::Set(gNetworkStartHost, sizeof(gNetworkStartHost), hostname);
+    return EXITCODE_CONTINUE;
+}
+
 
 #endif // DISABLE_NETWORK
 

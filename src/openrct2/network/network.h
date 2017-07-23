@@ -78,6 +78,7 @@ extern "C" {
 #include "NetworkServerAdvertiser.h"
 #include "NetworkUser.h"
 #include "TcpSocket.h"
+#include "../steam/SteamPlatform.h"
 
 
 enum {
@@ -99,7 +100,7 @@ public:
     void SetEnvironment(OpenRCT2::IPlatformEnvironment * env);
     bool Init();
     void Close();
-    bool BeginClient(const char* host, uint16 port);
+    bool BeginClient(const char* host, uint16 port, bool p2p);
     bool BeginServer(uint16 port, const char* address);
     sint32 GetMode();
     sint32 GetStatus();
@@ -176,9 +177,16 @@ public:
     std::string ServerProviderWebsite;
 
 private:
+    CCallback<Network, P2PSessionRequest_t> _SessionP2PRequestCb;
+    CCallback<Network, P2PSessionConnectFail_t> _SessionP2PConnectFailCb;
+
+    void OnP2PSessionRequest(P2PSessionRequest_t *pP2PSessionRequest);
+    void OnP2PSessionConnectFail(P2PSessionConnectFail_t *pP2PConnectFail);
+
     bool ProcessConnection(NetworkConnection& connection);
     void ProcessPacket(NetworkConnection& connection, NetworkPacket& packet);
     void AddClient(ITcpSocket * socket);
+    void AddClient(const CSteamID& steamid);
     void RemoveClient(std::unique_ptr<NetworkConnection>& connection);
     NetworkPlayer* AddPlayer(const utf8 *name, const std::string &keyhash);
     std::string MakePlayerNameUnique(const std::string &name);
@@ -280,7 +288,7 @@ extern "C" {
 void network_set_env(void * env);
 void network_close();
 void network_shutdown_client();
-sint32 network_begin_client(const char *host, sint32 port);
+sint32 network_begin_client(const char *host, sint32 port, bool p2p);
 sint32 network_begin_server(sint32 port, const char* address);
 
 sint32 network_get_mode();

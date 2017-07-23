@@ -30,7 +30,7 @@
 class NetworkPlayer;
 struct ObjectRepositoryItem;
 
-class NetworkConnection final
+class NetworkConnection
 {
 public:
     ITcpSocket *                                Socket          = nullptr;
@@ -43,22 +43,27 @@ public:
     std::vector<const ObjectRepositoryItem *>   RequestedObjects;
 
     NetworkConnection();
-    ~NetworkConnection();
+    virtual ~NetworkConnection();
 
-    sint32  ReadPacket();
-    void QueuePacket(std::unique_ptr<NetworkPacket> packet, bool front = false);
-    void SendQueuedPackets();
-    void ResetLastPacketTime();
-    bool ReceivedPacketRecently();
+    virtual sint32 ReadPacket();
+    virtual void QueuePacket(std::unique_ptr<NetworkPacket> packet, bool front = false);
+    virtual void SendQueuedPackets();
+    virtual void ResetLastPacketTime();
+    virtual bool ReceivedPacketRecently();
 
-    const utf8 * GetLastDisconnectReason() const;
-    void SetLastDisconnectReason(const utf8 * src);
-    void SetLastDisconnectReason(const rct_string_id string_id, void * args = nullptr);
+    virtual const utf8 * GetLastDisconnectReason() const;
+    virtual void SetLastDisconnectReason(const utf8 * src);
+    virtual void SetLastDisconnectReason(const rct_string_id string_id, void * args = nullptr);
+
+    virtual bool IsP2P() const { return false; }
+
+protected:
+    uint32                                      _lastPacketTime;
 
 private:
+    utf8 *                                      _lastDisconnectReason = nullptr;
     std::list<std::unique_ptr<NetworkPacket>>   _outboundPackets;
-    uint32                                      _lastPacketTime;
-    utf8 *                                      _lastDisconnectReason   = nullptr;
 
-    bool SendPacket(NetworkPacket &packet);
+protected:
+    virtual bool SendPacket(NetworkPacket &packet);
 };

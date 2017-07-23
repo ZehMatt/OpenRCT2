@@ -20,6 +20,7 @@
 #include "../PlatformEnvironment.h"
 #include "../ui/UiContext.h"
 #include "../ui/WindowManager.h"
+#include "../steam/core/steam_gameserver.h"
 
 extern "C" {
     #include "../platform/platform.h"
@@ -54,6 +55,8 @@ sint32 _pickup_peep_old_x = SPRITE_LOCATION_NULL;
 #include "../object/ObjectRepository.h"
 #include "../ParkImporter.h"
 #include "../rct2/S6Exporter.h"
+#include "../steam/SteamPlatform.h"
+#include "NetworkConnectionP2P.h"
 
 extern "C" {
 #include "../config/Config.h"
@@ -91,7 +94,9 @@ static void network_get_keys_directory(utf8 *buffer, size_t bufferSize);
 static void network_get_private_key_path(utf8 *buffer, size_t bufferSize, const utf8 * playerName);
 static void network_get_public_key_path(utf8 *buffer, size_t bufferSize, const utf8 * playerName, const utf8 * hash);
 
-Network::Network()
+Network::Network() :
+    _SessionP2PRequestCb(this, &Network::OnP2PSessionRequest),
+    _SessionP2PConnectFailCb(this, &Network::OnP2PSessionConnectFail)
 {
     wsa_initialized = false;
     mode = NETWORK_MODE_NONE;
@@ -143,7 +148,7 @@ bool Network::Init()
 
     status = NETWORK_STATUS_READY;
 
-    server_connection = new NetworkConnection();
+    server_connection = nullptr;
     ServerName = std::string();
     ServerDescription = std::string();
     ServerGreeting = std::string();
@@ -171,8 +176,11 @@ void Network::Close()
     }
 
     if (mode == NETWORK_MODE_CLIENT) {
-        delete server_connection->Socket;
-        server_connection->Socket = nullptr;
+        if (!server_connection->IsP2P())
+        {
+            delete server_connection->Socket;
+            server_connection->Socket = nullptr;
+        }
     } else if (mode == NETWORK_MODE_SERVER) {
         delete listening_socket;
         listening_socket = nullptr;
@@ -203,7 +211,7 @@ void Network::Close()
     _requireClose = false;
 }
 
-bool Network::BeginClient(const char* host, uint16 port)
+bool Network::BeginClient(const char* host, uint16 port, bool p2p)
 {
     if (GetMode() != NETWORK_MODE_NONE) {
         return false;
@@ -215,9 +223,36 @@ bool Network::BeginClient(const char* host, uint16 port)
 
     mode = NETWORK_MODE_CLIENT;
 
-    assert(server_connection->Socket == nullptr);
-    server_connection->Socket = CreateTcpSocket();
-    server_connection->Socket->ConnectAsync(host, port);
+    if (!p2p)
+    {
+        log_info("Connecting using IP to: %s\n", host);
+
+        server_connection = new NetworkConnection();
+        server_connection->Socket = CreateTcpSocket();
+        server_connection->Socket->ConnectAsync(host, port);
+    }
+    else
+    {
+        uint64_t steamId = atoll(host);
+
+        log_info("Connecting using P2P to: %llu\n", steamId);
+
+        NetworkConnectionP2P *connection = new NetworkConnectionP2P();
+        connection->Socket = nullptr;
+        connection->_remoteId.SetFromUint64(steamId);
+
+        uint32 initMessage = 0xDEADBEEF;
+        SteamNetworking()->SendP2PPacket(connection->_remoteId, &initMessage, sizeof(initMessage), k_EP2PSendReliable);
+
+        server_connection = connection;
+
+        char str_connecting[128];
+        format_string(str_connecting, 256, STR_MULTIPLAYER_CONNECTING, NULL);
+        window_network_status_open(str_connecting, []() -> void {
+            gNetwork.Close();
+        });
+    }
+
     status = NETWORK_STATUS_CONNECTING;
     _lastConnectStatus = SOCKET_STATUS_CLOSED;
 
@@ -351,6 +386,12 @@ bool Network::BeginServer(uint16 port, const char* address)
         _advertiser = CreateServerAdvertiser(listening_port);
     }
 
+    if (steamplatform_available())
+    {
+        CSteamID steamId = SteamUser()->GetSteamID();
+        log_info("P2P address: %llu\n", steamId.ConvertToUint64());
+    }
+
     return true;
 }
 
@@ -407,6 +448,43 @@ void Network::Update()
 
 void Network::UpdateServer()
 {
+    uint8_t buf[4048];
+    uint32 len;
+    CSteamID id;
+
+    if (steamplatform_available())
+    {
+        while (SteamNetworking()->ReadP2PPacket(buf, 4048, &len, &id))
+        {
+            log_info("Received P2P message %u bytes\n", len);
+
+            auto itr = std::find_if(client_connection_list.begin(), client_connection_list.end(), [id](const std::unique_ptr<NetworkConnection>& con)->bool
+            {
+                if (!con->IsP2P())
+                    return false;
+                NetworkConnectionP2P *con2 = static_cast<NetworkConnectionP2P*>(con.get());
+                return con2->_remoteId == id;
+            });
+            if (itr == client_connection_list.end())
+            {
+                log_info("Discarding message, no connection found for %llu\n", id.ConvertToUint64());
+                continue;
+            }
+
+            NetworkConnectionP2P *con2 = static_cast<NetworkConnectionP2P*>((*itr).get());
+            if (len == sizeof(uint32) && *((uint32*)buf) == 0xDEADBEEF && con2->_fullyConnected == false)
+            {
+                con2->_fullyConnected = true;
+                // Discard this data, client uses this message to begin the session, we send him back the same thing.
+                log_info("Client %llu fully connected\n", id.ConvertToUint64());
+            }
+            else
+            {
+                con2->AppendData(buf, len);
+            }
+        }
+    }
+
     auto it = client_connection_list.begin();
     while (it != client_connection_list.end()) {
         if (!ProcessConnection(*(*it))) {
@@ -440,86 +518,136 @@ void Network::UpdateClient()
 {
     assert(server_connection != nullptr);
 
-    switch(status){
+    switch(status)
+    {
     case NETWORK_STATUS_CONNECTING:
-    {
-        switch (server_connection->Socket->GetStatus()) {
-        case SOCKET_STATUS_RESOLVING:
         {
-            if (_lastConnectStatus != SOCKET_STATUS_RESOLVING)
+            if (server_connection->IsP2P())
             {
-                _lastConnectStatus = SOCKET_STATUS_RESOLVING;
-                char str_resolving[256];
-                format_string(str_resolving, 256, STR_MULTIPLAYER_RESOLVING, NULL);
-                window_network_status_open(str_resolving, []() -> void {
-                    gNetwork.Close();
-                });
-            }
-            break;
-        }
-        case SOCKET_STATUS_CONNECTING:
-        {
-            if (_lastConnectStatus != SOCKET_STATUS_CONNECTING)
-            {
-                _lastConnectStatus = SOCKET_STATUS_CONNECTING;
-                char str_connecting[256];
-                format_string(str_connecting, 256, STR_MULTIPLAYER_CONNECTING, NULL);
-                window_network_status_open(str_connecting, []() -> void {
-                    gNetwork.Close();
-                });
-                server_connect_time = platform_get_ticks();
-            }
-            break;
-        }
-        case SOCKET_STATUS_CONNECTED:
-        {
-            status = NETWORK_STATUS_CONNECTED;
-            server_connection->ResetLastPacketTime();
-            Client_Send_TOKEN();
-            char str_authenticating[256];
-            format_string(str_authenticating, 256, STR_MULTIPLAYER_AUTHENTICATING, NULL);
-            window_network_status_open(str_authenticating, []() -> void {
-                gNetwork.Close();
-            });
-            break;
-        }
-        default:
-        {
-            const char * error = server_connection->Socket->GetError();
-            if (error != nullptr) {
-                Console::Error::WriteLine(error);
-            }
+                uint32 len;
+                if (SteamNetworking()->IsP2PPacketAvailable(&len))
+                {
+                    status = NETWORK_STATUS_CONNECTED;
 
-            Close();
-            window_network_status_close();
-            window_error_open(STR_UNABLE_TO_CONNECT_TO_SERVER, STR_NONE);
-            break;
-        }
-        }
-        break;
-    }
-    case NETWORK_STATUS_CONNECTED:
-    {
-        if (!ProcessConnection(*server_connection)) {
-            // Do not show disconnect message window when password window closed/canceled
-            if (server_connection->AuthStatus == NETWORK_AUTH_REQUIREPASSWORD) {
-                window_network_status_close();
-            } else {
-                char str_disconnected[256];
+                    NetworkConnectionP2P *connection = static_cast<NetworkConnectionP2P*>(server_connection);
 
-                if (server_connection->GetLastDisconnectReason()) {
-                    const char * disconnect_reason = server_connection->GetLastDisconnectReason();
-                    format_string(str_disconnected, 256, STR_MULTIPLAYER_DISCONNECTED_WITH_REASON, &disconnect_reason);
-                } else {
-                    format_string(str_disconnected, 256, STR_MULTIPLAYER_DISCONNECTED_NO_REASON, NULL);
+                    connection->ResetLastPacketTime();
+                    Client_Send_TOKEN();
+                    char str_authenticating[256];
+                    format_string(str_authenticating, 256, STR_MULTIPLAYER_AUTHENTICATING, NULL);
+                    window_network_status_open(str_authenticating, []() -> void {
+                        gNetwork.Close();
+                    });
+
+                    log_info("Established P2P connection with server %llu.\n", connection->_remoteId.ConvertToUint64());
+                    connection->_fullyConnected = true;
                 }
-
-                window_network_status_open(str_disconnected, NULL);
             }
-            Close();
+            else
+            {
+                switch (server_connection->Socket->GetStatus()) 
+                {
+                case SOCKET_STATUS_RESOLVING:
+                    {
+                        if (_lastConnectStatus != SOCKET_STATUS_RESOLVING)
+                        {
+                            _lastConnectStatus = SOCKET_STATUS_RESOLVING;
+                            char str_resolving[256];
+                            format_string(str_resolving, 256, STR_MULTIPLAYER_RESOLVING, NULL);
+                            window_network_status_open(str_resolving, []() -> void {
+                                gNetwork.Close();
+                            });
+                        }
+                    }
+                    break;
+                case SOCKET_STATUS_CONNECTING:
+                    {
+                        if (_lastConnectStatus != SOCKET_STATUS_CONNECTING)
+                        {
+                            _lastConnectStatus = SOCKET_STATUS_CONNECTING;
+                            char str_connecting[256];
+                            format_string(str_connecting, 256, STR_MULTIPLAYER_CONNECTING, NULL);
+                            window_network_status_open(str_connecting, []() -> void {
+                                gNetwork.Close();
+                            });
+                            server_connect_time = platform_get_ticks();
+                        }
+                    }
+                    break;
+
+                case SOCKET_STATUS_CONNECTED:
+                    {
+                        status = NETWORK_STATUS_CONNECTED;
+                        server_connection->ResetLastPacketTime();
+                        Client_Send_TOKEN();
+                        char str_authenticating[256];
+                        format_string(str_authenticating, 256, STR_MULTIPLAYER_AUTHENTICATING, NULL);
+                        window_network_status_open(str_authenticating, []() -> void {
+                            gNetwork.Close();
+                        });
+                    }
+                    break;
+                default:
+                    {
+                        const char * error = server_connection->Socket->GetError();
+                        if (error != nullptr) {
+                            Console::Error::WriteLine(error);
+                        }
+
+                        Close();
+                        window_network_status_close();
+                        window_error_open(STR_UNABLE_TO_CONNECT_TO_SERVER, STR_NONE);
+                    }
+                    break;
+                }
+            }
         }
         break;
-    }
+    case NETWORK_STATUS_CONNECTED:
+        {
+            if (server_connection->IsP2P())
+            {
+                NetworkConnectionP2P *connection = static_cast<NetworkConnectionP2P*>(server_connection);
+
+                uint8 buf[1024];
+                uint32 len;
+                CSteamID id;
+                while (SteamNetworking()->ReadP2PPacket(&buf, 1024, &len, &id))
+                {
+                    log_info("Received P2P message %u bytes\n", len);
+
+                    if (id != connection->_remoteId)
+                    {
+                        log_info("possible flaw, server id != receive id\n");
+                    }
+                    // Ditch the entry message.
+                    if (len == 4 && *((uint32*)buf) != 0xDEADBEEF)
+                    {
+                        connection->AppendData(buf, len);
+                    }
+                }
+            }
+
+            if (!ProcessConnection(*server_connection)) {
+                // Do not show disconnect message window when password window closed/canceled
+                if (server_connection->AuthStatus == NETWORK_AUTH_REQUIREPASSWORD) {
+                    window_network_status_close();
+                } else {
+                    char str_disconnected[256];
+
+                    if (server_connection->GetLastDisconnectReason()) {
+                        const char * disconnect_reason = server_connection->GetLastDisconnectReason();
+                        format_string(str_disconnected, 256, STR_MULTIPLAYER_DISCONNECTED_WITH_REASON, &disconnect_reason);
+                    } else {
+                        format_string(str_disconnected, 256, STR_MULTIPLAYER_DISCONNECTED_NO_REASON, NULL);
+                    }
+
+                    window_network_status_open(str_disconnected, NULL);
+                }
+                Close();
+            }
+        }
+        break;
     }
 }
 
@@ -590,6 +718,12 @@ void Network::SendPacketToClients(NetworkPacket& packet, bool front, bool gameCm
             if ((*it)->Player == nullptr) {
                 continue;
             }
+        }
+        if ((*it)->IsP2P())
+        {
+            NetworkConnectionP2P *con = static_cast<NetworkConnectionP2P*>((*it).get());
+            if (!con->_fullyConnected)
+                continue;
         }
         (*it)->QueuePacket(NetworkPacket::Duplicate(packet), front);
     }
@@ -1253,9 +1387,45 @@ void Network::Server_Send_EVENT_PLAYER_DISCONNECTED(const char *playerName, cons
     SendPacketToClients(*packet);
 }
 
+void Network::OnP2PSessionRequest(P2PSessionRequest_t *pP2PSessionRequest)
+{
+    log_info("P2PSessionRequest: %llu\n", pP2PSessionRequest->m_steamIDRemote.ConvertToUint64());
+    AddClient(pP2PSessionRequest->m_steamIDRemote);
+}
+
+void Network::OnP2PSessionConnectFail(P2PSessionConnectFail_t *pP2PConnectFail)
+{
+    const char *err = "Unknown";
+    switch (pP2PConnectFail->m_eP2PSessionError)
+    {
+    case k_EP2PSessionErrorNone:
+        err = "NONE?";
+        break;
+    case k_EP2PSessionErrorNotRunningApp :			
+        err = "target is not running the same game";
+        break;
+    case k_EP2PSessionErrorNoRightsToApp:
+        err = "local user doesn't own the app that is running";
+        break;
+    case k_EP2PSessionErrorDestinationNotLoggedIn :
+        err = "target user isn't connected to Steam";
+        break;
+    case k_EP2PSessionErrorTimeout:
+        err = "target isn't responding, perhaps not calling AcceptP2PSessionWithUser()";
+        break;
+    }
+
+    log_info("P2P Error: %s\n", err);
+
+    Close();
+    window_network_status_close();
+    window_error_open(STR_UNABLE_TO_CONNECT_TO_SERVER, STR_NONE);
+}
+
 bool Network::ProcessConnection(NetworkConnection& connection)
 {
     sint32 packetStatus;
+
     do {
         packetStatus = connection.ReadPacket();
         switch(packetStatus) {
@@ -1269,7 +1439,7 @@ bool Network::ProcessConnection(NetworkConnection& connection)
         case NETWORK_READPACKET_SUCCESS:
             // done reading in packet
             ProcessPacket(connection, connection.InboundPacket);
-            if (connection.Socket == nullptr) {
+            if (connection.IsP2P() == false && connection.Socket == nullptr) {
                 return false;
             }
             break;
@@ -1413,8 +1583,29 @@ void Network::AddClient(ITcpSocket * socket)
     client_connection_list.push_back(std::move(connection));
 }
 
+void Network::AddClient(const CSteamID& steamid)
+{
+    auto connection = std::unique_ptr<NetworkConnectionP2P>(new NetworkConnectionP2P);  // change to make_unique in c++14
+    connection->Socket = nullptr;
+    connection->_remoteId = steamid;
+    connection->_fullyConnected = true;
+
+    char addr[128];
+    snprintf(addr, sizeof(addr), "Client joined (P2P): %llu", steamid.ConvertToUint64());
+    AppendServerLog(addr);
+    client_connection_list.push_back(std::move(connection));
+
+    SteamNetworking()->AcceptP2PSessionWithUser(steamid);
+
+    // Tell the client hes fully connected.
+    uint32 magic = 0xDEADBEEF;
+    SteamNetworking()->SendP2PPacket(steamid, &magic, sizeof(magic), k_EP2PSendReliable);
+}
+
 void Network::RemoveClient(std::unique_ptr<NetworkConnection>& connection)
 {
+    log_info("%s\n", __FUNCTION__);
+
     NetworkPlayer* connection_player = connection->Player;
     if (connection_player) {
         char text[256];
@@ -1443,6 +1634,12 @@ void Network::RemoveClient(std::unique_ptr<NetworkConnection>& connection)
                           return player.get() == connection_player;
                       }), player_list.end());
     client_connection_list.remove(connection);
+    if (connection->IsP2P())
+    {
+        NetworkConnectionP2P *con = static_cast<NetworkConnectionP2P*>(connection.get());
+        log_info("Closing P2P session: %llu\n", con->_remoteId.ConvertToUint64());
+        SteamNetworking()->CloseP2PSessionWithUser(con->_remoteId);
+    }
     Server_Send_PLAYERLIST();
 }
 
@@ -1533,6 +1730,8 @@ std::string Network::MakePlayerNameUnique(const std::string &name)
 
 void Network::Client_Handle_TOKEN(NetworkConnection& connection, NetworkPacket& packet)
 {
+    log_info("%s\n", __FUNCTION__);
+
     utf8 keyPath[MAX_PATH];
     network_get_private_key_path(keyPath, sizeof(keyPath), gConfigNetwork.player_name);
     if (!platform_file_exists(keyPath)) {
@@ -1580,6 +1779,8 @@ void Network::Client_Handle_TOKEN(NetworkConnection& connection, NetworkPacket& 
 
 void Network::Client_Handle_AUTH(NetworkConnection& connection, NetworkPacket& packet)
 {
+    log_info("%s\n", __FUNCTION__);
+
     uint32 auth_status;
     packet >> auth_status >> (uint8&)player_id;
     connection.AuthStatus = (NETWORK_AUTH)auth_status;
@@ -1645,6 +1846,8 @@ void Network::Server_Client_Joined(const char* name, const std::string &keyhash,
 
 void Network::Server_Handle_TOKEN(NetworkConnection& connection, NetworkPacket& packet)
 {
+    log_info("%s\n", __FUNCTION__);
+
     uint8 token_size = 10 + (rand() & 0x7f);
     connection.Challenge.resize(token_size);
     for (sint32 i = 0; i < token_size; i++) {
@@ -2269,9 +2472,9 @@ void network_shutdown_client()
     gNetwork.ShutdownClient();
 }
 
-sint32 network_begin_client(const char *host, sint32 port)
+sint32 network_begin_client(const char *host, sint32 port, bool p2p)
 {
-    return gNetwork.BeginClient(host, port);
+    return gNetwork.BeginClient(host, port, p2p);
 }
 
 sint32 network_begin_server(sint32 port, const char* address)

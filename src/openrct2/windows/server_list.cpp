@@ -649,7 +649,7 @@ static void join_server(char *address)
         addresscopied = true;
     }
 
-    if (!network_begin_client(address, port)) {
+    if (!network_begin_client(address, port, false)) {
         window_error_open(STR_UNABLE_TO_CONNECT_TO_SERVER, STR_NONE);
     }
 

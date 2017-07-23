@@ -42,6 +42,7 @@
 #include "title/TitleScreen.h"
 #include "title/TitleSequenceManager.h"
 #include "ui/WindowManager.h"
+#include "steam/SteamPlatform.h"
 #include "Version.h"
 
 extern "C"
@@ -129,6 +130,7 @@ namespace OpenRCT2
             EVP_MD_CTX_destroy(gHashCTX);
 #endif // DISABLE_NETWORK
             rct2_interop_dispose();
+            steamplatform_shutdown();
 
             delete _titleScreen;
 
@@ -181,6 +183,8 @@ namespace OpenRCT2
 #endif // DISABLE_NETWORK
 
             crash_init();
+
+            steamplatform_init();
 
             if (!rct2_interop_setup_segment())
             {
@@ -404,7 +408,7 @@ namespace OpenRCT2
                 {
                     gNetworkStartPort = gConfigNetwork.default_port;
                 }
-                network_begin_client(gNetworkStartHost, gNetworkStartPort);
+                network_begin_client(gNetworkStartHost, gNetworkStartPort, gNetworkStartP2P);
             }
 #endif // DISABLE_NETWORK
 
@@ -449,6 +453,12 @@ namespace OpenRCT2
                 {
                     RunFixedFrame();
                 }
+
+                if (steamplatform_available())
+                {
+                    steamplatform_update();
+                }
+
             } while (!_finished);
             log_verbose("finish openrct2 loop");
         }

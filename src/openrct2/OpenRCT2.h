@@ -62,6 +62,7 @@ extern "C"
 
 #ifndef DISABLE_NETWORK
     extern sint32 gNetworkStart;
+    extern bool gNetworkStartP2P;
     extern char gNetworkStartHost[128];
     extern sint32 gNetworkStartPort;
     extern char* gNetworkStartAddress;
