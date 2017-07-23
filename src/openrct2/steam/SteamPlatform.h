@@ -8,6 +8,8 @@ class SteamPlatform
 {
 private:
     bool _steamAvailable = false;
+    bool _gameServer = false;
+    void *_steamApiMod = nullptr;
 
 public:
     SteamPlatform();
@@ -16,6 +18,13 @@ public:
     void Shutdown();
     void Update();
     bool IsAvailable() const;
+
+    bool InitializeServer(const char *host, uint16 port);
+
+    ISteamUser* User() const;
+    ISteamNetworking* Networking() const;
+
+    CSteamID SteamID() const;
 };
 
 extern SteamPlatform *gSteamPlatform;

@@ -128,7 +128,7 @@ bool NetworkConnectionP2P::SendPacket(NetworkPacket& packet)
     const void * buffer = &tosend[packet.BytesTransferred];
     size_t bufferSize = tosend.size() - packet.BytesTransferred;
 
-    bool sent = SteamNetworking()->SendP2PPacket(_remoteId, buffer, (uint32)bufferSize, k_EP2PSendReliable);
+    bool sent = gSteamPlatform->Networking()->SendP2PPacket(_remoteId, buffer, (uint32)bufferSize, k_EP2PSendReliable);
 
     if (sent)
     {

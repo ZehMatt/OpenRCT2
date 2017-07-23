@@ -179,6 +179,9 @@ public:
 private:
     CCallback<Network, P2PSessionRequest_t> _SessionP2PRequestCb;
     CCallback<Network, P2PSessionConnectFail_t> _SessionP2PConnectFailCb;
+    // GameServer
+    CCallback<Network, P2PSessionRequest_t, true> _SessionP2PRequestCb2;
+    CCallback<Network, P2PSessionConnectFail_t, true> _SessionP2PConnectFailCb2;
 
     void OnP2PSessionRequest(P2PSessionRequest_t *pP2PSessionRequest);
     void OnP2PSessionConnectFail(P2PSessionConnectFail_t *pP2PConnectFail);
@@ -188,7 +191,14 @@ private:
     void AddClient(ITcpSocket * socket);
     void AddClient(const CSteamID& steamid);
     void RemoveClient(std::unique_ptr<NetworkConnection>& connection);
+
+    void RemovePlayer(NetworkConnection& connection);
+    void RemovePlayer(std::unique_ptr<NetworkConnection>& connection)
+    {
+        RemovePlayer(*connection.get());
+    }
     NetworkPlayer* AddPlayer(const utf8 *name, const std::string &keyhash);
+
     std::string MakePlayerNameUnique(const std::string &name);
     void PrintError();
     const char* GetMasterServerUrl();

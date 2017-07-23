@@ -45,6 +45,7 @@
       <TargetMachine Condition="'$(Platform)'=='Win32'">MachineX86</TargetMachine>
       <TargetMachine Condition="'$(Platform)'=='x64'">MachineX64</TargetMachine>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">steam/core/lib/win64/steam_api64.lib</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">steam/core/lib/win64/steam_api64.lib</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <!-- Files -->

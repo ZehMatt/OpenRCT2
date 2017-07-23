@@ -437,6 +437,11 @@ namespace OpenRCT2
 
             do
             {
+                if (steamplatform_available())
+                {
+                    steamplatform_update();
+                }
+
                 useVariableFrame = ShouldRunVariableFrame();
                 // Make sure we catch the state change and reset it.
                 if (variableFrame != useVariableFrame)
@@ -452,11 +457,6 @@ namespace OpenRCT2
                 else
                 {
                     RunFixedFrame();
-                }
-
-                if (steamplatform_available())
-                {
-                    steamplatform_update();
                 }
 
             } while (!_finished);
