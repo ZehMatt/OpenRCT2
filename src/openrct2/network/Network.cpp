@@ -65,6 +65,8 @@ static sint32 _pickup_peep_old_x = LOCATION_NULL;
 #include "../util/Util.h"
 #include "../Cheats.h"
 
+#include "../peep/PeepController.h"
+
 #include "NetworkAction.h"
 
 #include <openssl/evp.h> // just for OpenSSL_add_all_algorithms()
@@ -1610,7 +1612,8 @@ NetworkPlayer* Network::AddPlayer(const utf8 *name, const std::string &keyhash)
             player = std::make_unique<NetworkPlayer>();
             player->Id = newid;
             player->KeyHash = keyhash;
-            if (networkUser == nullptr) {
+            if (networkUser == nullptr)
+            {
                 player->Group = GetDefaultGroup();
                 if (!String::IsNullOrEmpty(name)) {
                     player->SetName(MakePlayerNameUnique(String::Trim(std::string(name))));
@@ -1629,6 +1632,7 @@ NetworkPlayer* Network::AddPlayer(const utf8 *name, const std::string &keyhash)
         addedplayer = player.get();
         player_list.push_back(std::move(player));
     }
+
     return addedplayer;
 
 }
@@ -1869,6 +1873,13 @@ void Network::Server_Handle_OBJECTS(NetworkConnection& connection, NetworkPacket
     gNetwork.Server_Send_EVENT_PLAYER_JOINED(player_name);
     Server_Send_GROUPLIST(connection);
     Server_Send_PLAYERLIST();
+
+#ifdef PEEP_CONTROLLER
+    if (GetMode() == NETWORK_MODE_SERVER)
+    {
+        peep_controller_add_avatar(connection.Player->Name, connection.Player->Id);
+    }
+#endif
 }
 
 void Network::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacket& packet)
@@ -2076,7 +2087,7 @@ bool Network::LoadMap(IStream * stream)
         gCheatsDisableRideValueAging = stream->ReadValue<uint8>() != 0;
         gConfigGeneral.show_real_names_of_guests = stream->ReadValue<uint8>() != 0;
         gCheatsIgnoreResearchStatus = stream->ReadValue<uint8>() != 0;
-        
+
         gLastAutoSaveUpdate = AUTOSAVE_PAUSE;
         result = true;
     }
@@ -2189,7 +2200,7 @@ void Network::Client_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPa
 
     if (player_id == action->GetPlayer())
     {
-        // Only execute callbacks that belong to us, 
+        // Only execute callbacks that belong to us,
         // clients can have identical network ids assigned.
         auto itr = _gameActionCallbacks.find(action->GetNetworkId());
         if (itr != _gameActionCallbacks.end())

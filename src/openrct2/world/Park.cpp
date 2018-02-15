@@ -31,6 +31,7 @@
 #include "../network/network.h"
 #include "../OpenRCT2.h"
 #include "../peep/Peep.h"
+#include "../peep/PeepController.h"
 #include "../peep/Staff.h"
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"
@@ -517,6 +518,13 @@ static rct_peep *park_generate_new_guest_due_to_campaign(sint32 campaign)
 
 static void park_generate_new_guests()
 {
+    bool generateGuests = true;
+#if defined(PEEP_CONTROLLER)
+    generateGuests = network_get_mode() == NETWORK_MODE_NONE;
+    //log_info("Park Generate Guests: %s", network_get_mode() == NETWORK_MODE_NONE ? "Yes" : "No");
+#endif
+    if (!generateGuests)
+        return;
     // Generate a new guest for some probability
     if ((sint32)(scenario_rand() & 0xFFFF) < _guestGenerationProbability) {
         sint32 difficultGeneration = (gParkFlags & PARK_FLAGS_DIFFICULT_GUEST_GENERATION) != 0;

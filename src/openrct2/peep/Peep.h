@@ -542,7 +542,13 @@ struct rct_peep
     uint8   photo2_ride_ref;         // 0x5C
     uint8   photo3_ride_ref;         // 0x5D
     uint8   photo4_ride_ref;         // 0x5E
+#if 1 // PEEP_CONTROLLER
+    uint32  player_controlled : 1;
+    sint32  player_id : 30;
+    uint8   pad_5F[0x05];            // 0x5F
+#else
     uint8   pad_5F[0x09];            // 0x5F
+#endif
     uint8   current_ride;            // 0x68
     uint8   current_ride_station;    // 0x69
     uint8   current_train;           // 0x6A

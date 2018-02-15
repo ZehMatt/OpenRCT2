@@ -47,6 +47,7 @@
 #include "../world/Scenery.h"
 #include "../world/SmallScenery.h"
 #include "../world/Sprite.h"
+#include "PeepController.h"
 #include "Peep.h"
 #include "Staff.h"
 #include "../windows/Intent.h"
@@ -7415,11 +7416,17 @@ static void peep_update(rct_peep * peep)
 {
     if (peep->type == PEEP_TYPE_GUEST)
     {
+#ifdef PEEP_CONTROLLER
+        if(peep->player_controlled != 1) {
+#endif
         if (peep->previous_ride != 255)
             if (++peep->previous_ride_time_out >= 720)
                 peep->previous_ride = 255;
 
         peep_update_thoughts(peep);
+#ifdef PEEP_CONTROLLER
+        }
+#endif
     }
 
     // Walking speed logic
@@ -7450,7 +7457,8 @@ static void peep_update(rct_peep * peep)
             peep_update_falling(peep);
             break;
         case PEEP_STATE_1:
-            peep_update_1(peep);
+            if(false) // PEEP_CONTROLLER
+                peep_update_1(peep);
             break;
         case PEEP_STATE_QUEUING_FRONT:
             peep_update_ride(peep);
