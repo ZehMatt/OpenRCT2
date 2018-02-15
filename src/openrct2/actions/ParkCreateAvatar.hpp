@@ -23,6 +23,7 @@
 #include "../windows/Intent.h"
 #include "../interface/Window.h"
 #include "../world/Park.h"
+#include "../peep/PeepController.h"
 #include "../network/network.h"
 
 class ParkCreateAvatarGameActionResult final : public GameActionResult
@@ -84,9 +85,7 @@ public:
 
         if (_playerId == network_get_current_player_id())
         {
-            auto intent = Intent(WC_PEEP);
-            intent.putExtra(INTENT_EXTRA_PEEP, peep);
-            context_open_intent(&intent);
+            peep_controller_set_avatar(peep);
         }
 
         return res;

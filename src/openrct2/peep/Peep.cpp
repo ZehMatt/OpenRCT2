@@ -583,6 +583,9 @@ void peep_update_all()
 
         i++;
     }
+#ifdef PEEP_CONTROLLER
+    peep_controller_update();
+#endif
 }
 
 /**
