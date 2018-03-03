@@ -24,6 +24,7 @@
 #include "RideSetName.hpp"
 #include "RideDemolishAction.hpp"
 #include "ParkCreateAvatar.hpp"
+#include "PeepMove.hpp"
 
 namespace GameActions
 {
@@ -38,5 +39,6 @@ namespace GameActions
         Register<GuestSetNameAction>();
         Register<StaffSetNameAction>();
         Register<ParkCreateAvatar>();
+        Register<PeepMoveAction>();
     }
 }

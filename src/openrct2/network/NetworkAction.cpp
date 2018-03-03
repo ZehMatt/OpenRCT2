@@ -21,6 +21,7 @@
 
 #include "../Game.h"
 #include "../localisation/StringIds.h"
+#include "../peep/PeepController.h"
 
 sint32 NetworkActions::FindCommand(sint32 command)
 {
@@ -154,7 +155,10 @@ const std::vector<NetworkAction> NetworkActions::Actions =
         {
             GAME_COMMAND_SET_GUEST_NAME,
             GAME_COMMAND_PICKUP_GUEST,
-            GAME_COMMAND_BALLOON_PRESS
+            GAME_COMMAND_BALLOON_PRESS,
+#ifdef PEEP_CONTROLLER
+            GAME_COMMAND_PEEP_MOVE,
+#endif
         }
     }, {
         STR_ACTION_STAFF, "PERMISSION_STAFF",

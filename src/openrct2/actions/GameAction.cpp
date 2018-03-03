@@ -143,6 +143,11 @@ namespace GameActions
         uint16 actionFlags = action->GetActionFlags();
         uint32 flags = action->GetFlags();
 
+        if (action->GetPlayer() == 0 && network_get_mode() == NETWORK_MODE_CLIENT)
+        {
+            const_cast<GameAction*>(action)->SetPlayer(network_get_current_player_id());
+        }
+
         GameActionResult::Ptr result = Query(action);
         if (result->Error == GA_ERROR::OK)
         {

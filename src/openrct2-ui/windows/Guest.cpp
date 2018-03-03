@@ -32,6 +32,7 @@
 #include <openrct2/util/Util.h>
 #include <openrct2/windows/Intent.h>
 #include <openrct2/world/Footpath.h>
+#include <openrct2/peep/PeepController.h>
 
 enum WINDOW_GUEST_PAGE {
     WINDOW_GUEST_OVERVIEW,
@@ -39,7 +40,10 @@ enum WINDOW_GUEST_PAGE {
     WINDOW_GUEST_RIDES,
     WINDOW_GUEST_FINANCE,
     WINDOW_GUEST_THOUGHTS,
-    WINDOW_GUEST_INVENTORY
+    WINDOW_GUEST_INVENTORY,
+#ifdef PEEP_CONTROLLER
+    WINDOW_GUEST_CONTROL,
+#endif
 };
 
 enum WINDOW_GUEST_WIDGET_IDX {
@@ -160,6 +164,26 @@ static rct_widget window_guest_inventory_widgets[] = {
     {WIDGETS_END},
 };
 
+#ifdef PEEP_CONTROLLER
+
+/*
+SPR_CONSTRUCTION_DIRECTION_NE = 5635,
+SPR_CONSTRUCTION_DIRECTION_SE = 5636,
+SPR_CONSTRUCTION_DIRECTION_SW = 5637,
+SPR_CONSTRUCTION_DIRECTION_NW = 5638,
+*/
+static rct_widget window_guest_control_widgets[] = {
+    { WWT_FRAME,    0, 0,   191, 0,  156, STR_NONE, STR_NONE },
+    { WWT_FLATBTN,  1, 167, 190, 45,  68,  SPR_CONSTRUCTION_DIRECTION_NE, STR_NONE },
+    { WWT_FLATBTN,  1, 167, 190, 69,  92,  SPR_CONSTRUCTION_DIRECTION_SE, STR_NONE },
+    { WWT_FLATBTN,  1, 167, 190, 93,  116, SPR_CONSTRUCTION_DIRECTION_SW, STR_NONE },
+    { WWT_FLATBTN,  1, 167, 190, 117, 140, SPR_CONSTRUCTION_DIRECTION_NW, STR_NONE },
+    { WIDGETS_END },
+};
+
+#endif
+
+
 // 0x981D0C
 static rct_widget *window_guest_page_widgets[] = {
     window_guest_overview_widgets,
@@ -167,7 +191,10 @@ static rct_widget *window_guest_page_widgets[] = {
     window_guest_rides_widgets,
     window_guest_finance_widgets,
     window_guest_thoughts_widgets,
-    window_guest_inventory_widgets
+    window_guest_inventory_widgets,
+#ifdef PEEP_CONTROLLER
+    window_guest_control_widgets,
+#endif
 };
 
 static void window_guest_set_page(rct_window* w, sint32 page);
