@@ -61,6 +61,35 @@ template<> struct DataSerializerTraits<int32_t> : public DataSerializerTraitsInt
 {
 };
 
+template<typename T, size_t N> struct DataSerializerTraitsIntegralArray
+{
+    static void encode(IStream* stream, const T(&val)[N])
+    {
+        for (size_t i = 0; i < N; i++)
+        {
+            T temp = ByteSwapBE(val[i]);
+            stream->Write(&temp);
+        }
+    }
+    static void decode(IStream* stream, T (&val)[N])
+    {
+        T temp;
+        for (size_t i = 0; i < N; i++)
+        {
+            stream->Read(&temp);ByteSwapBE(temp);
+            val[i] = ByteSwapBE(temp);
+        }
+    }
+};
+
+template<size_t N> struct DataSerializerTraits<int32_t[N]> : public DataSerializerTraitsIntegralArray<int32_t, N>
+{
+};
+
+template<size_t N> struct DataSerializerTraits<uint32_t[N]> : public DataSerializerTraitsIntegralArray<uint32_t, N>
+{
+};
+
 template<> struct DataSerializerTraits<std::string>
 {
     static void encode(IStream* stream, const std::string& str)

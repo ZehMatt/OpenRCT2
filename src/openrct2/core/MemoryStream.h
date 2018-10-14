@@ -34,6 +34,9 @@ private:
 public:
     MemoryStream() = default;
     MemoryStream(const MemoryStream& copy);
+    MemoryStream(MemoryStream&& copy);
+    MemoryStream& operator=(MemoryStream&& mv);
+
     explicit MemoryStream(size_t capacity);
     MemoryStream(void* data, size_t dataSize, uint8_t access = MEMORY_ACCESS::READ);
     MemoryStream(const void* data, size_t dataSize);
@@ -55,7 +58,16 @@ public:
     void Seek(int64_t offset, int32_t origin) override;
 
     void Read(void* buffer, uint64_t length) override;
+    template<typename T> void Read(T& data)
+    {
+        Read(&data, sizeof(T));
+    }
+
     void Write(const void* buffer, uint64_t length) override;
+    template<typename T> void Write(const T& data)
+    {
+        Write(&data, sizeof(T));
+    }
 
     uint64_t TryRead(void* buffer, uint64_t length) override;
 

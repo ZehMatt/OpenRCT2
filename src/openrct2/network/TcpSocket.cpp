@@ -223,6 +223,53 @@ public:
         return tcpSocket;
     }
 
+    std::unique_ptr<ITcpSocket> Accept2() override
+    {
+        if (_status != SOCKET_STATUS_LISTENING)
+        {
+            throw std::runtime_error("Socket not listening.");
+        }
+        struct sockaddr_storage client_addr
+        {
+        };
+        socklen_t client_len = sizeof(struct sockaddr_storage);
+
+        std::unique_ptr<ITcpSocket> tcpSocket = nullptr;
+        SOCKET socket = accept(_socket, (struct sockaddr*)&client_addr, &client_len);
+        if (socket == INVALID_SOCKET)
+        {
+            if (LAST_SOCKET_ERROR() != EWOULDBLOCK)
+            {
+                log_error("Failed to accept client.");
+            }
+        }
+        else
+        {
+            if (!SetNonBlocking(socket, true))
+            {
+                closesocket(socket);
+                log_error("Failed to set non-blocking mode.");
+            }
+            else
+            {
+                char hostName[NI_MAXHOST];
+                int32_t rc = getnameinfo(
+                    (struct sockaddr*)&client_addr, client_len, hostName, sizeof(hostName), nullptr, 0,
+                    NI_NUMERICHOST | NI_NUMERICSERV);
+                SetTCPNoDelay(socket, true);
+                if (rc == 0)
+                {
+                    tcpSocket = std::unique_ptr<ITcpSocket>(new TcpSocket(socket, hostName));
+                }
+                else
+                {
+                    tcpSocket = std::unique_ptr<ITcpSocket>(new TcpSocket(socket, ""));
+                }
+            }
+        }
+        return tcpSocket;
+    }
+
     void Connect(const char* address, uint16_t port) override
     {
         if (_status != SOCKET_STATUS_CLOSED)
@@ -495,6 +542,11 @@ private:
         return setsockopt(socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&enabled, sizeof(enabled)) == 0;
     }
 };
+
+std::unique_ptr<ITcpSocket> ITcpSocket::Create()
+{
+    return std::make_unique<TcpSocket>();
+}
 
 ITcpSocket* CreateTcpSocket()
 {

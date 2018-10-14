@@ -636,7 +636,7 @@ static void window_multiplayer_players_scrollpaint(rct_window* w, rct_drawpixeli
             }
             else
             {
-                if (network_get_player_flags(i) & NETWORK_PLAYER_FLAG_ISSERVER)
+                if (network_get_player_flags(i) & NETWORK_PLAYER_FLAG_HOST)
                 {
                     lineCh = utf8_write_codepoint(lineCh, FORMAT_BABYBLUE);
                 }

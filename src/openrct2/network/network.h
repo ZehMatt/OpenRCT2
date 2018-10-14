@@ -21,7 +21,8 @@ enum
 
 enum
 {
-    NETWORK_PLAYER_FLAG_ISSERVER = 1 << 0,
+    NETWORK_PLAYER_FLAG_CLIENT = 0,
+    NETWORK_PLAYER_FLAG_HOST = 1 << 0,
 };
 
 enum
@@ -40,6 +41,8 @@ enum
 #include "../common.h"
 #include "../localisation/StringIds.h"
 #include "NetworkTypes.h"
+#include "NetworkClient.h"
+#include "NetworkServer.h"
 
 struct GameAction;
 struct rct_peep;
@@ -86,30 +89,38 @@ public:
     Network();
     ~Network();
     void SetEnvironment(const std::shared_ptr<OpenRCT2::IPlatformEnvironment>& env);
+
     bool Init();
     void Close();
     bool BeginClient(const char* host, uint16_t port);
     bool BeginServer(uint16_t port, const char* address);
+
     int32_t GetMode();
     int32_t GetStatus();
     int32_t GetAuthStatus();
     uint32_t GetServerTick();
     uint8_t GetPlayerID();
+
     void Update();
     void Flush();
     void ProcessGameCommandQueue();
     void EnqueueGameAction(const GameAction* action);
+
     std::vector<std::unique_ptr<NetworkPlayer>>::iterator GetPlayerIteratorByID(uint8_t id);
     NetworkPlayer* GetPlayerByID(uint8_t id);
+
     std::vector<std::unique_ptr<NetworkGroup>>::iterator GetGroupIteratorByID(uint8_t id);
     NetworkGroup* GetGroupByID(uint8_t id);
+
     static const char* FormatChat(NetworkPlayer* fromplayer, const char* text);
+
     void SendPacketToClients(NetworkPacket& packet, bool front = false, bool gameCmd = false);
     bool CheckSRAND(uint32_t tick, uint32_t srand0);
     void CheckDesynchronizaton();
     void KickPlayer(int32_t playerId);
     void SetPassword(const char* password);
     void ShutdownClient();
+
     NetworkGroup* AddGroup();
     void RemoveGroup(uint8_t id);
     uint8_t GetDefaultGroup();
@@ -138,9 +149,11 @@ public:
     void Server_Send_CHAT(const char* text);
     void Client_Send_GAMECMD(
         uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint8_t callback);
+
     void Server_Send_GAMECMD(
         uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t ebp, uint8_t playerid,
         uint8_t callback);
+
     void Client_Send_GAME_ACTION(const GameAction* action);
     void Server_Send_GAME_ACTION(const GameAction* action);
     void Server_Send_TICK();
@@ -238,7 +251,7 @@ private:
     };
 
     int32_t mode = NETWORK_MODE_NONE;
-    int32_t status = NETWORK_STATUS_NONE;
+    //int32_t status = NETWORK_STATUS_NONE;
     bool _closeLock = false;
     bool _requireClose = false;
     bool wsa_initialized = false;
@@ -269,6 +282,7 @@ private:
     std::string _serverLogPath;
     std::string _serverLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
     std::shared_ptr<OpenRCT2::IPlatformEnvironment> _env;
+    std::unique_ptr<NetworkBase> _networkImpl;
 
     void UpdateServer();
     void UpdateClient();
