@@ -122,9 +122,24 @@ public:
         else
         {
             TileElement* tileElement = map_get_first_element_at(coords.x / 32, coords.y / 32);
-            tileElement->AsWall()->SetPrimaryColour(_mainColour);
-            tileElement->AsWall()->SetSecondaryColour(_textColour);
-            map_invalidate_tile(coords.x, coords.y, tileElement->base_height * 8, tileElement->clearance_height * 8);
+            // TODO: Validate me, took the logic from Query.
+            do
+            {
+                if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
+                    continue;
+
+                rct_scenery_entry* scenery_entry = tileElement->AsWall()->GetEntry();
+                if (scenery_entry->wall.scrolling_mode == SCROLLING_MODE_NONE)
+                    continue;
+                if (tileElement->AsWall()->GetBannerIndex() != (BannerIndex)_bannerIndex)
+                    continue;
+
+                tileElement->AsWall()->SetPrimaryColour(_mainColour);
+                tileElement->AsWall()->SetSecondaryColour(_textColour);
+                map_invalidate_tile(coords.x, coords.y, tileElement->base_height * 8, tileElement->clearance_height * 8);
+
+                break;
+            } while (!(tileElement++)->IsLastForTile());
         }
 
         auto intent = Intent(INTENT_ACTION_UPDATE_BANNER);
