@@ -40,6 +40,9 @@ static exitcode_t HandleFuzzerGA(CommandLineArgEnumerator* argEnumerator)
         return EXITCODE_FAIL;
     }
 
+    gOpenRCT2NoGraphics = true;
+    gOpenRCT2Headless = true;
+
     core_init();
 
     const char* inputPath = argv[0];
