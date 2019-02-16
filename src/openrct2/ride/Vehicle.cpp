@@ -7686,6 +7686,9 @@ static bool vehicle_update_motion_collision_detection(
         location.y += xy_offset.y;
 
         collideId = sprite_get_first_in_quadrant(location.x * 32, location.y * 32);
+        //
+        // BUG: This can end up in an infinite loop.
+        //
         for (; collideId != SPRITE_INDEX_NULL; collideId = collideVehicle->next_in_quadrant)
         {
             collideVehicle = GET_VEHICLE(collideId);
