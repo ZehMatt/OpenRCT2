@@ -51,7 +51,7 @@ public:
 
     GameActionResult::Ptr Query() const override
     {
-        if ((BannerIndex)_bannerIndex >= MAX_BANNERS || _bannerIndex < 0)
+        if (_bannerIndex >= MAX_BANNERS || _bannerIndex < 0)
         {
             log_warning("Invalid game command for setting sign style, banner id '%d' out of range", _bannerIndex);
             return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_NONE);
