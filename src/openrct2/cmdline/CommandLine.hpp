@@ -119,7 +119,7 @@ namespace CommandLine
     extern const CommandLineCommand BenchGfxCommands[];
     extern const CommandLineCommand BenchSpriteSortCommands[];
     extern const CommandLineCommand SimulateCommands[];
-
+    extern const CommandLineCommand FuzzerCommands[];
     extern const CommandLineExample RootExamples[];
 
     void PrintHelp(bool allCommands = false);
