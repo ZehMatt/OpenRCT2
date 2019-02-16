@@ -162,7 +162,7 @@ private:
                                 return MONEY32_UNDEFINED;
 
                             totalCost += res->Cost;
-                            tileEdited = executing;
+                            tileEdited = executing && res->Cost != 0;
                         }
                         break;
                     case TILE_ELEMENT_TYPE_SMALL_SCENERY:
@@ -180,7 +180,7 @@ private:
                                 return MONEY32_UNDEFINED;
 
                             totalCost += res->Cost;
-                            tileEdited = executing;
+                            tileEdited = executing && res->Cost != 0;
                         }
                         break;
                     case TILE_ELEMENT_TYPE_WALL:
@@ -197,7 +197,7 @@ private:
                                 return MONEY32_UNDEFINED;
 
                             totalCost += res->Cost;
-                            tileEdited = executing;
+                            tileEdited = executing && res->Cost != 0;
                         }
                         break;
                     case TILE_ELEMENT_TYPE_LARGE_SCENERY:
@@ -215,7 +215,7 @@ private:
                                 return MONEY32_UNDEFINED;
 
                             totalCost += res->Cost;
-                            tileEdited = executing;
+                            tileEdited = executing && res->Cost != 0;
                         }
                         break;
                 }
