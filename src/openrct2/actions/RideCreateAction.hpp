@@ -44,10 +44,10 @@ public:
 DEFINE_GAME_ACTION(RideCreateAction, GAME_COMMAND_CREATE_RIDE, RideCreateGameActionResult)
 {
 private:
-    int32_t _rideType;
-    int32_t _subType;
-    uint8_t _colour1;
-    uint8_t _colour2;
+    int32_t _rideType = RIDE_TYPE_COUNT;
+    int32_t _subType = RIDE_ENTRY_INDEX_NULL;
+    uint8_t _colour1 = 0xFF;
+    uint8_t _colour2 = 0xFF;
 
 public:
     RideCreateAction()
