@@ -25,6 +25,16 @@
 #include <sstream>
 #include <stdexcept>
 
+struct DataSerializerTraitsException
+{
+};
+
+inline void serialiser_check_stream_bounds(IStream* stream, size_t len)
+{
+    if (stream->GetPosition() + len > stream->GetLength())
+        throw DataSerializerTraitsException();
+}
+
 template<typename T> struct DataSerializerTraits
 {
     static void encode(IStream* stream, const T& v) = delete;
@@ -41,6 +51,8 @@ template<typename T> struct DataSerializerTraitsIntegral
     }
     static void decode(IStream* stream, T& val)
     {
+        serialiser_check_stream_bounds(stream, sizeof(T));
+
         T temp;
         stream->Read(&temp);
         val = ByteSwapBE(temp);
@@ -63,6 +75,8 @@ template<> struct DataSerializerTraits<bool>
     }
     static void decode(IStream* stream, bool& val)
     {
+        serialiser_check_stream_bounds(stream, sizeof(bool));
+
         stream->Read(&val);
     }
     static void log(IStream* stream, const bool& val)
@@ -117,10 +131,12 @@ template<> struct DataSerializerTraits<std::string>
     }
     static void decode(IStream* stream, std::string& res)
     {
+        serialiser_check_stream_bounds(stream, sizeof(uint16_t));
         uint16_t len;
         stream->Read(&len);
         len = ByteSwapBE(len);
 
+        serialiser_check_stream_bounds(stream, len);
         const char* str = stream->ReadArray<char>(len);
         res.assign(str, len);
 
@@ -143,6 +159,7 @@ template<> struct DataSerializerTraits<NetworkPlayerId_t>
     }
     static void decode(IStream* stream, NetworkPlayerId_t& val)
     {
+        serialiser_check_stream_bounds(stream, sizeof(uint32_t));
         uint32_t temp;
         stream->Read(&temp);
         val.id = ByteSwapBE(temp);
@@ -177,6 +194,7 @@ template<> struct DataSerializerTraits<NetworkRideId_t>
     }
     static void decode(IStream* stream, NetworkRideId_t& val)
     {
+        serialiser_check_stream_bounds(stream, sizeof(uint32_t));
         uint32_t temp;
         stream->Read(&temp);
         val.id = ByteSwapBE(temp);
@@ -242,6 +260,7 @@ template<> struct DataSerializerTraits<MemoryStream>
         uint32_t length = 0;
         s.decode(stream, length);
 
+        serialiser_check_stream_bounds(stream, length);
         std::unique_ptr<uint8_t[]> buf(new uint8_t[length]);
         stream->Read(buf.get(), length);
 
@@ -268,6 +287,7 @@ template<typename _Ty, size_t _Size> struct DataSerializerTraits<std::array<_Ty,
     }
     static void decode(IStream* stream, std::array<_Ty, _Size>& val)
     {
+        serialiser_check_stream_bounds(stream, sizeof(uint16_t));
         uint16_t len;
         stream->Read(&len);
         len = ByteSwapBE(len);
@@ -305,9 +325,13 @@ template<> struct DataSerializerTraits<MapRange>
     }
     static void decode(IStream* stream, MapRange& v)
     {
+        serialiser_check_stream_bounds(stream, sizeof(int32_t));
         auto l = ByteSwapBE(stream->ReadValue<int32_t>());
+        serialiser_check_stream_bounds(stream, sizeof(int32_t));
         auto t = ByteSwapBE(stream->ReadValue<int32_t>());
+        serialiser_check_stream_bounds(stream, sizeof(int32_t));
         auto r = ByteSwapBE(stream->ReadValue<int32_t>());
+        serialiser_check_stream_bounds(stream, sizeof(int32_t));
         auto b = ByteSwapBE(stream->ReadValue<int32_t>());
         v = MapRange(l, t, r, b);
     }
@@ -331,7 +355,9 @@ template<> struct DataSerializerTraits<CoordsXY>
     }
     static void decode(IStream* stream, CoordsXY& coords)
     {
+        serialiser_check_stream_bounds(stream, sizeof(int16_t));
         auto x = ByteSwapBE(stream->ReadValue<int16_t>());
+        serialiser_check_stream_bounds(stream, sizeof(int16_t));
         auto y = ByteSwapBE(stream->ReadValue<int16_t>());
         coords = CoordsXY(x, y);
     }

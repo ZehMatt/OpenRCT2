@@ -55,16 +55,16 @@ public:
     {
         if (!_isLogging)
         {
-            if (_isSaving)
+            try
             {
-                DataSerializerTraits<T>::encode(_activeStream, data);
+                if (_isSaving)
+                    DataSerializerTraits<T>::encode(_activeStream, data);
+                else
+                    DataSerializerTraits<T>::decode(_activeStream, const_cast<T&>(data));
             }
-            else
+            catch (DataSerializerTraitsException&)
             {
-                if (sizeof(T) + _activeStream->GetPosition() > _activeStream->GetLength())
-                    return *this;
-
-                DataSerializerTraits<T>::decode(_activeStream, const_cast<T&>(data));
+                log_error("Exception was thrown during serialisation.");
             }
         }
         else
@@ -79,16 +79,16 @@ public:
     {
         if (!_isLogging)
         {
-            if (_isSaving)
+            try
             {
-                DataSerializerTraits<DataSerialiserTag<T>>::encode(_activeStream, data);
+                if (_isSaving)
+                    DataSerializerTraits<DataSerialiserTag<T>>::encode(_activeStream, data);
+                else
+                    DataSerializerTraits<DataSerialiserTag<T>>::decode(_activeStream, data);
             }
-            else
+            catch (DataSerializerTraitsException&)
             {
-                if (sizeof(T) + _activeStream->GetPosition() > _activeStream->GetLength())
-                    return *this;
-
-                DataSerializerTraits<DataSerialiserTag<T>>::decode(_activeStream, data);
+                log_error("Exception was thrown during serialisation.");
             }
         }
         else
