@@ -682,6 +682,9 @@ void sprite_remove(rct_sprite* sprite)
     rct_sprite* quadrantSprite;
     while (*spriteIndex != SPRITE_INDEX_NULL && (quadrantSprite = get_sprite(*spriteIndex)) != sprite)
     {
+        // Recursive?
+        if (*spriteIndex == quadrantSprite->generic.next_in_quadrant)
+            break;
         spriteIndex = &quadrantSprite->generic.next_in_quadrant;
     }
     *spriteIndex = sprite->generic.next_in_quadrant;
