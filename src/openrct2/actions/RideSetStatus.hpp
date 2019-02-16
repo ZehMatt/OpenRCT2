@@ -59,6 +59,12 @@ public:
     {
         GameActionResult::Ptr res = std::make_unique<GameActionResult>();
         Ride* ride = get_ride(_rideIndex);
+        if (ride == nullptr || ride->type == RIDE_TYPE_NULL)
+        {
+            log_warning("Invalid game command for ride %u", uint32_t(_rideIndex));
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_INVALID_SELECTION_OF_OBJECTS);
+        }
+
         res->ErrorTitle = _StatusErrorTitles[_status];
         set_format_arg_on(res->ErrorMessageArgs.data(), 6, rct_string_id, ride->name);
         set_format_arg_on(res->ErrorMessageArgs.data(), 8, uint32_t, ride->name_arguments);
