@@ -1277,6 +1277,9 @@ int32_t sub_6C683D(
     uint16_t flags)
 {
     TileElement* tileElement = map_get_first_element_at(*x / 32, *y / 32);
+    if (tileElement == nullptr)
+        return 1;
+
     TileElement* successTileElement = nullptr;
 
     do
