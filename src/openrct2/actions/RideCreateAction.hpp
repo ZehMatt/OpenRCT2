@@ -82,7 +82,7 @@ public:
             return std::make_unique<RideCreateGameActionResult>(GA_ERROR::NO_FREE_ELEMENTS, STR_TOO_MANY_RIDES);
         }
 
-        if (_rideType >= RIDE_TYPE_COUNT)
+        if (_rideType >= RIDE_TYPE_COUNT || _rideType < 0)
         {
             return std::make_unique<RideCreateGameActionResult>(GA_ERROR::INVALID_PARAMETERS, STR_INVALID_RIDE_TYPE);
         }
