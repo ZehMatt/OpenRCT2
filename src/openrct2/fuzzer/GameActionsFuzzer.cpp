@@ -54,9 +54,17 @@ static void UpdateRandomInput()
     _inputStream.SetPosition(0);
     DataSerialiser ds(true, _inputStream);
 
+    // We fill the base parameters to ensure it reaches execution.
+    uint32_t networkId = 0;
+    uint32_t flags = GAME_COMMAND_FLAG_APPLY;
+    NetworkPlayerId_t playerId = 0;
+
+    ds << networkId << flags << playerId;
+
+    std::uniform_int_distribution<size_t> dist(0, std::size(_RandomSerialisers) - 1);
     for (size_t i = 0; i < 1 + (rand() % 8); i++)
     {
-        size_t idx = rand() % std::size(_RandomSerialisers);
+        size_t idx = dist(_prng);
         fnSerializeRandomData fn = _RandomSerialisers[idx];
         fn(ds, _prng);
     }
@@ -66,7 +74,7 @@ void GameActionsFuzzer::Initialize()
 {
     _fuzzerEnabled = true;
     _nextActionId = 0;
-    _prng.seed(time(nullptr));
+    _prng.seed(0); // Fixed seed for now to fix case by case.
     UpdateRandomInput();
 
     GameActions::Initialize();
