@@ -25,9 +25,13 @@
     <ProjectGuid>{7B8DB129-79EF-417E-B372-8A18E009D261}</ProjectGuid>
     <RootNamespace>openrct2-dll</RootNamespace>
     <ProjectName>openrct2-dll</ProjectName>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <Import Project="..\..\openrct2.common.props" />
   <PropertyGroup>

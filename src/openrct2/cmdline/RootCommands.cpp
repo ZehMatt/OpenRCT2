@@ -8,8 +8,11 @@
  *****************************************************************************/
 
 #include "../Context.h"
+#include "../Game.h"
+#include "../GameState.h"
 #include "../OpenRCT2.h"
 #include "../PlatformEnvironment.h"
+#include "../world/Sprite.h"
 #include "../Version.h"
 #include "../config/Config.h"
 #include "../core/Console.hpp"
@@ -23,6 +26,9 @@
 #include "../platform/Crash.h"
 #include "../platform/platform.h"
 #include "CommandLine.hpp"
+
+#include <cstdlib>
+#include <memory>
 
 #include <ctime>
 #include <iterator>
@@ -93,6 +99,7 @@ static exitcode_t HandleCommandJoin(CommandLineArgEnumerator * enumerator);
 #endif
 static exitcode_t HandleCommandSetRCT2(CommandLineArgEnumerator * enumerator);
 static exitcode_t HandleCommandScanObjects(CommandLineArgEnumerator * enumerator);
+static exitcode_t HandleSimulate(CommandLineArgEnumerator* argEnumerator);
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 
@@ -130,6 +137,7 @@ const CommandLineCommand CommandLine::RootCommands[]
     DefineCommand("convert",  "<source> <destination>", StandardOptions, CommandLine::HandleCommandConvert),
     DefineCommand("scan-objects", "<path>",             StandardOptions, HandleCommandScanObjects),
     DefineCommand("handle-uri", "openrct2://.../",      StandardOptions, CommandLine::HandleCommandUri),
+    DefineCommand("simulate", "<park> <ticks>",         StandardOptions, HandleSimulate),
 
 #if defined(_WIN32) && !defined(__MINGW32__)
     DefineCommand("register-shell", "", RegisterShellOptions, HandleCommandRegisterShell),
@@ -140,7 +148,6 @@ const CommandLineCommand CommandLine::RootCommands[]
     DefineSubCommand("sprite",          CommandLine::SpriteCommands           ),
     DefineSubCommand("benchgfx",        CommandLine::BenchGfxCommands         ),
     DefineSubCommand("benchspritesort", CommandLine::BenchSpriteSortCommands  ),
-    DefineSubCommand("simulate",        CommandLine::SimulateCommands         ),
     CommandTableEnd
 };
 
@@ -432,6 +439,73 @@ static exitcode_t HandleCommandRegisterShell([[maybe_unused]] CommandLineArgEnum
     return EXITCODE_OK;
 }
 #endif // defined(_WIN32) && !defined(__MINGW32__)
+
+exitcode_t HandleSimulate(CommandLineArgEnumerator* argEnumerator)
+{
+    exitcode_t result = CommandLine::HandleCommandDefault();
+    if (result != EXITCODE_CONTINUE)
+    {
+        return result;
+    }
+
+    const char** argv = (const char**)argEnumerator->GetArguments() + argEnumerator->GetIndex();
+    int32_t argc = argEnumerator->GetCount() - argEnumerator->GetIndex();
+
+    if (argc < 2)
+    {
+        Console::Error::WriteLine("Missing arguments <sv6-file> <ticks> [<expectedhash>].");
+        return EXITCODE_FAIL;
+    }
+
+    core_init();
+
+    const char* inputPath = argv[0];
+    uint32_t ticks = atol(argv[1]);
+    const char* expectedHash = nullptr;
+    if (argc >= 3)
+    {
+        expectedHash = argv[2];
+        Console::WriteLine("Expected Hash: %s", expectedHash);
+    }
+
+    gOpenRCT2Headless = true;
+
+#ifndef DISABLE_NETWORK
+    gNetworkStart = NETWORK_MODE_SERVER;
+#endif
+
+    std::unique_ptr<OpenRCT2::IContext> context(OpenRCT2::CreateContext());
+    if (context->Initialise())
+    {
+        if (!context->LoadParkFromFile(inputPath))
+        {
+            return EXITCODE_FAIL;
+        }
+
+        Console::WriteLine("Running %d ticks...", ticks);
+        for (uint32_t i = 0; i < ticks; i++)
+        {
+            context->GetGameState()->UpdateLogic();
+        }
+        rct_sprite_checksum checksum = sprite_checksum();
+
+        if (expectedHash != nullptr && expectedHash != checksum.ToString())
+        {
+            Console::WriteLine("Failed: %s != %s", checksum.ToString().c_str(), expectedHash);
+            return EXITCODE_FAIL;
+        }
+        else
+        {
+            Console::WriteLine("Completed: %s", checksum.ToString().c_str());
+        }
+    }
+    else
+    {
+        Console::Error::WriteLine("Context initialization failed.");
+        return EXITCODE_FAIL;
+    }
+    return EXITCODE_OK;
+}
 
 static void PrintAbout()
 {

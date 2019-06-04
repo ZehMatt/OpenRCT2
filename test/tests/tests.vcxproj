@@ -26,6 +26,7 @@
     <ProjectGuid>{62B020FA-E4FB-4C6E-B32A-DC999470F155}</ProjectGuid>
     <RootNamespace>tests</RootNamespace>
     <ProjectName>tests</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -35,6 +36,9 @@
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IncludePath>$(GtestDir);$(GtestDir)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)bin;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>D:\Code\OpenRCT2\bin</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

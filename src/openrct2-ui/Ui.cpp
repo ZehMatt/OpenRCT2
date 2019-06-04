@@ -60,6 +60,10 @@ int main(int argc, const char** argv)
             context->RunOpenRCT2(argc, argv);
         }
     }
+    else if(runGame == -1)
+    {
+        return -1;
+    }
     return gExitCode;
 }
 

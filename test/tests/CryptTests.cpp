@@ -154,6 +154,7 @@ TEST_F(CryptTests, RSA_VerifyWithPublic)
 TEST_F(CryptTests, RSAKey_GetPublic)
 {
     auto inPem = File::ReadAllText(GetTestPublicKeyPath());
+    inPem.erase(std::remove(inPem.begin(), inPem.end(), '\r'), inPem.end());
     auto publicKey = Crypt::CreateRSAKey();
     publicKey->SetPublic(inPem);
     auto outPem = publicKey->GetPublic();
