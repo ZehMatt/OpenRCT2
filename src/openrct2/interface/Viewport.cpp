@@ -524,7 +524,7 @@ static void viewport_set_underground_flag(int32_t underground, rct_window* windo
             if (bit)
                 return;
         }
-        window_invalidate(window);
+        window->Invalidate();
     }
 }
 
@@ -1087,7 +1087,7 @@ void show_gridlines()
             if (!(mainWindow->viewport->flags & VIEWPORT_FLAG_GRIDLINES))
             {
                 mainWindow->viewport->flags |= VIEWPORT_FLAG_GRIDLINES;
-                window_invalidate(mainWindow);
+                mainWindow->Invalidate();
             }
         }
     }
@@ -1109,7 +1109,7 @@ void hide_gridlines()
             if (!gConfigGeneral.always_show_gridlines)
             {
                 mainWindow->viewport->flags &= ~VIEWPORT_FLAG_GRIDLINES;
-                window_invalidate(mainWindow);
+                mainWindow->Invalidate();
             }
         }
     }
@@ -1129,7 +1129,7 @@ void show_land_rights()
             if (!(mainWindow->viewport->flags & VIEWPORT_FLAG_LAND_OWNERSHIP))
             {
                 mainWindow->viewport->flags |= VIEWPORT_FLAG_LAND_OWNERSHIP;
-                window_invalidate(mainWindow);
+                mainWindow->Invalidate();
             }
         }
     }
@@ -1151,7 +1151,7 @@ void hide_land_rights()
             if (mainWindow->viewport->flags & VIEWPORT_FLAG_LAND_OWNERSHIP)
             {
                 mainWindow->viewport->flags &= ~VIEWPORT_FLAG_LAND_OWNERSHIP;
-                window_invalidate(mainWindow);
+                mainWindow->Invalidate();
             }
         }
     }
@@ -1171,7 +1171,7 @@ void show_construction_rights()
             if (!(mainWindow->viewport->flags & VIEWPORT_FLAG_CONSTRUCTION_RIGHTS))
             {
                 mainWindow->viewport->flags |= VIEWPORT_FLAG_CONSTRUCTION_RIGHTS;
-                window_invalidate(mainWindow);
+                mainWindow->Invalidate();
             }
         }
     }
@@ -1193,7 +1193,7 @@ void hide_construction_rights()
             if (mainWindow->viewport->flags & VIEWPORT_FLAG_CONSTRUCTION_RIGHTS)
             {
                 mainWindow->viewport->flags &= ~VIEWPORT_FLAG_CONSTRUCTION_RIGHTS;
-                window_invalidate(mainWindow);
+                mainWindow->Invalidate();
             }
         }
     }
@@ -1244,7 +1244,7 @@ void viewport_set_visibility(uint8_t mode)
                 break;
         }
         if (invalidate != 0)
-            window_invalidate(window);
+            window->Invalidate();
     }
 }
 

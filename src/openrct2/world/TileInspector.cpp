@@ -15,6 +15,7 @@
 #include "../common.h"
 #include "../core/Guard.hpp"
 #include "../interface/Window.h"
+#include "../interface/Window_internal.h"
 #include "../localisation/Localisation.h"
 #include "../ride/Station.h"
 #include "../ride/Track.h"
@@ -132,7 +133,7 @@ GameActionResult::Ptr tile_inspector_insert_corrupt_at(CoordsXY loc, int16_t ele
                 windowTileInspectorSelectedIndex++;
             }
 
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -175,7 +176,7 @@ GameActionResult::Ptr tile_inspector_remove_element_at(CoordsXY loc, int16_t ele
                 windowTileInspectorSelectedIndex = -1;
             }
 
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -203,7 +204,7 @@ GameActionResult::Ptr tile_inspector_swap_elements_at(CoordsXY loc, int16_t firs
             else if (windowTileInspectorSelectedIndex == second)
                 windowTileInspectorSelectedIndex = first;
 
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -355,7 +356,7 @@ GameActionResult::Ptr tile_inspector_paste_element_at(CoordsXY loc, TileElement 
             else if (windowTileInspectorSelectedIndex >= newIndex)
                 windowTileInspectorSelectedIndex++;
 
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -412,7 +413,7 @@ GameActionResult::Ptr tile_inspector_sort_elements_at(CoordsXY loc, bool isExecu
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
             windowTileInspectorSelectedIndex = -1;
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -466,7 +467,7 @@ GameActionResult::Ptr tile_inspector_any_base_height_offset(
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -494,7 +495,7 @@ GameActionResult::Ptr tile_inspector_surface_show_park_fences(CoordsXY loc, bool
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -561,7 +562,7 @@ GameActionResult::Ptr tile_inspector_surface_toggle_corner(CoordsXY loc, int32_t
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -599,7 +600,7 @@ GameActionResult::Ptr tile_inspector_surface_toggle_diagonal(CoordsXY loc, bool 
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -623,7 +624,7 @@ GameActionResult::Ptr tile_inspector_path_set_sloped(CoordsXY loc, int32_t eleme
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -647,7 +648,7 @@ GameActionResult::Ptr tile_inspector_path_set_broken(CoordsXY loc, int32_t eleme
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -672,7 +673,7 @@ GameActionResult::Ptr tile_inspector_path_toggle_edge(CoordsXY loc, int32_t elem
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -713,7 +714,7 @@ GameActionResult::Ptr tile_inspector_entrance_make_usable(CoordsXY loc, int32_t 
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -738,7 +739,7 @@ GameActionResult::Ptr tile_inspector_wall_set_slope(CoordsXY loc, int32_t elemen
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -959,7 +960,7 @@ GameActionResult::Ptr tile_inspector_track_set_block_brake(
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 
@@ -984,7 +985,7 @@ GameActionResult::Ptr tile_inspector_track_set_indestructible(
         if (tileInspectorWindow != nullptr && (uint32_t)(loc.x / 32) == windowTileInspectorTileX
             && (uint32_t)(loc.y / 32) == windowTileInspectorTileY)
         {
-            window_invalidate(tileInspectorWindow);
+            tileInspectorWindow->Invalidate();
         }
     }
 

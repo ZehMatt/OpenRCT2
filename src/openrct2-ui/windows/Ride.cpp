@@ -1612,7 +1612,7 @@ static rct_window* window_ride_open_station(Ride* ride, int32_t stationIndex)
     w->page = WINDOW_RIDE_PAGE_MAIN;
     w->width = 316;
     w->height = 180;
-    window_invalidate(w);
+    w->Invalidate();
 
     w->widgets = window_ride_page_widgets[w->page];
     w->enabled_widgets = window_ride_page_enabled_widgets[w->page];
@@ -1698,7 +1698,7 @@ rct_window* window_ride_open_vehicle(rct_vehicle* vehicle)
     rct_window* w = window_find_by_number(WC_RIDE, ride->id);
     if (w != nullptr)
     {
-        window_invalidate(w);
+        w->Invalidate();
 
         if (input_test_flag(INPUT_FLAG_TOOL_ACTIVE) && gCurrentToolWidget.window_classification == w->classification
             && gCurrentToolWidget.window_number == w->number)
@@ -1743,7 +1743,7 @@ rct_window* window_ride_open_vehicle(rct_vehicle* vehicle)
     w->page = WINDOW_RIDE_PAGE_MAIN;
     w->width = 316;
     w->height = 180;
-    window_invalidate(w);
+    w->Invalidate();
 
     w->widgets = window_ride_page_widgets[w->page];
     w->enabled_widgets = window_ride_page_enabled_widgets[w->page];
@@ -1755,7 +1755,7 @@ rct_window* window_ride_open_vehicle(rct_vehicle* vehicle)
 
     w->ride.view = view;
     window_ride_init_viewport(w);
-    window_invalidate(w);
+    w->Invalidate();
 
     return w;
 }
@@ -1798,12 +1798,12 @@ static void window_ride_set_page(rct_window* w, int32_t page)
     w->pressed_widgets = 0;
     w->widgets = window_ride_page_widgets[page];
     window_ride_disable_tabs(w);
-    window_invalidate(w);
+    w->Invalidate();
 
     window_event_resize_call(w);
     window_event_invalidate_call(w);
     window_init_scroll_widgets(w);
-    window_invalidate(w);
+    w->Invalidate();
 
     if (listen != 0 && w->viewport != nullptr)
         w->viewport->flags |= VIEWPORT_FLAG_SOUND_ON;
@@ -1959,12 +1959,12 @@ static void window_ride_init_viewport(rct_window* w)
             focus.coordinate.z, focus.sprite.type & VIEWPORT_FOCUS_TYPE_MASK, focus.sprite.sprite_id);
 
         w->flags |= WF_NO_SCROLLING;
-        window_invalidate(w);
+        w->Invalidate();
     }
     if (w->viewport)
     {
         w->viewport->flags = viewport_flags;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
@@ -2435,7 +2435,7 @@ static void window_ride_main_dropdown(rct_window* w, rct_widgetindex widgetIndex
 
             w->ride.view = dropdownIndex;
             window_ride_init_viewport(w);
-            window_invalidate(w);
+            w->Invalidate();
             break;
         case WIDX_OPEN:
         {
@@ -3545,7 +3545,7 @@ static void window_ride_operating_update(rct_window* w)
     if (ride->window_invalidate_flags & RIDE_INVALIDATE_RIDE_OPERATING)
     {
         ride->window_invalidate_flags &= ~RIDE_INVALIDATE_RIDE_OPERATING;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
@@ -4124,7 +4124,7 @@ static void window_ride_maintenance_update(rct_window* w)
     if (ride->window_invalidate_flags & RIDE_INVALIDATE_RIDE_MAINTENANCE)
     {
         ride->window_invalidate_flags &= ~RIDE_INVALIDATE_RIDE_MAINTENANCE;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
@@ -4555,7 +4555,7 @@ static void window_ride_colour_dropdown(rct_window* w, rct_widgetindex widgetInd
     {
         case WIDX_TRACK_COLOUR_SCHEME_DROPDOWN:
             w->ride_colour = (uint16_t)dropdownIndex;
-            window_invalidate(w);
+            w->Invalidate();
             break;
         case WIDX_TRACK_MAIN_COLOUR:
         {
@@ -4616,7 +4616,7 @@ static void window_ride_colour_dropdown(rct_window* w, rct_widgetindex widgetInd
         break;
         case WIDX_VEHICLE_COLOUR_INDEX_DROPDOWN:
             w->vehicleIndex = dropdownIndex;
-            window_invalidate(w);
+            w->Invalidate();
             break;
         case WIDX_VEHICLE_MAIN_COLOUR:
         {
@@ -5813,7 +5813,7 @@ static void window_ride_set_graph(rct_window* w, int32_t type)
         w->list_information_type &= 0xFF00;
         w->list_information_type |= type;
     }
-    window_invalidate(w);
+    w->Invalidate();
 }
 
 /**
@@ -6475,7 +6475,7 @@ static void window_ride_income_update(rct_window* w)
     if (ride->window_invalidate_flags & RIDE_INVALIDATE_RIDE_INCOME)
     {
         ride->window_invalidate_flags &= ~RIDE_INVALIDATE_RIDE_INCOME;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
@@ -6776,7 +6776,7 @@ static void window_ride_customer_update(rct_window* w)
     if (ride->window_invalidate_flags & RIDE_INVALIDATE_RIDE_CUSTOMER)
     {
         ride->window_invalidate_flags &= ~RIDE_INVALIDATE_RIDE_CUSTOMER;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 

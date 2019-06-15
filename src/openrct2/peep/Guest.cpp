@@ -13,6 +13,7 @@
 #include "../audio/audio.h"
 #include "../config/Config.h"
 #include "../core/Guard.hpp"
+#include "../interface/Window_internal.h"
 #include "../localisation/Localisation.h"
 #include "../management/Finance.h"
 #include "../management/Marketing.h"
@@ -3064,7 +3065,7 @@ static void peep_head_for_nearest_ride_with_flags(Guest* peep, int32_t rideTypeF
     if (w != nullptr)
     {
         window_event_invalidate_call(w);
-        window_invalidate(w);
+        w->Invalidate();
     }
 
     peep->time_lost = 0;

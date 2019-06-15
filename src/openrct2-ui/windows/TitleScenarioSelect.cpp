@@ -270,11 +270,11 @@ static void window_scenarioselect_mousedown(rct_window* w, rct_widgetindex widge
         w->selected_tab = widgetIndex - 4;
         w->highlighted_scenario = nullptr;
         initialise_list_items(w);
-        window_invalidate(w);
+        w->Invalidate();
         window_event_resize_call(w);
         window_event_invalidate_call(w);
         window_init_scroll_widgets(w);
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
@@ -390,11 +390,11 @@ static void window_scenarioselect_scrollmouseover(rct_window* w, int32_t scrollI
     if (w->highlighted_scenario != selected)
     {
         w->highlighted_scenario = selected;
-        window_invalidate(w);
+        w->Invalidate();
     }
     else if (_showLockedInformation != originalShowLockedInformation)
     {
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 

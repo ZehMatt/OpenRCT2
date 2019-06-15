@@ -464,7 +464,7 @@ void window_maze_construction_update_pressed_widgets()
     }
 
     w->pressed_widgets = pressedWidgets;
-    window_invalidate(w);
+    w->Invalidate();
 }
 
 /**

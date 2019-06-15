@@ -330,7 +330,7 @@ rct_window* window_staff_open(Peep* peep)
         w->max_height = 450;
     }
     w->page = 0;
-    window_invalidate(w);
+    w->Invalidate();
 
     w->widgets = window_staff_overview_widgets;
     w->enabled_widgets = window_staff_page_enabled_widgets[0];
@@ -365,13 +365,13 @@ void window_staff_disable_widgets(rct_window* w)
         if (peep_can_be_picked_up(peep))
         {
             if (w->disabled_widgets & (1 << WIDX_PICKUP))
-                window_invalidate(w);
+                w->Invalidate();
         }
         else
         {
             disabled_widgets |= (1 << WIDX_PICKUP);
             if (!(w->disabled_widgets & (1 << WIDX_PICKUP)))
-                window_invalidate(w);
+                w->Invalidate();
         }
     }
 
@@ -427,13 +427,13 @@ void window_staff_set_page(rct_window* w, int32_t page)
     w->widgets = window_staff_page_widgets[page];
 
     window_staff_disable_widgets(w);
-    window_invalidate(w);
+    w->Invalidate();
 
     window_event_resize_call(w);
     window_event_invalidate_call(w);
 
     window_init_scroll_widgets(w);
-    window_invalidate(w);
+    w->Invalidate();
 
     if (listen && w->viewport)
         w->viewport->flags |= VIEWPORT_FLAG_SOUND_ON;
@@ -502,24 +502,24 @@ void window_staff_overview_resize(rct_window* w)
     if (w->width < w->min_width)
     {
         w->width = w->min_width;
-        window_invalidate(w);
+        w->Invalidate();
     }
 
     if (w->width > w->max_width)
     {
-        window_invalidate(w);
+        w->Invalidate();
         w->width = w->max_width;
     }
 
     if (w->height < w->min_height)
     {
         w->height = w->min_height;
-        window_invalidate(w);
+        w->Invalidate();
     }
 
     if (w->height > w->max_height)
     {
-        window_invalidate(w);
+        w->Invalidate();
         w->height = w->max_height;
     }
 
@@ -705,24 +705,24 @@ void window_staff_stats_resize(rct_window* w)
     if (w->width < w->min_width)
     {
         w->width = w->min_width;
-        window_invalidate(w);
+        w->Invalidate();
     }
 
     if (w->width > w->max_width)
     {
-        window_invalidate(w);
+        w->Invalidate();
         w->width = w->max_width;
     }
 
     if (w->height < w->min_height)
     {
         w->height = w->min_height;
-        window_invalidate(w);
+        w->Invalidate();
     }
 
     if (w->height > w->max_height)
     {
-        window_invalidate(w);
+        w->Invalidate();
         w->height = w->max_height;
     }
 }
@@ -740,7 +740,7 @@ void window_staff_stats_update(rct_window* w)
     if (peep->window_invalidate_flags & PEEP_INVALIDATE_STAFF_STATS)
     {
         peep->window_invalidate_flags &= ~PEEP_INVALIDATE_STAFF_STATS;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
@@ -1379,13 +1379,13 @@ void window_staff_viewport_init(rct_window* w)
 
             viewport_create(w, x, y, width, height, 0, 0, 0, 0, focus.type & VIEWPORT_FOCUS_TYPE_MASK, focus.sprite_id);
             w->flags |= WF_NO_SCROLLING;
-            window_invalidate(w);
+            w->Invalidate();
         }
     }
 
     if (w->viewport)
         w->viewport->flags = viewport_flags;
-    window_invalidate(w);
+    w->Invalidate();
 }
 
 /**

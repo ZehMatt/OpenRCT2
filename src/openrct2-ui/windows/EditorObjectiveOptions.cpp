@@ -332,12 +332,12 @@ static void window_editor_objective_options_set_page(rct_window* w, int32_t page
     w->hold_down_widgets = window_editor_objective_options_page_hold_down_widgets[page];
     w->event_handlers = window_editor_objective_options_page_events[page];
     w->widgets = window_editor_objective_options_widgets[page];
-    window_invalidate(w);
+    w->Invalidate();
     window_editor_objective_options_update_disabled_widgets(w);
     window_event_resize_call(w);
     window_event_invalidate_call(w);
     window_init_scroll_widgets(w);
-    window_invalidate(w);
+    w->Invalidate();
 }
 
 /**
@@ -347,7 +347,7 @@ static void window_editor_objective_options_set_page(rct_window* w, int32_t page
 static void window_editor_objective_options_set_objective(rct_window* w, int32_t objective)
 {
     gScenarioObjectiveType = objective;
-    window_invalidate(w);
+    w->Invalidate();
 
     // Set default objective arguments
     switch (objective)
@@ -526,7 +526,7 @@ static void window_editor_objective_options_arg_1_increase(rct_window* w)
             else
             {
                 gScenarioObjectiveCurrency += MONEY(1000, 0);
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
         case OBJECTIVE_MONTHLY_FOOD_INCOME:
@@ -537,7 +537,7 @@ static void window_editor_objective_options_arg_1_increase(rct_window* w)
             else
             {
                 gScenarioObjectiveCurrency += MONEY(100, 0);
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
         case OBJECTIVE_10_ROLLERCOASTERS_LENGTH:
@@ -548,7 +548,7 @@ static void window_editor_objective_options_arg_1_increase(rct_window* w)
             else
             {
                 gScenarioObjectiveNumGuests += 100;
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
         case OBJECTIVE_FINISH_5_ROLLERCOASTERS:
@@ -559,7 +559,7 @@ static void window_editor_objective_options_arg_1_increase(rct_window* w)
             else
             {
                 gScenarioObjectiveCurrency += FIXED_2DP(0, 10);
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
         default:
@@ -570,7 +570,7 @@ static void window_editor_objective_options_arg_1_increase(rct_window* w)
             else
             {
                 gScenarioObjectiveNumGuests += 50;
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
     }
@@ -590,7 +590,7 @@ static void window_editor_objective_options_arg_1_decrease(rct_window* w)
             else
             {
                 gScenarioObjectiveCurrency -= MONEY(1000, 0);
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
         case OBJECTIVE_MONTHLY_FOOD_INCOME:
@@ -601,7 +601,7 @@ static void window_editor_objective_options_arg_1_decrease(rct_window* w)
             else
             {
                 gScenarioObjectiveCurrency -= MONEY(100, 0);
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
         case OBJECTIVE_10_ROLLERCOASTERS_LENGTH:
@@ -612,7 +612,7 @@ static void window_editor_objective_options_arg_1_decrease(rct_window* w)
             else
             {
                 gScenarioObjectiveNumGuests -= 100;
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
         case OBJECTIVE_FINISH_5_ROLLERCOASTERS:
@@ -623,7 +623,7 @@ static void window_editor_objective_options_arg_1_decrease(rct_window* w)
             else
             {
                 gScenarioObjectiveCurrency -= FIXED_2DP(0, 10);
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
         default:
@@ -634,7 +634,7 @@ static void window_editor_objective_options_arg_1_decrease(rct_window* w)
             else
             {
                 gScenarioObjectiveNumGuests -= 50;
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
     }
@@ -649,7 +649,7 @@ static void window_editor_objective_options_arg_2_increase(rct_window* w)
     else
     {
         gScenarioObjectiveYear++;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
@@ -662,7 +662,7 @@ static void window_editor_objective_options_arg_2_decrease(rct_window* w)
     else
     {
         gScenarioObjectiveYear--;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
@@ -718,7 +718,7 @@ static void window_editor_objective_options_main_dropdown(rct_window* w, rct_wid
             if (gS6Info.category != (uint8_t)dropdownIndex)
             {
                 gS6Info.category = (uint8_t)dropdownIndex;
-                window_invalidate(w);
+                w->Invalidate();
             }
             break;
     }
@@ -776,11 +776,11 @@ static void window_editor_objective_options_main_textinput(rct_window* w, rct_wi
         }
         case WIDX_SCENARIO_NAME:
             safe_strcpy(gS6Info.name, text, std::size(gS6Info.name));
-            window_invalidate(w);
+            w->Invalidate();
             break;
         case WIDX_DETAILS:
             safe_strcpy(gS6Info.details, text, std::size(gS6Info.details));
-            window_invalidate(w);
+            w->Invalidate();
             break;
     }
 }
@@ -1038,7 +1038,7 @@ static void window_editor_objective_options_rides_update(rct_window* w)
     if (w->no_list_items != numItems)
     {
         w->no_list_items = numItems;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
@@ -1067,7 +1067,7 @@ static void window_editor_objective_options_rides_scrollmousedown(rct_window* w,
 
     ride = get_ride(w->list_item_positions[i]);
     ride->lifecycle_flags ^= RIDE_LIFECYCLE_INDESTRUCTIBLE;
-    window_invalidate(w);
+    w->Invalidate();
 }
 
 /**
@@ -1085,7 +1085,7 @@ static void window_editor_objective_options_rides_scrollmouseover(rct_window* w,
     if (w->selected_list_item != i)
     {
         w->selected_list_item = i;
-        window_invalidate(w);
+        w->Invalidate();
     }
 }
 
