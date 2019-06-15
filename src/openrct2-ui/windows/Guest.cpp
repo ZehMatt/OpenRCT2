@@ -705,7 +705,7 @@ void window_guest_overview_mouse_up(rct_window* w, rct_widgetindex widgetIndex)
                 w, widgetIndex, STR_GUEST_RENAME_TITLE, STR_GUEST_RENAME_PROMPT, peep->name_string_idx, peep->id, 32);
             break;
         case WIDX_LOCATE:
-            window_scroll_to_viewport(w);
+            w->ScrollToViewport();
             break;
         case WIDX_TRACK:
         {
