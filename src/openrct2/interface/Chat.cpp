@@ -12,6 +12,7 @@
 #include "../Context.h"
 #include "../audio/AudioMixer.h"
 #include "../audio/audio.h"
+#include "../core/Logging.h"
 #include "../drawing/Drawing.h"
 #include "../localisation/Localisation.h"
 #include "../network/network.h"
@@ -37,6 +38,8 @@ static TextInputSession* _chatTextInputSession;
 static const char* chat_history_get(uint32_t index);
 static uint32_t chat_history_get_time(uint32_t index);
 static void chat_clear_input();
+
+static Logging::Group logChat("Chat");
 
 bool chat_available()
 {
@@ -231,7 +234,7 @@ void chat_history_add(const char* src)
     _chatHistoryIndex++;
 
     // Log to file (src only as logging does its own timestamp)
-    network_append_chat_log(src);
+    Logging::log(logChat, "%s\n", src);
 
     free(buffer);
 

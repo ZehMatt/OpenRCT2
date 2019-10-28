@@ -12,6 +12,7 @@
 #include "../Context.h"
 #include "../ReplayManager.h"
 #include "../core/Guard.hpp"
+#include "../core/Logging.h"
 #include "../core/Memory.hpp"
 #include "../core/MemoryStream.h"
 #include "../localisation/Localisation.h"
@@ -23,6 +24,8 @@
 
 #include <algorithm>
 #include <iterator>
+
+static Logging::Group logGameActions("GameActions");
 
 GameActionResult::GameActionResult(GA_ERROR error, rct_string_id message)
 {
@@ -311,6 +314,9 @@ namespace GameActions
 
     static void LogActionBegin(ActionLogContext_t& ctx, const GameAction* action)
     {
+        if (action->GetFlags() & GAME_COMMAND_FLAG_GHOST)
+            return;
+
         MemoryStream& output = ctx.output;
 
         char temp[128] = {};
@@ -328,6 +334,9 @@ namespace GameActions
 
     static void LogActionFinish(ActionLogContext_t& ctx, const GameAction* action, const GameActionResult::Ptr& result)
     {
+        if (action->GetFlags() & GAME_COMMAND_FLAG_GHOST)
+            return;
+
         MemoryStream& output = ctx.output;
 
         char temp[128] = {};
@@ -344,9 +353,7 @@ namespace GameActions
         output.Write(temp, strlen(temp) + 1);
 
         const char* text = (const char*)output.GetData();
-        log_verbose("%s", text);
-
-        network_append_server_log(text);
+        Logging::logMinimal(logGameActions, "%s\n", text);
     }
 
     static GameActionResult::Ptr ExecuteInternal(const GameAction* action, bool topLevel)
@@ -384,7 +391,7 @@ namespace GameActions
                     // As a client we have to wait or send it first.
                     if (!(actionFlags & GA_FLAGS::CLIENT_ONLY) && !(flags & GAME_COMMAND_FLAG_NETWORKED))
                     {
-                        log_verbose("[%s] GameAction::Execute %s (Out)", GetRealm(), action->GetName());
+                        Logging::logVerbose(logGameActions, "[%s] GameAction::Execute %s (Out)", GetRealm(), action->GetName());
                         network_send_game_action(action);
 
                         return result;
@@ -396,7 +403,8 @@ namespace GameActions
                     // at the beginning of the frame, so we have to put them into the queue.
                     if (!(actionFlags & GA_FLAGS::CLIENT_ONLY) && !(flags & GAME_COMMAND_FLAG_NETWORKED))
                     {
-                        log_verbose("[%s] GameAction::Execute %s (Queue)", GetRealm(), action->GetName());
+                        Logging::logVerbose(
+                            logGameActions, "[%s] GameAction::Execute %s (Queue)", GetRealm(), action->GetName());
                         Enqueue(action, gCurrentTicks);
 
                         return result;

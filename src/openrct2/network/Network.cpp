@@ -18,6 +18,7 @@
 #include "../actions/NetworkModifyGroupAction.hpp"
 #include "../actions/PeepPickupAction.hpp"
 #include "../core/Guard.hpp"
+#include "../core/Logging.h"
 #include "../platform/platform.h"
 #include "../ui/UiContext.h"
 #include "../ui/WindowManager.h"
@@ -43,6 +44,8 @@ static int32_t _pickup_peep_old_x = LOCATION_NULL;
 // General chunk size is 63 KiB, this can not be any larger because the packet size is encoded
 // with uint16_t and needs some spare room for other data in the packet.
 static constexpr uint32_t CHUNK_SIZE = 1024 * 63;
+
+static Logging::Group logNetwork("Network");
 
 #ifndef DISABLE_NETWORK
 
@@ -163,10 +166,8 @@ public:
 
     void BeginChatLog();
     void AppendChatLog(const std::string& s);
-    void CloseChatLog();
 
     void BeginServerLog();
-    void AppendServerLog(const std::string& s);
     void CloseServerLog();
 
     void Client_Send_RequestGameState(uint32_t tick);
@@ -315,9 +316,6 @@ private:
     void Server_Handle_OBJECTS(NetworkConnection& connection, NetworkPacket& packet);
 
     uint8_t* save_for_network(size_t& out_size, const std::vector<const ObjectRepositoryItem*>& objects) const;
-
-    std::ofstream _chat_log_fs;
-    std::ofstream _server_log_fs;
 };
 
 static Network gNetwork;
@@ -356,9 +354,6 @@ Network::Network()
     server_command_handlers[NETWORK_COMMAND_TOKEN] = &Network::Server_Handle_TOKEN;
     server_command_handlers[NETWORK_COMMAND_OBJECTS] = &Network::Server_Handle_OBJECTS;
     server_command_handlers[NETWORK_COMMAND_REQUEST_GAMESTATE] = &Network::Server_Handle_REQUEST_GAMESTATE;
-
-    _chat_log_fs << std::unitbuf;
-    _server_log_fs << std::unitbuf;
 }
 
 void Network::SetEnvironment(const std::shared_ptr<IPlatformEnvironment>& env)
@@ -411,8 +406,6 @@ void Network::Close()
             return;
         }
 
-        CloseChatLog();
-        CloseServerLog();
         CloseConnection();
 
         client_connection_list.clear();
@@ -1310,42 +1303,14 @@ void Network::AppendLog(std::ostream& fs, const std::string& s)
 
 void Network::BeginChatLog()
 {
-    auto directory = _env->GetDirectoryPath(DIRBASE::USER, DIRID::LOG_CHAT);
-    _chatLogPath = BeginLog(directory, "", _chatLogFilenameFormat);
-
-#    if defined(_WIN32) && !defined(__MINGW32__)
-    auto pathW = String::ToWideChar(_chatLogPath.c_str());
-    _chat_log_fs.open(pathW.c_str(), std::ios::out | std::ios::app);
-#    else
-    _chat_log_fs.open(_chatLogPath, std::ios::out | std::ios::app);
-#    endif
 }
 
 void Network::AppendChatLog(const std::string& s)
 {
-    if (gConfigNetwork.log_chat && _chat_log_fs.is_open())
-    {
-        AppendLog(_chat_log_fs, s);
-    }
-}
-
-void Network::CloseChatLog()
-{
-    _chat_log_fs.close();
 }
 
 void Network::BeginServerLog()
 {
-    auto directory = _env->GetDirectoryPath(DIRBASE::USER, DIRID::LOG_SERVER);
-    _serverLogPath = BeginLog(directory, ServerName, _serverLogFilenameFormat);
-
-#    if defined(_WIN32) && !defined(__MINGW32__)
-    auto pathW = String::ToWideChar(_serverLogPath.c_str());
-    _server_log_fs.open(pathW.c_str(), std::ios::out | std::ios::app | std::ios::binary);
-#    else
-    _server_log_fs.open(_serverLogPath, std::ios::out | std::ios::app | std::ios::binary);
-#    endif
-
     // Log server start event
     utf8 logMessage[256];
     if (GetMode() == NETWORK_MODE_CLIENT)
@@ -1356,15 +1321,7 @@ void Network::BeginServerLog()
     {
         format_string(logMessage, sizeof(logMessage), STR_LOG_SERVER_STARTED, nullptr);
     }
-    AppendServerLog(logMessage);
-}
-
-void Network::AppendServerLog(const std::string& s)
-{
-    if (gConfigNetwork.log_server_actions && _server_log_fs.is_open())
-    {
-        AppendLog(_server_log_fs, s);
-    }
+    Logging::log(logNetwork, "%s\n", logMessage);
 }
 
 void Network::CloseServerLog()
@@ -1379,8 +1336,7 @@ void Network::CloseServerLog()
     {
         format_string(logMessage, sizeof(logMessage), STR_LOG_SERVER_STOPPED, nullptr);
     }
-    AppendServerLog(logMessage);
-    _server_log_fs.close();
+    Logging::log(logNetwork, "%s\n", logMessage);
 }
 
 void Network::Client_Send_RequestGameState(uint32_t tick)
@@ -2005,9 +1961,7 @@ void Network::ProcessDisconnectedClients()
 void Network::AddClient(std::unique_ptr<ITcpSocket>&& socket)
 {
     // Log connection info.
-    char addr[128];
-    snprintf(addr, sizeof(addr), "Client joined from %s", socket->GetHostName());
-    AppendServerLog(addr);
+    Logging::log(logNetwork, "Client joined from %s\n", socket->GetHostName());
 
     // Store connection
     auto connection = std::make_unique<NetworkConnection>();
@@ -2050,7 +2004,7 @@ void Network::ServerClientDisconnected(std::unique_ptr<NetworkConnection>& conne
         (char*)connection_player->Name.c_str(), connection->GetLastDisconnectReason());
 
     // Log player disconnected event
-    AppendServerLog(text);
+    Logging::log(logNetwork, "%s\n", text);
 }
 
 void Network::RemovePlayer(std::unique_ptr<NetworkConnection>& connection)
@@ -2336,7 +2290,8 @@ void Network::Server_Client_Joined(const char* name, const std::string& keyhash,
         std::string playerNameHash = player->Name + " (" + keyhash + ")";
         player_name = (const char*)playerNameHash.c_str();
         format_string(text, 256, STR_MULTIPLAYER_PLAYER_HAS_JOINED_THE_GAME, &player_name);
-        AppendServerLog(text);
+
+        Logging::log(logNetwork, "%s\n", text);
     }
 }
 
@@ -2470,23 +2425,21 @@ void Network::Server_Handle_OBJECTS(NetworkConnection& connection, NetworkPacket
         {
             playerName = connection.Player->Name;
         }
-        std::string text = std::string("Player ") + playerName + std::string(" requested invalid amount of objects");
-        AppendServerLog(text);
-        log_warning(text.c_str());
+        Logging::log(logNetwork, "Player %s requested invalid amount of objects\n", playerName.c_str());
         return;
     }
-    log_verbose("Client requested %u objects", size);
+    Logging::logVerbose(logNetwork, "Client requested %u objects", size);
     auto& repo = GetContext()->GetObjectRepository();
     for (uint32_t i = 0; i < size; i++)
     {
         const char* name = (const char*)packet.Read(8);
         // This is required, as packet does not have null terminator
         std::string s(name, name + 8);
-        log_verbose("Client requested object %s", s.c_str());
+        Logging::logVerbose(logNetwork, "Client requested object %s", s.c_str());
         const ObjectRepositoryItem* item = repo.FindObject(s.c_str());
         if (item == nullptr)
         {
-            log_warning("Client tried getting non-existent object %s from us.", s.c_str());
+            Logging::log(logNetwork, "Client tried getting non-existent object %s from us.", s.c_str());
         }
         else
         {
@@ -2539,10 +2492,10 @@ void Network::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacket& p
                 const std::string hash = connection.Key.PublicKeyHash();
                 if (verified)
                 {
-                    log_verbose("Signature verification ok. Hash %s", hash.c_str());
+                    Logging::log(logNetwork, "Signature verification ok. Hash %s", hash.c_str());
                     if (gConfigNetwork.known_keys_only && _userManager.GetUserByHash(hash) == nullptr)
                     {
-                        log_verbose("Hash %s, not known", hash.c_str());
+                        Logging::log(logNetwork, "Hash %s, not known", hash.c_str());
                         connection.AuthStatus = NETWORK_AUTH_UNKNOWN_KEY_DISALLOWED;
                     }
                     else
@@ -2553,13 +2506,13 @@ void Network::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacket& p
                 else
                 {
                     connection.AuthStatus = NETWORK_AUTH_VERIFICATIONFAILURE;
-                    log_verbose("Signature verification failed!");
+                    Logging::log(logNetwork, "Signature verification failed!");
                 }
             }
             catch (const std::exception&)
             {
                 connection.AuthStatus = NETWORK_AUTH_VERIFICATIONFAILURE;
-                log_verbose("Signature verification failed, invalid data!");
+                Logging::log(logNetwork, "Signature verification failed, invalid data!");
             }
         }
 
@@ -2601,7 +2554,7 @@ void Network::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacket& p
         }
         else if (connection.AuthStatus != NETWORK_AUTH_REQUIREPASSWORD)
         {
-            log_error("Unknown failure (%d) while authenticating client", connection.AuthStatus);
+            Logging::log(logNetwork, "Unknown failure (%d) while authenticating client", connection.AuthStatus);
         }
         Server_Send_AUTH(connection);
     }
@@ -2655,13 +2608,13 @@ void Network::Client_Handle_MAP([[maybe_unused]] NetworkConnection& connection, 
         // zlib-compressed
         if (strcmp("open2_sv6_zlib", (char*)&chunk_buffer[0]) == 0)
         {
-            log_verbose("Received zlib-compressed sv6 map");
+            Logging::logVerbose(logNetwork, "Received zlib-compressed sv6 map");
             has_to_free = true;
             size_t header_len = strlen("open2_sv6_zlib") + 1;
             data = util_zlib_inflate(&chunk_buffer[header_len], size - header_len, &data_size);
             if (data == nullptr)
             {
-                log_warning("Failed to decompress data sent from server.");
+                Logging::log(logNetwork, "Failed to decompress data sent from server.");
                 Close();
                 return;
             }
@@ -3429,7 +3382,7 @@ GameActionResult::Ptr network_set_player_group(
             game_command_player->Name.c_str(),
         };
         format_string(log_msg, 256, STR_LOG_SET_PLAYER_GROUP, args);
-        network_append_server_log(log_msg);
+        Logging::log(logNetwork, "%s\n", log_msg);
     }
     return std::make_unique<GameActionResult>();
 }
@@ -3773,11 +3726,6 @@ void network_append_chat_log(const utf8* text)
     gNetwork.AppendChatLog(text);
 }
 
-void network_append_server_log(const utf8* text)
-{
-    gNetwork.AppendServerLog(text);
-}
-
 static void network_get_keys_directory(utf8* buffer, size_t bufferSize)
 {
     platform_get_user_directory(buffer, "keys", bufferSize);
@@ -4060,9 +4008,6 @@ int32_t network_get_current_player_group_index()
     return 0;
 }
 void network_append_chat_log(const utf8* text)
-{
-}
-void network_append_server_log(const utf8* text)
 {
 }
 const utf8* network_get_server_name()
