@@ -33,6 +33,7 @@
 #include "core/FileScanner.h"
 #include "core/FileStream.hpp"
 #include "core/Guard.hpp"
+#include "core/Logging.h"
 #include "core/MemoryStream.h"
 #include "core/Path.hpp"
 #include "core/String.hpp"
@@ -395,8 +396,6 @@ namespace OpenRCT2
             {
                 _uiContext->CreateWindow();
             }
-
-            EnsureUserContentDirectoriesExist();
 
             // TODO Ideally we want to delay this until we show the title so that we can
             //      still open the game window and draw a progress screen for the creation
@@ -998,37 +997,6 @@ namespace OpenRCT2
             chat_update();
             _stdInOutConsole.ProcessEvalQueue();
             _uiContext->Update();
-        }
-
-        /**
-         * Ensure that the custom user content folders are present
-         */
-        void EnsureUserContentDirectoriesExist()
-        {
-            EnsureDirectoriesExist(
-                DIRBASE::USER,
-                {
-                    DIRID::OBJECT,
-                    DIRID::SAVE,
-                    DIRID::SCENARIO,
-                    DIRID::TRACK,
-                    DIRID::LANDSCAPE,
-                    DIRID::HEIGHTMAP,
-                    DIRID::THEME,
-                    DIRID::SEQUENCE,
-                    DIRID::REPLAY,
-                    DIRID::LOG_DESYNCS,
-                });
-        }
-
-        void EnsureDirectoriesExist(const DIRBASE dirBase, const std::initializer_list<DIRID>& dirIds)
-        {
-            for (const auto& dirId : dirIds)
-            {
-                auto path = _env->GetDirectoryPath(dirBase, dirId);
-                if (!platform_ensure_directory_exists(path.c_str()))
-                    log_error("Unable to create directory '%s'.", path.c_str());
-            }
         }
 
         /**

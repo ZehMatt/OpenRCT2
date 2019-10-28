@@ -11,12 +11,15 @@
 
 #include "OpenRCT2.h"
 #include "config/Config.h"
+#include "core/Logging.h"
 #include "core/Path.hpp"
 #include "core/String.hpp"
 #include "platform/Platform2.h"
 #include "platform/platform.h"
 
 using namespace OpenRCT2;
+
+static Logging::Group logPlatform("Platform");
 
 class PlatformEnvironment final : public IPlatformEnvironment
 {
@@ -118,6 +121,39 @@ static std::string GetOpenRCT2DirectoryName()
 #endif
 }
 
+static void EnsureDirectoriesExist(
+    std::unique_ptr<IPlatformEnvironment>& env, const DIRBASE dirBase, const std::initializer_list<DIRID>& dirIds)
+{
+    for (const auto& dirId : dirIds)
+    {
+        auto path = env->GetDirectoryPath(dirBase, dirId);
+        if (!platform_ensure_directory_exists(path.c_str()))
+            log_error("Unable to create directory '%s'.", path.c_str());
+    }
+}
+
+/**
+ * Ensure that the custom user content folders are present
+ */
+static void EnsureUserContentDirectoriesExist(std::unique_ptr<IPlatformEnvironment>& env)
+{
+    EnsureDirectoriesExist(
+        env, DIRBASE::USER,
+        {
+            DIRID::OBJECT,
+            DIRID::SAVE,
+            DIRID::SCENARIO,
+            DIRID::TRACK,
+            DIRID::LANDSCAPE,
+            DIRID::HEIGHTMAP,
+            DIRID::THEME,
+            DIRID::SEQUENCE,
+            DIRID::REPLAY,
+            DIRID::LOG_DESYNCS,
+            DIRID::LOGS,
+        });
+}
+
 std::unique_ptr<IPlatformEnvironment> OpenRCT2::CreatePlatformEnvironment()
 {
     auto subDirectory = GetOpenRCT2DirectoryName();
@@ -156,6 +192,7 @@ std::unique_ptr<IPlatformEnvironment> OpenRCT2::CreatePlatformEnvironment()
     }
 
     auto env = OpenRCT2::CreatePlatformEnvironment(basePaths);
+    EnsureUserContentDirectoriesExist(env);
 
     // Now load the config so we can get the RCT1 and RCT2 paths
     auto configPath = env->GetFilePath(PATHID::CONFIG);
@@ -173,13 +210,21 @@ std::unique_ptr<IPlatformEnvironment> OpenRCT2::CreatePlatformEnvironment()
         env->SetBasePath(DIRBASE::RCT2, String::ToStd(gConfigGeneral.rct2_path));
     }
 
+    auto logsPath = env->GetDirectoryPath(DIRBASE::USER, DIRID::LOGS);
+
+    char logFileName[128];
+    sprintf(logFileName, "%u_%u.log", 0, 1);
+
+    auto logPath = Path::Combine(logsPath, logFileName);
+    Logging::open(logPath.c_str());
+
     // Log base paths
-    log_verbose("DIRBASE::RCT1    : %s", env->GetDirectoryPath(DIRBASE::RCT1).c_str());
-    log_verbose("DIRBASE::RCT2    : %s", env->GetDirectoryPath(DIRBASE::RCT2).c_str());
-    log_verbose("DIRBASE::OPENRCT2: %s", env->GetDirectoryPath(DIRBASE::OPENRCT2).c_str());
-    log_verbose("DIRBASE::USER    : %s", env->GetDirectoryPath(DIRBASE::USER).c_str());
-    log_verbose("DIRBASE::CONFIG  : %s", env->GetDirectoryPath(DIRBASE::CONFIG).c_str());
-    log_verbose("DIRBASE::CACHE   : %s", env->GetDirectoryPath(DIRBASE::CACHE).c_str());
+    Logging::logMinimal(logPlatform, "DIRBASE::RCT1    : %s\n", env->GetDirectoryPath(DIRBASE::RCT1).c_str());
+    Logging::logMinimal(logPlatform, "DIRBASE::RCT2    : %s\n", env->GetDirectoryPath(DIRBASE::RCT2).c_str());
+    Logging::logMinimal(logPlatform, "DIRBASE::OPENRCT2: %s\n", env->GetDirectoryPath(DIRBASE::OPENRCT2).c_str());
+    Logging::logMinimal(logPlatform, "DIRBASE::USER    : %s\n", env->GetDirectoryPath(DIRBASE::USER).c_str());
+    Logging::logMinimal(logPlatform, "DIRBASE::CONFIG  : %s\n", env->GetDirectoryPath(DIRBASE::CONFIG).c_str());
+    Logging::logMinimal(logPlatform, "DIRBASE::CACHE   : %s\n", env->GetDirectoryPath(DIRBASE::CACHE).c_str());
 
     return env;
 }
@@ -222,6 +267,7 @@ const char * PlatformEnvironment::DirectoryNamesOpenRCT2[] =
     "heightmap",            // HEIGHTMAP
     "replay",               // REPLAY
     "desyncs",              // DESYNCS
+    "logs",                 // LOGS
 };
 
 const char * PlatformEnvironment::FileNames[] =
