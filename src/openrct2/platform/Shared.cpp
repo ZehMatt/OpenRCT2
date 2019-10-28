@@ -20,6 +20,7 @@
 #include "../Game.h"
 #include "../OpenRCT2.h"
 #include "../config/Config.h"
+#include "../core/Logging.h"
 #include "../drawing/Drawing.h"
 #include "../drawing/LightFX.h"
 #include "../localisation/Currency.h"
@@ -232,6 +233,7 @@ void core_init()
         platform_android_init_class_loader();
 #endif // __ANDROID__
 
+        Logging::initialize();
         platform_ticks_init();
         bitcount_init();
         mask_init();
