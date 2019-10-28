@@ -14,6 +14,7 @@
 #include "../core/Console.hpp"
 #include "../core/File.h"
 #include "../core/FileStream.hpp"
+#include "../core/Logging.h"
 #include "../core/Memory.hpp"
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
@@ -519,6 +520,12 @@ namespace Config
         }
     }
 
+    static void ReadLogging(IIniReader* reader)
+    {
+        reader->ReadSection("Logging");
+        Logging::setLevel("network", Logging::Level::Minimal);
+    }
+
     static void WriteFont(IIniWriter* writer)
     {
         auto model = &gConfigFonts;
@@ -537,6 +544,17 @@ namespace Config
         writer->WriteInt32("height_big", model->height_big);
         writer->WriteBoolean("enable_hinting", model->enable_hinting);
         writer->WriteInt32("hinting_threshold", model->hinting_threshold);
+    }
+
+    static void WriteLogging(IIniWriter* writer)
+    {
+        writer->WriteSection("Logging");
+        const auto& groups = Logging::getGroups();
+        const auto& levels = Logging::getLevels();
+        for (size_t i = 0; i < groups.size(); i++)
+        {
+            writer->WriteInt32(groups[i], static_cast<int32_t>(levels[i]));
+        }
     }
 
     static bool SetDefaults()
@@ -572,6 +590,7 @@ namespace Config
             ReadNotifications(reader.get());
             ReadTwitch(reader.get());
             ReadFont(reader.get());
+            ReadLogging(reader.get());
             return true;
         }
         catch (const std::exception&)
@@ -596,6 +615,7 @@ namespace Config
             WriteNotifications(writer.get());
             WriteTwitch(writer.get());
             WriteFont(writer.get());
+            WriteLogging(writer.get());
             return true;
         }
         catch (const std::exception& ex)
