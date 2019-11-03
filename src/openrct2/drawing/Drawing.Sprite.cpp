@@ -405,37 +405,39 @@ bool gfx_load_csg()
  * @param imageId Only flags are used.
  */
 void FASTCALL gfx_bmp_sprite_to_buffer(
-    const uint8_t* palette_pointer, uint8_t* source_pointer, uint8_t* dest_pointer, const rct_g1_element* source_image,
-    rct_drawpixelinfo* dest_dpi, int32_t height, int32_t width, ImageId imageId)
+    const uint8_t* palette, const uint8_t* src, uint8_t* dst, const rct_g1_element* srcImage, rct_drawpixelinfo* dpi,
+    int32_t height, int32_t width, ImageId imageId)
 {
-    uint16_t zoom_level = dest_dpi->zoom_level;
-    uint8_t zoom_amount = 1 << zoom_level;
-    uint32_t dest_line_width = (dest_dpi->width / zoom_amount) + dest_dpi->pitch;
-    uint32_t source_line_width = source_image->width * zoom_amount;
+    if (height == 0 || width == 0)
+        return;
+
+    const uint16_t zoomLevel = dpi->zoom_level;
+
+    const uint32_t maxHeight = static_cast<uint32_t>(height) >> zoomLevel;
+    const uint32_t maxWidth = static_cast<uint32_t>(width) >> zoomLevel;
+
+    const uint32_t dstLineWidth = (dpi->width >> zoomLevel) + dpi->pitch;
+    const uint32_t srcLineWidth = srcImage->width << zoomLevel;
 
     // Image uses the palette pointer to remap the colours of the image
     if (imageId.HasPrimary())
     {
-        assert(palette_pointer != nullptr);
+        assert(palette != nullptr);
 
         // Image with remaps
-        for (; height > 0; height -= zoom_amount)
+        for (uint32_t h = 0; h < maxHeight; ++h)
         {
-            uint8_t* next_source_pointer = source_pointer + source_line_width;
-            uint8_t* next_dest_pointer = dest_pointer + dest_line_width;
-            for (int32_t no_pixels = width; no_pixels > 0;
-                 no_pixels -= zoom_amount, source_pointer += zoom_amount, dest_pointer++)
+            for (uint32_t w = 0; w < maxWidth; ++w)
             {
-                uint8_t pixel = *source_pointer;
-                pixel = palette_pointer[pixel];
+                const uint32_t idx = w << zoomLevel;
+                const uint8_t pixel = palette[src[idx]];
                 if (pixel)
                 {
-                    *dest_pointer = pixel;
+                    dst[w] = pixel;
                 }
             }
-
-            source_pointer = next_source_pointer;
-            dest_pointer = next_dest_pointer;
+            src += srcLineWidth;
+            dst += dstLineWidth;
         }
         return;
     }
@@ -445,66 +447,56 @@ void FASTCALL gfx_bmp_sprite_to_buffer(
     // by the palette pointer.
     if (imageId.IsBlended())
     { // Not tested
-        assert(palette_pointer != nullptr);
-        for (; height > 0; height -= zoom_amount)
+        assert(palette != nullptr);
+        for (uint32_t h = 0; h < maxHeight; ++h)
         {
-            uint8_t* next_source_pointer = source_pointer + source_line_width;
-            uint8_t* next_dest_pointer = dest_pointer + dest_line_width;
-
-            for (int32_t no_pixels = width; no_pixels > 0;
-                 no_pixels -= zoom_amount, source_pointer += zoom_amount, dest_pointer++)
+            for (uint32_t w = 0; w < maxWidth; ++w)
             {
-                uint8_t pixel = *source_pointer;
-                if (pixel)
+                const uint32_t idx = w << zoomLevel;
+                if (src[idx])
                 {
-                    pixel = *dest_pointer;
-                    pixel = palette_pointer[pixel];
-                    *dest_pointer = pixel;
+                    dst[w] = palette[dst[w]];
                 }
             }
-
-            source_pointer = next_source_pointer;
-            dest_pointer = next_dest_pointer;
-        }
-        return;
-    }
-
-    // Basic bitmap no fancy stuff
-    if (!(source_image->flags & G1_FLAG_BMP))
-    { // Not tested
-        for (; height > 0; height -= zoom_amount)
-        {
-            uint8_t* next_source_pointer = source_pointer + source_line_width;
-            uint8_t* next_dest_pointer = dest_pointer + dest_line_width;
-
-            for (int32_t no_pixels = width; no_pixels > 0;
-                 no_pixels -= zoom_amount, dest_pointer++, source_pointer += zoom_amount)
-            {
-                *dest_pointer = *source_pointer;
-            }
-
-            dest_pointer = next_dest_pointer;
-            source_pointer = next_source_pointer;
+            src += srcLineWidth;
+            dst += dstLineWidth;
         }
         return;
     }
 
     // Basic bitmap with no draw pixels
-    for (; height > 0; height -= zoom_amount)
+    if (srcImage->flags & G1_FLAG_BMP)
     {
-        uint8_t* next_source_pointer = source_pointer + source_line_width;
-        uint8_t* next_dest_pointer = dest_pointer + dest_line_width;
-
-        for (int32_t no_pixels = width; no_pixels > 0; no_pixels -= zoom_amount, dest_pointer++, source_pointer += zoom_amount)
+        for (uint32_t h = 0; h < maxHeight; ++h)
         {
-            uint8_t pixel = *source_pointer;
-            if (pixel)
+            for (uint32_t w = 0; w < maxWidth; ++w)
             {
-                *dest_pointer = pixel;
+                const uint32_t idx = w << zoomLevel;
+                const uint8_t pixel = src[idx];
+                if (pixel)
+                {
+                    dst[w] = pixel;
+                }
             }
+            src += srcLineWidth;
+            dst += dstLineWidth;
         }
-        dest_pointer = next_dest_pointer;
-        source_pointer = next_source_pointer;
+        return;
+    }
+
+    // Basic bitmap no fancy stuff
+    { // Not tested
+        for (uint32_t h = 0; h < maxHeight; ++h)
+        {
+            for (uint32_t w = 0; w < maxWidth; ++w)
+            {
+                const uint32_t idx = w << zoomLevel;
+                dst[w] = src[idx];
+            }
+            src += srcLineWidth;
+            dst += dstLineWidth;
+        }
+        return;
     }
 }
 

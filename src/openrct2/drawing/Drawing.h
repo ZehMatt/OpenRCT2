@@ -489,8 +489,8 @@ void gfx_object_check_all_images_freed();
 size_t ImageListGetUsedCount();
 size_t ImageListGetMaximum();
 void FASTCALL gfx_bmp_sprite_to_buffer(
-    const uint8_t* palette_pointer, uint8_t* source_pointer, uint8_t* dest_pointer, const rct_g1_element* source_image,
-    rct_drawpixelinfo* dest_dpi, int32_t height, int32_t width, ImageId imageId);
+    const uint8_t* palette, const uint8_t* src, uint8_t* dst, const rct_g1_element* srcImage, rct_drawpixelinfo* dpi,
+    int32_t height, int32_t width, ImageId imageId);
 void FASTCALL gfx_rle_sprite_to_buffer(
     const uint8_t* RESTRICT source_bits_pointer, uint8_t* RESTRICT dest_bits_pointer, const uint8_t* RESTRICT palette_pointer,
     const rct_drawpixelinfo* RESTRICT dpi, ImageId imageId, int32_t source_y_start, int32_t height, int32_t source_x_start,
