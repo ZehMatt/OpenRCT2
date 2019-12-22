@@ -26,7 +26,7 @@ DEFINE_GAME_ACTION(FootpathSceneryPlaceAction, GAME_COMMAND_PLACE_FOOTPATH_SCENE
 {
 private:
     CoordsXYZ _loc;
-    uint8_t _pathItemType;
+    uint8_t _pathItemType{};
 
 public:
     FootpathSceneryPlaceAction() = default;
