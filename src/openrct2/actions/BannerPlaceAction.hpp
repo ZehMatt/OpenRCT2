@@ -21,7 +21,7 @@ private:
     CoordsXYZD _loc;
     uint8_t _bannerType{ std::numeric_limits<uint8_t>::max() };
     BannerIndex _bannerIndex{ BANNER_INDEX_NULL };
-    uint8_t _primaryColour;
+    uint8_t _primaryColour{ COLOUR_BLACK };
 
 public:
     BannerPlaceAction() = default;
@@ -138,7 +138,7 @@ public:
         }
 
         TileElement* newTileElement = tile_element_insert({ _loc.x / 32, _loc.y / 32, baseHeight }, 0b0000);
-        assert(newTileElement != nullptr);
+        Guard::Assert(newTileElement != nullptr);
 
         banner->flags = 0;
         banner->text = {};
