@@ -27,7 +27,7 @@ DEFINE_GAME_ACTION(LargeSceneryRemoveAction, GAME_COMMAND_REMOVE_LARGE_SCENERY, 
 {
 private:
     CoordsXYZD _loc;
-    uint16_t _tileIndex;
+    uint16_t _tileIndex{};
 
 public:
     LargeSceneryRemoveAction() = default;
@@ -52,7 +52,7 @@ public:
 
     GameActionResult::Ptr Query() const override
     {
-        GameActionResult::Ptr res = std::make_unique<GameActionResult>();
+        GameActionResult::Ptr res = MakeResult();
 
         const uint32_t flags = GetFlags();
 
@@ -71,6 +71,13 @@ public:
         }
 
         rct_scenery_entry* scenery_entry = tileElement->AsLargeScenery()->GetEntry();
+
+        int16_t totalNumTiles = GetTotalNumTiles(scenery_entry->large_scenery.tiles);
+        if (_tileIndex >= totalNumTiles)
+        {
+            log_warning("Out of bounds tile index: %d, max: %d", _tileIndex, totalNumTiles);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_NONE);
+        }
 
         auto rotatedOffsets = CoordsXYZ{ CoordsXY{ scenery_entry->large_scenery.tiles[_tileIndex].x_offset,
                                                    scenery_entry->large_scenery.tiles[_tileIndex].y_offset }
@@ -117,7 +124,7 @@ public:
 
     GameActionResult::Ptr Execute() const override
     {
-        GameActionResult::Ptr res = std::make_unique<GameActionResult>();
+        GameActionResult::Ptr res = MakeResult();
 
         const uint32_t flags = GetFlags();
 
@@ -138,6 +145,13 @@ public:
         tile_element_remove_banner_entry(tileElement);
 
         rct_scenery_entry* scenery_entry = tileElement->AsLargeScenery()->GetEntry();
+
+        int16_t totalNumTiles = GetTotalNumTiles(scenery_entry->large_scenery.tiles);
+        if (_tileIndex >= totalNumTiles)
+        {
+            log_warning("Out of bounds tile index: %d, max: %d", _tileIndex, totalNumTiles);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_NONE);
+        }
 
         auto rotatedFirstTile = CoordsXYZ{ CoordsXY{ scenery_entry->large_scenery.tiles[_tileIndex].x_offset,
                                                      scenery_entry->large_scenery.tiles[_tileIndex].y_offset }
@@ -234,5 +248,14 @@ private:
         } while (!(tileElement++)->IsLastForTile());
 
         return nullptr;
+    }
+    int16_t GetTotalNumTiles(rct_large_scenery_tile * tiles) const
+    {
+        uint32_t totalNumTiles = 0;
+        for (rct_large_scenery_tile* tile = tiles; tile->x_offset != -1; tile++)
+        {
+            totalNumTiles++;
+        }
+        return totalNumTiles;
     }
 };
