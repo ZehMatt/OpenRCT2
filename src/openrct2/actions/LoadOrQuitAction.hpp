@@ -26,10 +26,7 @@ private:
     uint8_t _savePromptMode{ PM_SAVE_BEFORE_LOAD };
 
 public:
-    LoadOrQuitAction()
-    {
-    }
-
+    LoadOrQuitAction() = default;
     LoadOrQuitAction(LoadOrQuitModes mode, uint8_t savePromptMode = PM_SAVE_BEFORE_LOAD)
         : _mode(static_cast<uint8_t>(mode))
         , _savePromptMode(savePromptMode)
