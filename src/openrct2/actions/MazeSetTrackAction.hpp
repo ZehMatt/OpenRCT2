@@ -50,14 +50,12 @@ DEFINE_GAME_ACTION(MazeSetTrackAction, GAME_COMMAND_SET_MAZE_TRACK, GameActionRe
 {
 private:
     CoordsXYZD _loc;
-    bool _initialPlacement;
-    NetworkRideId_t _rideIndex;
-    uint8_t _mode;
+    bool _initialPlacement = false;
+    NetworkRideId_t _rideIndex = RIDE_ID_NULL;
+    uint8_t _mode = std::numeric_limits<uint8_t>::max();
 
 public:
-    MazeSetTrackAction()
-    {
-    }
+    MazeSetTrackAction() = default;
     MazeSetTrackAction(CoordsXYZD location, bool initialPlacement, NetworkRideId_t rideIndex, uint8_t mode)
         : _loc(location)
         , _initialPlacement(initialPlacement)
@@ -81,6 +79,29 @@ public:
         res->Position.z = _loc.z;
         res->ExpenditureType = RCT_EXPENDITURE_TYPE_RIDE_CONSTRUCTION;
         res->ErrorTitle = STR_RIDE_CONSTRUCTION_CANT_CONSTRUCT_THIS_HERE;
+
+        // Check if mode is valid.
+        switch (_mode)
+        {
+            case GC_SET_MAZE_TRACK_BUILD:
+            case GC_SET_MAZE_TRACK_MOVE:
+            case GC_SET_MAZE_TRACK_FILL:
+                break;
+            default:
+                res->Error = GA_ERROR::UNKNOWN;
+                res->ErrorMessage = STR_CONSTRUCTION_ERR_UNKNOWN;
+                return res;
+        }
+
+        // Rides must always exist to place maze tracks.
+        auto ride = get_ride(_rideIndex);
+        if (ride == nullptr || ride->type == RIDE_CRASH_TYPE_NONE)
+        {
+            res->Error = GA_ERROR::INVALID_PARAMETERS;
+            res->ErrorMessage = STR_NONE;
+            return res;
+        }
+
         if (!map_check_free_elements_and_reorganise(1))
         {
             res->Error = GA_ERROR::NO_FREE_ELEMENTS;
@@ -155,14 +176,6 @@ public:
                 return res;
             }
 
-            auto ride = get_ride(_rideIndex);
-            if (ride == nullptr || ride->type == RIDE_CRASH_TYPE_NONE)
-            {
-                res->Error = GA_ERROR::NO_CLEARANCE;
-                res->ErrorMessage = STR_INVALID_SELECTION_OF_OBJECTS;
-                return res;
-            }
-
             money32 price = (((RideTrackCosts[ride->type].track_price * TrackPricing[TRACK_ELEM_MAZE]) >> 16));
             res->Cost = price / 2 * 10;
 
@@ -193,7 +206,7 @@ public:
         if (!map_check_free_elements_and_reorganise(1))
         {
             res->Error = GA_ERROR::NO_FREE_ELEMENTS;
-            res->ErrorMessage = STR_NONE;
+            res->ErrorMessage = STR_TILE_ELEMENT_LIMIT_REACHED;
             return res;
         }
 
