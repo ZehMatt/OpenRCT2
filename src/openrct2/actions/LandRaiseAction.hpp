@@ -31,12 +31,10 @@ DEFINE_GAME_ACTION(LandRaiseAction, GAME_COMMAND_RAISE_LAND, GameActionResult)
 private:
     CoordsXY _coords;
     MapRange _range;
-    uint8_t _selectionType;
+    uint8_t _selectionType{};
 
 public:
-    LandRaiseAction()
-    {
-    }
+    LandRaiseAction() = default;
     LandRaiseAction(CoordsXY coords, MapRange range, uint8_t selectionType)
         : _coords(coords)
         , _range(range)
@@ -75,6 +73,13 @@ private:
         // The selections between MAP_SELECT_TYPE_FULL and MAP_SELECT_TYPE_EDGE_0 are not included in the tables
         if (_selectionType >= MAP_SELECT_TYPE_EDGE_0 && _selectionType <= MAP_SELECT_TYPE_EDGE_3)
             tableRow -= MAP_SELECT_TYPE_EDGE_0 - MAP_SELECT_TYPE_FULL - 1;
+
+        constexpr size_t tableSize = std::size(tile_element_raise_styles);
+        if (tableRow >= tableSize)
+        {
+            // Don't read out of bounds.
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_NONE);
+        }
 
         // Keep big coordinates within map boundaries
         auto aX = std::max<decltype(_range.GetLeft())>(32, _range.GetLeft());
