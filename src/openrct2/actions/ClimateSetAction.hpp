@@ -17,7 +17,7 @@ DEFINE_GAME_ACTION(ClimateSetAction, GAME_COMMAND_SET_CLIMATE, GameActionResult)
     using climate_t = decltype(gClimate);
 
 private:
-    climate_t _climate;
+    climate_t _climate = CLIMATE_COUNT;
 
 public:
     ClimateSetAction() = default;
@@ -42,10 +42,10 @@ public:
     {
         if (_climate >= CLIMATE_COUNT)
         {
-            return std::make_unique<GameActionResult>(GA_ERROR::INVALID_PARAMETERS, STR_INVALID_CLIMATE_ID, STR_NONE);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_INVALID_CLIMATE_ID, STR_NONE);
         }
 
-        return std::make_unique<GameActionResult>();
+        return MakeResult();
     }
 
     GameActionResult::Ptr Execute() const override
@@ -54,6 +54,6 @@ public:
 
         gfx_invalidate_screen();
 
-        return std::make_unique<GameActionResult>();
+        return MakeResult();
     }
 };
