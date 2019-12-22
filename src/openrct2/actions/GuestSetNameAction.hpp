@@ -24,13 +24,11 @@
 DEFINE_GAME_ACTION(GuestSetNameAction, GAME_COMMAND_SET_GUEST_NAME, GameActionResult)
 {
 private:
-    uint16_t _spriteIndex;
+    uint16_t _spriteIndex = SPRITE_INDEX_NULL;
     std::string _name;
 
 public:
-    GuestSetNameAction()
-    {
-    }
+    GuestSetNameAction() = default;
     GuestSetNameAction(uint16_t spriteIndex, const std::string& name)
         : _spriteIndex(spriteIndex)
         , _name(name)
@@ -53,14 +51,14 @@ public:
     {
         if (_spriteIndex >= MAX_SPRITES)
         {
-            return std::make_unique<GameActionResult>(GA_ERROR::INVALID_PARAMETERS, STR_CANT_NAME_GUEST, STR_NONE);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_CANT_NAME_GUEST, STR_NONE);
         }
 
         auto peep = GET_PEEP(_spriteIndex);
         if (peep->type != PEEP_TYPE_GUEST)
         {
             log_warning("Invalid game command for sprite %u", _spriteIndex);
-            return std::make_unique<GameActionResult>(GA_ERROR::INVALID_PARAMETERS, STR_CANT_NAME_GUEST, STR_NONE);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_CANT_NAME_GUEST, STR_NONE);
         }
 
         return std::make_unique<GameActionResult>();
@@ -72,18 +70,18 @@ public:
         if (peep->type != PEEP_TYPE_GUEST)
         {
             log_warning("Invalid game command for sprite %u", _spriteIndex);
-            return std::make_unique<GameActionResult>(GA_ERROR::INVALID_PARAMETERS, STR_CANT_NAME_GUEST, STR_NONE);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_CANT_NAME_GUEST, STR_NONE);
         }
 
         auto curName = peep->GetName();
         if (curName == _name)
         {
-            return std::make_unique<GameActionResult>(GA_ERROR::OK, STR_NONE);
+            return MakeResult(GA_ERROR::OK, STR_NONE);
         }
 
         if (!peep->SetName(_name))
         {
-            return std::make_unique<GameActionResult>(GA_ERROR::UNKNOWN, STR_CANT_NAME_GUEST, STR_NONE);
+            return MakeResult(GA_ERROR::UNKNOWN, STR_CANT_NAME_GUEST, STR_NONE);
         }
 
         peep_update_name_sort(peep);
