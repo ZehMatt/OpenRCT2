@@ -18,9 +18,9 @@ DEFINE_GAME_ACTION(LargeScenerySetColourAction, GAME_COMMAND_SET_LARGE_SCENERY_C
 {
 private:
     CoordsXYZD _loc;
-    uint8_t _tileIndex;
-    uint8_t _primaryColour;
-    uint8_t _secondaryColour;
+    uint8_t _tileIndex{};
+    uint8_t _primaryColour{ COLOUR_BLACK };
+    uint8_t _secondaryColour{ COLOUR_BLACK };
 
 public:
     LargeScenerySetColourAction() = default;
@@ -147,5 +147,14 @@ private:
             }
         }
         return res;
+    }
+    int16_t GetTotalNumTiles(rct_large_scenery_tile * tiles) const
+    {
+        uint32_t totalNumTiles = 0;
+        for (rct_large_scenery_tile* tile = tiles; tile->x_offset != -1; tile++)
+        {
+            totalNumTiles++;
+        }
+        return totalNumTiles;
     }
 };
