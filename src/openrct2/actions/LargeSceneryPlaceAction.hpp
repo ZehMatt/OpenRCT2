@@ -48,8 +48,8 @@ DEFINE_GAME_ACTION(LargeSceneryPlaceAction, GAME_COMMAND_PLACE_LARGE_SCENERY, La
 private:
     CoordsXYZD _loc;
     uint8_t _sceneryType{ std::numeric_limits<uint8_t>::max() };
-    uint8_t _primaryColour;
-    uint8_t _secondaryColour;
+    uint8_t _primaryColour{ COLOUR_BLACK };
+    uint8_t _secondaryColour{ COLOUR_BLACK };
     BannerIndex _bannerId{ BANNER_INDEX_NULL };
 
 public:
@@ -86,7 +86,7 @@ public:
 
     GameActionResult::Ptr Query() const override
     {
-        auto res = std::make_unique<LargeSceneryPlaceActionResult>();
+        auto res = MakeResult();
         res->ErrorTitle = STR_CANT_POSITION_THIS_HERE;
         res->ExpenditureType = RCT_EXPENDITURE_TYPE_LANDSCAPING;
         int16_t surfaceHeight = tile_element_height(_loc);
@@ -102,20 +102,20 @@ public:
             log_error(
                 "Invalid game command for scenery placement, primaryColour = %u, secondaryColour = %u", _primaryColour,
                 _secondaryColour);
-            return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::INVALID_PARAMETERS);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS);
         }
 
         if (_sceneryType >= MAX_LARGE_SCENERY_OBJECTS)
         {
             log_error("Invalid game command for scenery placement, sceneryType = %u", _sceneryType);
-            return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::INVALID_PARAMETERS);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS);
         }
 
         rct_scenery_entry* sceneryEntry = get_large_scenery_entry(_sceneryType);
         if (sceneryEntry == nullptr)
         {
             log_error("Invalid game command for scenery placement, sceneryType = %u", _sceneryType);
-            return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::INVALID_PARAMETERS);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS);
         }
 
         uint32_t totalNumTiles = GetTotalNumTiles(sceneryEntry->large_scenery.tiles);
@@ -140,14 +140,14 @@ public:
             if (banner->type != BANNER_NULL)
             {
                 log_error("No free banners available");
-                return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::NO_FREE_ELEMENTS);
+                return MakeResult(GA_ERROR::NO_FREE_ELEMENTS);
             }
         }
 
         if (!map_check_free_elements_and_reorganise(totalNumTiles))
         {
             log_error("No free map elements available");
-            return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::NO_FREE_ELEMENTS);
+            return MakeResult(GA_ERROR::NO_FREE_ELEMENTS);
         }
 
         uint8_t tileNum = 0;
@@ -166,8 +166,7 @@ public:
                     curTile.x, curTile.y, zLow, zHigh, &map_place_scenery_clear_func, quarterTile, GetFlags(), &supportsCost,
                     CREATE_CROSSING_MODE_NONE))
             {
-                return std::make_unique<LargeSceneryPlaceActionResult>(
-                    GA_ERROR::NO_CLEARANCE, gGameCommandErrorText, gCommonFormatArgs);
+                return MakeResult(GA_ERROR::NO_CLEARANCE, gGameCommandErrorText, gCommonFormatArgs);
             }
 
             int32_t tempSceneryGroundFlags = gMapGroundFlags & (ELEMENT_IS_ABOVE_GROUND | ELEMENT_IS_UNDERGROUND);
@@ -175,13 +174,11 @@ public:
             {
                 if ((gMapGroundFlags & ELEMENT_IS_UNDERWATER) || (gMapGroundFlags & ELEMENT_IS_UNDERGROUND))
                 {
-                    return std::make_unique<LargeSceneryPlaceActionResult>(
-                        GA_ERROR::DISALLOWED, STR_CANT_BUILD_THIS_UNDERWATER);
+                    return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_BUILD_THIS_UNDERWATER);
                 }
                 if (res->GroundFlags && !(res->GroundFlags & tempSceneryGroundFlags))
                 {
-                    return std::make_unique<LargeSceneryPlaceActionResult>(
-                        GA_ERROR::DISALLOWED, STR_CANT_BUILD_PARTLY_ABOVE_AND_PARTLY_BELOW_GROUND);
+                    return MakeResult(GA_ERROR::DISALLOWED, STR_CANT_BUILD_PARTLY_ABOVE_AND_PARTLY_BELOW_GROUND);
                 }
             }
 
@@ -189,13 +186,13 @@ public:
 
             if (curTile.x >= gMapSizeUnits || curTile.y >= gMapSizeUnits)
             {
-                return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::DISALLOWED, STR_OFF_EDGE_OF_MAP);
+                return MakeResult(GA_ERROR::DISALLOWED, STR_OFF_EDGE_OF_MAP);
             }
 
             if (!(gScreenFlags & SCREEN_FLAGS_SCENARIO_EDITOR) && !map_is_location_owned({ curTile, zLow * 8 })
                 && !gCheatsSandboxMode)
             {
-                return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::DISALLOWED, STR_LAND_NOT_OWNED_BY_PARK);
+                return MakeResult(GA_ERROR::DISALLOWED, STR_LAND_NOT_OWNED_BY_PARK);
             }
         }
 
@@ -208,7 +205,7 @@ public:
 
     GameActionResult::Ptr Execute() const override
     {
-        auto res = std::make_unique<LargeSceneryPlaceActionResult>();
+        auto res = MakeResult();
         res->ErrorTitle = STR_CANT_POSITION_THIS_HERE;
 
         int16_t surfaceHeight = tile_element_height(_loc);
@@ -223,13 +220,13 @@ public:
         if (sceneryEntry == nullptr)
         {
             log_error("Invalid game command for scenery placement, sceneryType = %u", _sceneryType);
-            return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::INVALID_PARAMETERS);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS);
         }
 
         if (sceneryEntry->large_scenery.tiles == nullptr)
         {
             log_error("Invalid large scenery object, sceneryType = %u", _sceneryType);
-            return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::INVALID_PARAMETERS);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS);
         }
 
         uint32_t totalNumTiles = GetTotalNumTiles(sceneryEntry->large_scenery.tiles);
@@ -254,7 +251,7 @@ public:
             if (banner->type != BANNER_NULL)
             {
                 log_error("No free banners available");
-                return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::NO_FREE_ELEMENTS);
+                return MakeResult(GA_ERROR::NO_FREE_ELEMENTS);
             }
 
             banner->text = {};
@@ -276,7 +273,7 @@ public:
         if (!map_check_free_elements_and_reorganise(totalNumTiles))
         {
             log_error("No free map elements available");
-            return std::make_unique<LargeSceneryPlaceActionResult>(GA_ERROR::NO_FREE_ELEMENTS);
+            return MakeResult(GA_ERROR::NO_FREE_ELEMENTS);
         }
 
         uint8_t tileNum = 0;
@@ -295,8 +292,7 @@ public:
                     curTile.x, curTile.y, zLow, zHigh, &map_place_scenery_clear_func, quarterTile, GetFlags(), &supportsCost,
                     CREATE_CROSSING_MODE_NONE))
             {
-                return std::make_unique<LargeSceneryPlaceActionResult>(
-                    GA_ERROR::NO_CLEARANCE, gGameCommandErrorText, gCommonFormatArgs);
+                return MakeResult(GA_ERROR::NO_CLEARANCE, gGameCommandErrorText, gCommonFormatArgs);
             }
 
             res->GroundFlags = gMapGroundFlags & (ELEMENT_IS_ABOVE_GROUND | ELEMENT_IS_UNDERGROUND);
