@@ -28,13 +28,11 @@ DEFINE_GAME_ACTION(LandSetHeightAction, GAME_COMMAND_SET_LAND_HEIGHT, GameAction
 {
 private:
     CoordsXY _coords;
-    uint8_t _height;
-    uint8_t _style;
+    uint8_t _height{};
+    uint8_t _style{};
 
 public:
-    LandSetHeightAction()
-    {
-    }
+    LandSetHeightAction() = default;
     LandSetHeightAction(CoordsXY coords, uint8_t height, uint8_t style)
         : _coords(coords)
         , _height(height)
@@ -58,20 +56,20 @@ public:
     {
         if (gParkFlags & PARK_FLAGS_FORBID_LANDSCAPE_CHANGES)
         {
-            return std::make_unique<GameActionResult>(GA_ERROR::DISALLOWED, STR_FORBIDDEN_BY_THE_LOCAL_AUTHORITY);
+            return MakeResult(GA_ERROR::DISALLOWED, STR_FORBIDDEN_BY_THE_LOCAL_AUTHORITY);
         }
 
         rct_string_id errorTitle = CheckParameters();
         if (errorTitle != STR_NONE)
         {
-            return std::make_unique<GameActionResult>(GA_ERROR::DISALLOWED, errorTitle);
+            return MakeResult(GA_ERROR::DISALLOWED, errorTitle);
         }
 
         if (!(gScreenFlags & SCREEN_FLAGS_SCENARIO_EDITOR) && !gCheatsSandboxMode)
         {
             if (!map_is_location_in_park(_coords))
             {
-                return std::make_unique<GameActionResult>(GA_ERROR::DISALLOWED, STR_LAND_NOT_OWNED_BY_PARK);
+                return MakeResult(GA_ERROR::DISALLOWED, STR_LAND_NOT_OWNED_BY_PARK);
             }
         }
 
@@ -85,7 +83,7 @@ public:
                 if (tileElement != nullptr)
                 {
                     map_obstruction_set_error_text(tileElement);
-                    return std::make_unique<GameActionResult>(GA_ERROR::DISALLOWED, gGameCommandErrorText);
+                    return MakeResult(GA_ERROR::DISALLOWED, gGameCommandErrorText);
                 }
             }
             sceneryRemovalCost = GetSmallSceneryRemovalCost();
@@ -97,7 +95,7 @@ public:
             errorTitle = CheckRideSupports();
             if (errorTitle != STR_NONE)
             {
-                return std::make_unique<GameActionResult>(GA_ERROR::DISALLOWED, errorTitle);
+                return MakeResult(GA_ERROR::DISALLOWED, errorTitle);
             }
         }
 
@@ -109,7 +107,7 @@ public:
         if (tileElement != nullptr)
         {
             map_obstruction_set_error_text(tileElement);
-            return std::make_unique<GameActionResult>(GA_ERROR::DISALLOWED, gGameCommandErrorText);
+            return MakeResult(GA_ERROR::DISALLOWED, gGameCommandErrorText);
         }
 
         if (!gCheatsDisableClearanceChecks)
@@ -135,10 +133,12 @@ public:
             if (tileElement != nullptr)
             {
                 map_obstruction_set_error_text(tileElement);
-                return std::make_unique<GameActionResult>(GA_ERROR::DISALLOWED, gGameCommandErrorText);
+                return MakeResult(GA_ERROR::DISALLOWED, gGameCommandErrorText);
             }
         }
-        auto res = std::make_unique<GameActionResult>();
+
+        auto res = MakeResult();
+        res->Position = { _coords.x + 16, _coords.y + 16, tile_element_height(_coords) };
         res->Cost = sceneryRemovalCost + GetSurfaceHeightChangeCost(surfaceElement);
         res->ExpenditureType = RCT_EXPENDITURE_TYPE_LANDSCAPING;
         return res;
@@ -159,12 +159,12 @@ public:
 
         auto* surfaceElement = map_get_surface_element_at(_coords);
         if (surfaceElement == nullptr)
-            return std::make_unique<GameActionResult>(GA_ERROR::UNKNOWN, STR_NONE);
+            return MakeResult(GA_ERROR::INVALID_PARAMETERS, STR_NONE);
 
         cost += GetSurfaceHeightChangeCost(surfaceElement);
         SetSurfaceHeight(reinterpret_cast<TileElement*>(surfaceElement));
 
-        auto res = std::make_unique<GameActionResult>();
+        auto res = MakeResult();
         res->Position = { _coords.x + 16, _coords.y + 16, surfaceHeight };
         res->Cost = cost;
         res->ExpenditureType = RCT_EXPENDITURE_TYPE_LANDSCAPING;
