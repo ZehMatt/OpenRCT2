@@ -1596,7 +1596,7 @@ static bool track_design_place_ride(TrackDesign* td6, const CoordsXYZ& origin, R
                 }
                 gGameCommandErrorTitle = STR_RIDE_CONSTRUCTION_CANT_CONSTRUCT_THIS_HERE;
                 auto trackPlaceAction = TrackPlaceAction(
-                    _currentRideIndex, trackType, { newCoords, tempZ, static_cast<uint8_t>(rotation) }, brakeSpeed, trackColour,
+                    ride->id, trackType, { newCoords, tempZ, static_cast<uint8_t>(rotation) }, brakeSpeed, trackColour,
                     seatRotation, liftHillAndAlternativeState, true);
                 trackPlaceAction.SetFlags(flags);
 
@@ -1810,6 +1810,10 @@ int32_t place_virtual_track(TrackDesign* td6, uint8_t ptdOperation, bool placeSc
     {
         _trackDesignPlaceStatePlaceScenery = false;
     }
+
+    // NOTE: We need to save this, in networked games this would affect all clients otherwise.
+    ride_id_t savedRideId = _currentRideIndex;
+
     _currentRideIndex = ride->id;
 
     _trackPreviewMin = coords;
@@ -1825,6 +1829,8 @@ int32_t place_virtual_track(TrackDesign* td6, uint8_t ptdOperation, bool placeSc
     {
         track_place_success = track_design_place_ride(td6, coords, ride);
     }
+
+    _currentRideIndex = savedRideId;
 
     // Scenery elements
     if (track_place_success)
@@ -1851,6 +1857,7 @@ int32_t place_virtual_track(TrackDesign* td6, uint8_t ptdOperation, bool placeSc
         // from _trackDesignPlaceZ, causing bug #259.
         return _trackDesignPlaceZ - _trackDesignPlaceSceneryZ;
     }
+
     return _trackDesignPlaceCost;
 }
 
