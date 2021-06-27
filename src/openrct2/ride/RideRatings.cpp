@@ -24,6 +24,7 @@
 #include "Track.h"
 
 #include <algorithm>
+#include <array>
 #include <iterator>
 
 using namespace OpenRCT2;
@@ -76,7 +77,12 @@ struct ShelteredEights
     uint8_t TotalShelteredEighths;
 };
 
+// UNUSED!
 RideRatingUpdateState gRideRatingUpdateState;
+
+static constexpr auto MaxRideRatingUpdateStates = 5;
+
+std::array<RideRatingUpdateState, MaxRideRatingUpdateStates> gRideRatingUpdateStates;
 
 static void ride_ratings_update_state(RideRatingUpdateState& state);
 static void ride_ratings_update_state_0(RideRatingUpdateState& state);
@@ -121,9 +127,10 @@ void ride_ratings_update_all()
     if (gScreenFlags & SCREEN_FLAGS_SCENARIO_EDITOR)
         return;
 
-    // NOTE: Until the new save format only one ride can be updated at once.
-    // The SV6 format can store only a single state.
-    ride_ratings_update_state(gRideRatingUpdateState);
+    for (auto& state : gRideRatingUpdateStates)
+    {
+        ride_ratings_update_state(state);
+    }
 }
 
 static void ride_ratings_update_state(RideRatingUpdateState& state)
@@ -165,11 +172,21 @@ static void ride_ratings_update_state_0(RideRatingUpdateState& state)
         currentRide = 0;
     }
 
-    auto ride = get_ride(currentRide);
-    if (ride != nullptr && ride->status != RideStatus::Closed)
+    // Make sure no other state is currently updating this ride.
+    auto it = std::find_if(gRideRatingUpdateStates.begin(), gRideRatingUpdateStates.end(), [currentRide](auto& state) {
+        return state.CurrentRide == currentRide;
+    });
+
+    if (it == gRideRatingUpdateStates.end())
     {
-        state.State = RIDE_RATINGS_STATE_INITIALISE;
+        auto ride = get_ride(currentRide);
+        if (ride != nullptr && ride->status != RideStatus::Closed)
+        {
+            // No other state is updating this ride and and its open.
+            state.State = RIDE_RATINGS_STATE_INITIALISE;
+        }
     }
+
     state.CurrentRide = currentRide;
 }
 
