@@ -224,37 +224,32 @@ namespace OpenRCT2::Scripting
     template<typename T> class DukEnumMap
     {
     private:
-        std::unordered_map<std::string_view, T> _s2n;
-        std::unordered_map<T, std::string_view> _n2s;
+        std::vector<std::pair<std::string_view, T>> _map;
 
     public:
         DukEnumMap(const std::initializer_list<std::pair<std::string_view, T>>& items)
+            : _map{ items }
         {
-            _s2n = std::unordered_map<std::string_view, T>(items.begin(), items.end());
-            for (const auto& kvp : items)
-            {
-                _n2s.emplace(std::get<1>(kvp), std::get<0>(kvp));
-            }
         }
 
         std::string_view operator[](T k) const
         {
-            auto it = _n2s.find(k);
-            if (it == _n2s.end())
+            auto it = std::find_if(_map.begin(), _map.end(), [k](auto& entry) { return entry.second == k; });
+            if (it != _map.end())
             {
-                return "";
+                return it->first;
             }
-            return it->second;
+            return "";
         }
 
         T operator[](std::string_view k) const
         {
-            auto it = _s2n.find(k);
-            if (it == _s2n.end())
+            auto it = std::find_if(_map.begin(), _map.end(), [k](auto& entry) { return entry.first == k; });
+            if (it != _map.end())
             {
-                return static_cast<T>(0);
+                return it->second;
             }
-            return it->second;
+            return T{};
         }
     };
 
