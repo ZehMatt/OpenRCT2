@@ -122,6 +122,7 @@ public: // Client
     void ServerClientDisconnected();
     bool LoadMap(OpenRCT2::IStream* stream);
     void UpdateClient();
+    NetworkConnection* GetServerConnection();
 
     // Packet dispatchers.
     void Client_Send_RequestGameState(uint32_t tick);
@@ -231,5 +232,7 @@ private: // Client Data
     bool _requireReconnect = false;
     bool _clientMapLoaded = false;
 };
+
+extern NetworkBase gNetwork;
 
 #endif // DISABLE_NETWORK

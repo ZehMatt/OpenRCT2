@@ -101,7 +101,7 @@ static void network_get_keys_directory(utf8* buffer, size_t bufferSize);
 static void network_get_private_key_path(utf8* buffer, size_t bufferSize, const std::string& playerName);
 static void network_get_public_key_path(utf8* buffer, size_t bufferSize, const std::string& playerName, const utf8* hash);
 
-static NetworkBase gNetwork;
+NetworkBase gNetwork;
 
 NetworkBase::NetworkBase()
 {
@@ -652,6 +652,11 @@ void NetworkBase::UpdateClient()
             break;
         }
     }
+}
+
+NetworkConnection* NetworkBase::GetServerConnection()
+{
+    return _serverConnection.get();
 }
 
 std::vector<std::unique_ptr<NetworkPlayer>>::iterator NetworkBase::GetPlayerIteratorByID(uint8_t id)

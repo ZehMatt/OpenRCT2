@@ -52,6 +52,7 @@
   <!-- Files -->
   <ItemGroup>
     <ClInclude Include="AssertHelpers.hpp" />
+    <ClInclude Include="Fuzzing.hpp" />
     <ClInclude Include="helpers\StringHelpers.hpp" />
     <ClInclude Include="TestData.h" />
   </ItemGroup>
@@ -62,6 +63,8 @@
     <ClCompile Include="Endianness.cpp" />
     <ClCompile Include="EnumMapTest.cpp" />
     <ClCompile Include="FormattingTests.cpp" />
+    <ClCompile Include="Fuzzing.cpp" />
+    <ClCompile Include="GameActionFuzzer.cpp" />
     <ClCompile Include="LanguagePackTest.cpp" />
     <ClCompile Include="ImageImporterTests.cpp" />
     <ClCompile Include="IniReaderTest.cpp" />
