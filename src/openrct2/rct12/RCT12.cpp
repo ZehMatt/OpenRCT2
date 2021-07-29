@@ -21,6 +21,8 @@
 #include "../world/TileElement.h"
 #include "../world/Wall.h"
 
+#include <src/openrct2/scenario/Scenario.h>
+
 using namespace OpenRCT2;
 
 uint8_t RCT12TileElementBase::GetType() const
@@ -1348,4 +1350,20 @@ RCT12TrackType OpenRCT2FlatTrackTypeToRCT12(track_type_t origTrackType)
     }
 
     return origTrackType;
+}
+
+money64 RCT12CompletedCompanyValueToOpenRCT2(money32 origValue)
+{
+    if (origValue == RCT12_COMPANY_VALUE_ON_FAILED_OBJECTIVE)
+        return COMPANY_VALUE_ON_FAILED_OBJECTIVE;
+
+    return ToMoney64(origValue);
+}
+
+money32 OpenRCT2CompletedCompanyValueToRCT12(money64 origValue)
+{
+    if (origValue == COMPANY_VALUE_ON_FAILED_OBJECTIVE)
+        return RCT12_COMPANY_VALUE_ON_FAILED_OBJECTIVE;
+
+    return ToMoney32(origValue);
 }
