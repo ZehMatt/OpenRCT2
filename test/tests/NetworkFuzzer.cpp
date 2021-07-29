@@ -33,7 +33,7 @@
 using namespace OpenRCT2;
 
 // If this is defined it wont spawn a local server on its own.
-#define NO_CHILD
+//#define NO_CHILD
 
 enum class StateType
 {
@@ -64,7 +64,7 @@ static void HandleInit(ClientState& state)
 
 #ifndef NO_CHILD
     state.child = Fuzzing::SpawnDebugChild(
-        "host testdata/parks/bpb.sv6 --headless --password=fuzz --port=11753 --user-data-path=.\\fuzzer_server");
+        "host testdata/parks/bpb.sv6 --password=fuzz --port=11753 --user-data-path=.\\fuzzer_server");
     ASSERT_NE(state.child, nullptr);
 #endif
 
@@ -144,7 +144,7 @@ static void HandleFuzzerLoop(ClientState& state)
 
     for (;;)
     {
-        Fuzzing::MutateInputBrute(state.input, 32);
+        Fuzzing::MutateInputRandom(state.input, state.prng);
 
         cmdType = static_cast<GameCommand>(state.input.raw[0] % static_cast<size_t>(GameCommand::Count));
         if (cmdType == GameCommand::LoadOrQuit)
@@ -153,9 +153,7 @@ static void HandleFuzzerLoop(ClientState& state)
         break;
     }
 
-    NetworkPacket packet(NetworkCommand::GameAction);
-
-    packet << gCurrentTicks << cmdType;
+    NetworkPacket packet;
     packet.Write(state.input.raw.data(), state.input.raw.size());
 
     connection->QueuePacket(packet);
@@ -171,7 +169,7 @@ static void HandleFuzzerLoop(ClientState& state)
     }
 }
 
-TEST(GameActionFuzzer, all)
+TEST(NetworkFuzzer, all)
 {
     std::string path = TestData::GetParkPath("bpb.sv6");
 

@@ -12,7 +12,7 @@ namespace OpenRCT2::Fuzzing
         bool hitSystemBP{};
     };
 
-    bool MutateInput(InputState& input, std::mt19937_64& prng)
+    bool MutateInputRandom(InputState& input, std::mt19937_64& prng)
     {
         enum class MutationType
         {
@@ -62,6 +62,38 @@ namespace OpenRCT2::Fuzzing
             input.raw.erase(input.raw.begin() + byteIndex);
         }
 
+        return true;
+    }
+
+    bool MutateInputBrute(InputState& input, size_t maxBytes)
+    {
+        auto& buf = input.raw;
+
+        if (buf.empty())
+        {
+            buf.push_back(0);
+            return true;
+        }
+
+        for (auto it = buf.rbegin(); it != buf.rend(); it++)
+        {
+            auto& val = *it;
+            if (1 + val > 0xFF)
+            {
+                val = 0;
+                continue;
+            }
+            else
+            {
+                val++;
+                return true;
+            }
+        }
+
+        if (buf.size() == maxBytes)
+            return false;
+
+        buf.push_back(0);
         return true;
     }
 
@@ -170,4 +202,5 @@ namespace OpenRCT2::Fuzzing
 
         return false;
     }
+
 } // namespace OpenRCT2::Fuzzing

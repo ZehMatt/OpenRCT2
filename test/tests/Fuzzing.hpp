@@ -25,12 +25,11 @@ namespace OpenRCT2::Fuzzing
 
     struct InputState
     {
-        size_t numBits = 0;
-        size_t bitIndex = 0;
         std::vector<uint8_t> raw;
     };
 
-    bool MutateInput(InputState& input, std::mt19937_64& prng);
+    bool MutateInputRandom(InputState& input, std::mt19937_64& prng);
+    bool MutateInputBrute(InputState& input, size_t maxBytes);
 
     struct ChildProcess;
 
