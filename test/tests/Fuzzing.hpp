@@ -10,8 +10,8 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <random>
+#include <vector>
 
 namespace OpenRCT2::Fuzzing
 {
@@ -21,10 +21,12 @@ namespace OpenRCT2::Fuzzing
         AccessViolation,
     };
 
-    using CrashHandler = void(*)(uintptr_t Address, ExceptionType exType, uintptr_t MemoryAddress);
+    using CrashHandler = void (*)(uintptr_t Address, ExceptionType exType, uintptr_t MemoryAddress);
 
     struct InputState
     {
+        size_t numBits = 0;
+        size_t bitIndex = 0;
         std::vector<uint8_t> raw;
     };
 
@@ -37,4 +39,5 @@ namespace OpenRCT2::Fuzzing
     bool UpdateChild(ChildProcess* process, const CrashHandler& handler);
 
     bool FinishProcess(ChildProcess* process);
-}
+
+} // namespace OpenRCT2::Fuzzing

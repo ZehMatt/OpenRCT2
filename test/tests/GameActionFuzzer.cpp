@@ -7,6 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include "Fuzzing.hpp"
 #include "TestData.h"
 
 #include <gtest/gtest.h>
@@ -15,23 +16,23 @@
 #include <openrct2/GameState.h>
 #include <openrct2/OpenRCT2.h>
 #include <openrct2/ParkImporter.h>
+#include <openrct2/actions/GameAction.h>
 #include <openrct2/audio/AudioContext.h>
 #include <openrct2/core/File.h>
 #include <openrct2/core/Path.hpp>
 #include <openrct2/core/String.hpp>
-#include <openrct2/platform/platform.h>
-#include <openrct2/actions/GameAction.h>
-#include <openrct2/network/NetworkPacket.h>
 #include <openrct2/network/NetworkBase.h>
+#include <openrct2/network/NetworkPacket.h>
+#include <openrct2/network/network.h>
+#include <openrct2/platform/platform.h>
 #include <openrct2/ride/Ride.h>
+#include <random>
 #include <string>
 #include <windows.h>
-#include <openrct2/network/network.h>
-#include "Fuzzing.hpp"
-#include <random>
 
 using namespace OpenRCT2;
 
+// If this is defined it wont spawn a local server on its own.
 #define NO_CHILD
 
 enum class StateType
@@ -51,7 +52,10 @@ struct ClientState
     Fuzzing::InputState input;
     std::unique_ptr<IContext> context{};
     uint64_t nextRetry{};
+    uint64_t nextInput{};
     int retryCount{};
+    uint64_t nextReport{};
+    size_t totalPackets{};
 };
 
 static void HandleInit(ClientState& state)
@@ -59,7 +63,8 @@ static void HandleInit(ClientState& state)
     state.prng.seed(1);
 
 #ifndef NO_CHILD
-    state.child = Fuzzing::SpawnDebugChild("host testdata/parks/bpb.sv6 --headless --password=fuzz --port=11753 --user-data-path=.\\fuzzer_server");
+    state.child = Fuzzing::SpawnDebugChild(
+        "host testdata/parks/bpb.sv6 --headless --password=fuzz --port=11753 --user-data-path=.\\fuzzer_server");
     ASSERT_NE(state.child, nullptr);
 #endif
 
@@ -124,24 +129,45 @@ static void HandleAwaitConnection(ClientState& state)
 
 static void HandleFuzzerLoop(ClientState& state)
 {
-    Fuzzing::MutateInput(state.input, state.prng);
+    auto* connection = gNetwork.GetServerConnection();
+    if (connection == nullptr)
+    {
+        printf("Lost connection.\n");
+        state.state = StateType::Cleanup;
+        return;
+    }
 
-    auto cmdType = static_cast<GameCommand>(state.input.raw[0] % static_cast<size_t>(GameCommand::Count));
+    if (connection->PendingPacketCount() > 100)
+        return;
+
+    GameCommand cmdType;
+
+    for (;;)
+    {
+        Fuzzing::MutateInput(state.input, state.prng);
+
+        cmdType = static_cast<GameCommand>(state.input.raw[0] % static_cast<size_t>(GameCommand::Count));
+        if (cmdType == GameCommand::LoadOrQuit)
+            continue;
+
+        break;
+    }
 
     NetworkPacket packet(NetworkCommand::GameAction);
 
     packet << gCurrentTicks << cmdType;
     packet.Write(state.input.raw.data(), state.input.raw.size());
 
-    auto* connection = gNetwork.GetServerConnection();
-    if (connection == nullptr)
+    connection->QueuePacket(packet);
+    state.totalPackets++;
+
+    if (GetTickCount64() >= state.nextReport)
     {
-        printf("Lost connection.\n");
-        state.state = StateType::Cleanup;
-    }
-    else
-    {
-        connection->QueuePacket(packet);
+        printf(
+            "Input size: %zu bits (%zu bytes), Total Packets: %zu\n", state.input.raw.size() * 8, state.input.raw.size(),
+            state.totalPackets);
+
+        state.nextReport = GetTickCount64() + 10000;
     }
 }
 
@@ -188,10 +214,10 @@ TEST(GameActionFuzzer, all)
 
         if (client.child != nullptr)
         {
-            bool res = Fuzzing::UpdateChild(client.child, [](uintptr_t addresss, Fuzzing::ExceptionType exType, uintptr_t memAddress)->void
-            {
-                printf("Child crashed at %p\n", (void*)addresss);
-            });
+            bool res = Fuzzing::UpdateChild(
+                client.child, [](uintptr_t addresss, Fuzzing::ExceptionType exType, uintptr_t memAddress) -> void {
+                    printf("Child crashed at %p\n", (void*)addresss);
+                });
 
             if (!res)
                 break;

@@ -1,6 +1,7 @@
 #include "Fuzzing.hpp"
-#include <windows.h>
+
 #include <cstdio>
+#include <windows.h>
 
 namespace OpenRCT2::Fuzzing
 {
@@ -27,7 +28,7 @@ namespace OpenRCT2::Fuzzing
             return true;
         }
 
-        std::discrete_distribution<> d({ 1000, 500, 1, 1 });
+        std::discrete_distribution<> d({ 10000, 100, 1, 1 });
         auto mutationType = static_cast<MutationType>(d(prng));
 
         if (mutationType == MutationType::RemoveByte && input.raw.size() <= 1)
@@ -72,7 +73,9 @@ namespace OpenRCT2::Fuzzing
         char commandLine[512];
         sprintf_s(commandLine, "openrct2 %s", arguments);
 
-        if (CreateProcessA(nullptr, commandLine, nullptr, nullptr, FALSE, DEBUG_PROCESS, nullptr, nullptr, &child->si, &child->pi) == FALSE)
+        if (CreateProcessA(
+                nullptr, commandLine, nullptr, nullptr, FALSE, DEBUG_PROCESS, nullptr, nullptr, &child->si, &child->pi)
+            == FALSE)
         {
             delete child;
             return nullptr;
@@ -131,12 +134,12 @@ namespace OpenRCT2::Fuzzing
 
         switch (ev.dwDebugEventCode)
         {
-        case EXIT_PROCESS_DEBUG_EVENT:
-            continueType = DebugContinueType::Terminate;
-            break;
-        case EXCEPTION_DEBUG_EVENT:
-            continueType = HandleException(process, ev, handler);
-            break;
+            case EXIT_PROCESS_DEBUG_EVENT:
+                continueType = DebugContinueType::Terminate;
+                break;
+            case EXCEPTION_DEBUG_EVENT:
+                continueType = HandleException(process, ev, handler);
+                break;
         }
 
         if (continueType == DebugContinueType::Terminate)
@@ -167,4 +170,4 @@ namespace OpenRCT2::Fuzzing
 
         return false;
     }
-}
+} // namespace OpenRCT2::Fuzzing
