@@ -39,7 +39,11 @@ include(GNUInstallDirs)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+set(CMAKE_CXX_CLANG_TIDY 
+  clang-tidy;
+  -header-filter=.;
+  -checks=*;)
+  
 set(ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 set(TITLE_SEQUENCE_VERSION "0.1.2c")
