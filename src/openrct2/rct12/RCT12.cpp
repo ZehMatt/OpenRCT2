@@ -13,6 +13,7 @@
 #include "../localisation/Formatting.h"
 #include "../localisation/Localisation.h"
 #include "../ride/Track.h"
+#include "../scenario/Scenario.h"
 #include "../world/Banner.h"
 #include "../world/Footpath.h"
 #include "../world/LargeScenery.h"
@@ -20,8 +21,6 @@
 #include "../world/Surface.h"
 #include "../world/TileElement.h"
 #include "../world/Wall.h"
-
-#include <src/openrct2/scenario/Scenario.h>
 
 using namespace OpenRCT2;
 
