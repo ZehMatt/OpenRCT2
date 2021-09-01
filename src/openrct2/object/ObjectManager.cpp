@@ -65,7 +65,10 @@ public:
     {
         auto index = GetSpareEntry();
         if (!index)
-            return false;
+        {
+            _objects.push_back(std::move(object));
+            return true;
+        }
 
         _objects[*index] = std::move(object);
         return true;
@@ -202,6 +205,7 @@ public:
         // Load the required objects
         size_t numNewLoadedObjects = 0;
         UnloadAll();
+        LoadDefaultObjects();
         LoadObjects(requiredObjects, &numNewLoadedObjects);
         LoadDefaultObjects();
         UpdateSceneryGroupIndexes();
