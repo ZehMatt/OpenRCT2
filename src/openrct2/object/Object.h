@@ -20,8 +20,16 @@
 #include <string_view>
 #include <vector>
 
+// This index is per ride type, not absolute.
 using ObjectEntryIndex = uint16_t;
 constexpr const ObjectEntryIndex OBJECT_ENTRY_INDEX_NULL = std::numeric_limits<ObjectEntryIndex>::max();
+
+// Unique handle per object entry.
+enum class ObjectHandle : uint16_t
+{
+    Null = std::numeric_limits<uint16_t>::max(),
+};
+
 struct ObjectRepositoryItem;
 
 // First 0xF of rct_object_entry->flags
