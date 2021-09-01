@@ -172,7 +172,7 @@ void* object_entry_get_chunk(ObjectType objectType, ObjectEntryIndex index)
 
     void* result = nullptr;
     auto& objectMgr = OpenRCT2::GetContext()->GetObjectManager();
-    auto obj = objectMgr.GetLoadedObject(objectIndex);
+    auto obj = objectMgr.GetLoadedObject(objectType, objectIndex);
     if (obj != nullptr)
     {
         result = obj->GetLegacyData();

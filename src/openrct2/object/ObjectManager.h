@@ -24,8 +24,7 @@ struct IObjectManager
     {
     }
 
-    virtual Object* GetLoadedObject(size_t index) abstract;
-    virtual Object* GetLoadedObject(ObjectType objectType, size_t index) abstract;
+    virtual Object* GetLoadedObject(ObjectType objectType, ObjectEntryIndex index) abstract;
     virtual Object* GetLoadedObject(const ObjectEntryDescriptor& entry) abstract;
     virtual ObjectEntryIndex GetLoadedObjectEntryIndex(const Object* object) abstract;
     virtual std::vector<rct_object_entry> GetInvalidObjects(const rct_object_entry* entries) abstract;
@@ -45,7 +44,6 @@ struct IObjectManager
 
 [[nodiscard]] std::unique_ptr<IObjectManager> CreateObjectManager(IObjectRepository& objectRepository);
 
-[[nodiscard]] Object* object_manager_get_loaded_object_by_index(size_t index);
 [[nodiscard]] Object* object_manager_get_loaded_object(const ObjectEntryDescriptor& entry);
 [[nodiscard]] ObjectEntryIndex object_manager_get_loaded_object_entry_index(const Object* loadedObject);
 [[nodiscard]] ObjectEntryIndex object_manager_get_loaded_object_entry_index(const ObjectEntryDescriptor& entry);

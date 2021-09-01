@@ -25,9 +25,9 @@ using ObjectEntryIndex = uint16_t;
 constexpr const ObjectEntryIndex OBJECT_ENTRY_INDEX_NULL = std::numeric_limits<ObjectEntryIndex>::max();
 
 // Unique handle per object entry.
-enum class ObjectHandle : uint16_t
+enum class ObjectHandle : uint32_t
 {
-    Null = std::numeric_limits<uint16_t>::max(),
+    Null = std::numeric_limits<uint32_t>::max(),
 };
 
 struct ObjectRepositoryItem;
