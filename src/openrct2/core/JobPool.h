@@ -25,7 +25,7 @@ private:
         const std::function<void()> WorkFn;
         const std::function<void()> CompletionFn;
 
-        TaskData(std::function<void()> workFn, std::function<void()> completionFn);
+        TaskData(std::function<void()>&& workFn, std::function<void()>&& completionFn);
     };
 
     std::atomic_bool _shouldStop = { false };
@@ -43,8 +43,8 @@ public:
     JobPool(size_t maxThreads = 255);
     ~JobPool();
 
-    void AddTask(std::function<void()> workFn, std::function<void()> completionFn = nullptr);
-    void Join(std::function<void()> reportFn = nullptr);
+    void AddTask(std::function<void()>&& workFn, std::function<void()>&& completionFn = nullptr);
+    void Join(std::function<void()>&& reportFn = nullptr);
     size_t CountPending();
 
 private:

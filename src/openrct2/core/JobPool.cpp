@@ -12,15 +12,15 @@
 #include <algorithm>
 #include <cassert>
 
-JobPool::TaskData::TaskData(std::function<void()> workFn, std::function<void()> completionFn)
-    : WorkFn(workFn)
-    , CompletionFn(completionFn)
+JobPool::TaskData::TaskData(std::function<void()>&& workFn, std::function<void()>&& completionFn)
+    : WorkFn(std::move(workFn))
+    , CompletionFn(std::move(completionFn))
 {
 }
 
 JobPool::JobPool(size_t maxThreads)
 {
-    maxThreads = std::min<size_t>(maxThreads, std::thread::hardware_concurrency());
+    maxThreads = std::min<size_t>(maxThreads, std::thread::hardware_concurrency() * 2);
     for (size_t n = 0; n < maxThreads; n++)
     {
         _threads.emplace_back(&JobPool::ProcessQueue, this);
@@ -42,14 +42,14 @@ JobPool::~JobPool()
     }
 }
 
-void JobPool::AddTask(std::function<void()> workFn, std::function<void()> completionFn)
+void JobPool::AddTask(std::function<void()>&& workFn, std::function<void()>&& completionFn)
 {
     unique_lock lock(_mutex);
-    _pending.emplace_back(workFn, completionFn);
+    _pending.emplace_back(std::move(workFn), std::move(completionFn));
     _condPending.notify_one();
 }
 
-void JobPool::Join(std::function<void()> reportFn)
+void JobPool::Join(std::function<void()>&& reportFn)
 {
     unique_lock lock(_mutex);
     while (true)

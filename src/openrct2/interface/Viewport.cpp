@@ -47,7 +47,6 @@ uint8_t gShowConstuctionRightsRefCount;
 static std::list<rct_viewport> _viewports;
 rct_viewport* g_music_tracking_viewport;
 
-static std::unique_ptr<JobPool> _paintJobs;
 static std::vector<paint_session*> _paintColumns;
 
 ScreenCoordsXY gSavedView;
@@ -940,16 +939,143 @@ static void viewport_paint_column(paint_session* session)
     PaintSessionFree(session);
 }
 
-/**
- *
- *  rct2: 0x00685CBF
- *  eax: left
- *  ebx: top
- *  edx: right
- *  esi: viewport
- *  edi: dpi
- *  ebp: bottom
- */
+class ParallelWorker
+{
+    std::vector<std::thread> _workers;
+    std::vector<std::function<void()>> _queue;
+    std::condition_variable _condResume;
+    std::condition_variable _condComplete;
+    std::atomic<size_t> _pending{};
+    std::atomic<bool> _exit{};
+    std::mutex _mtxWorker;
+    std::mutex _mtxCompletion;
+
+    using unique_lock = std::unique_lock<std::mutex>;
+
+public:
+    ParallelWorker()
+    {
+        const size_t numWorker = std::max(std::thread::hardware_concurrency(), 1u) * 2u;
+
+        // NOTE: This has to be done before spawning the threads, functions can use
+        // references to the queue entries.
+        _queue.resize(numWorker);
+
+        for (size_t i = 0; i < numWorker; i++)
+        {
+            _workers.emplace_back(&ParallelWorker::WorkerThread, this, i);
+        }
+    }
+
+    ~ParallelWorker()
+    {
+        _exit = true;
+        _condResume.notify_all();
+        for (auto& th : _workers)
+        {
+            th.join();
+        }
+    }
+
+    template<typename T, typename TPred = void (*)(const T&)> void ForEach(const std::vector<T>& vec, TPred pred)
+    {
+        {
+            unique_lock lock(_mtxWorker);
+
+            const auto numWorkers = _workers.size();
+            const auto partitionSize = (vec.size() + (numWorkers - 1)) / numWorkers;
+
+            for (size_t i = 0; i < numWorkers; i++)
+            {
+                const auto rangeStart = i * partitionSize;
+                const auto rangeEnd = std::min(vec.size(), rangeStart + partitionSize);
+                // printf("Start: %zu -> %zu\n", rangeStart, rangeEnd);
+
+                _queue[i] = [&vec, pred, rangeStart, rangeEnd]() {
+                    for (size_t n = rangeStart; n < rangeEnd; n++)
+                    {
+                        auto& elem = vec[n];
+                        pred(elem);
+                    }
+                };
+                _pending++;
+            }
+
+            _condResume.notify_all();
+        }
+        WaitForCompletion();
+    }
+
+    template<typename T, typename TPred = void (*)(const size_t)> void ForEachIndex(const std::vector<T>& vec, TPred pred)
+    {
+        {
+            unique_lock lock(_mtxWorker);
+
+            const auto numWorkers = _workers.size();
+            const auto partitionSize = (vec.size() + (numWorkers - 1)) / numWorkers;
+
+            for (size_t i = 0; i < numWorkers; i++)
+            {
+                const auto rangeStart = i * partitionSize;
+                const auto rangeEnd = std::min(vec.size(), rangeStart + partitionSize);
+                // printf("Start: %zu -> %zu\n", rangeStart, rangeEnd);
+
+                _queue[i] = [&vec, pred, rangeStart, rangeEnd]() {
+                    for (size_t n = rangeStart; n < rangeEnd; n++)
+                    {
+                        pred(n);
+                    }
+                };
+                _pending++;
+            }
+
+            _condResume.notify_all();
+        }
+        WaitForCompletion();
+    }
+
+private:
+    void WaitForCompletion()
+    {
+        unique_lock lock(_mtxCompletion);
+        _condComplete.wait(lock, [&]() { return _pending.load() == 0; });
+
+        assert(_pending == 0);
+    }
+
+    void WorkerThread(const size_t workerIndex)
+    {
+        // printf("Worker Start: %zu\n", workerIndex);
+        auto& func = _queue[workerIndex];
+
+        for (;;)
+        {
+            {
+                unique_lock lock(_mtxWorker);
+
+                // Wait for data.
+                _condResume.wait(lock, [&]() { return _exit || func; });
+            }
+
+            if (_exit)
+                break;
+
+            func();
+            func = nullptr;
+
+            {
+                unique_lock lock(_mtxCompletion);
+
+                _pending--;
+                _condComplete.notify_one();
+            }
+        }
+    }
+};
+
+#if 1
+static std::unique_ptr<JobPool> _paintJobs;
+
 void viewport_paint(
     const rct_viewport* viewport, rct_drawpixelinfo* dpi, int32_t left, int32_t top, int32_t right, int32_t bottom,
     std::vector<RecordedPaintSession>* recorded_sessions)
@@ -1058,6 +1184,111 @@ void viewport_paint(
         viewport_paint_column(column);
     }
 }
+#else
+
+static std::unique_ptr<ParallelWorker> _paintJobs;
+
+void viewport_paint(
+    const rct_viewport* viewport, rct_drawpixelinfo* dpi, int32_t left, int32_t top, int32_t right, int32_t bottom,
+    std::vector<RecordedPaintSession>* recorded_sessions)
+{
+    uint32_t viewFlags = viewport->flags;
+    uint32_t width = right - left;
+    uint32_t height = bottom - top;
+    uint32_t bitmask = viewport->zoom >= 0 ? 0xFFFFFFFF & (0xFFFFFFFF * viewport->zoom) : 0xFFFFFFFF;
+
+    width &= bitmask;
+    height &= bitmask;
+    left &= bitmask;
+    top &= bitmask;
+    right = left + width;
+    bottom = top + height;
+
+    auto x = left - static_cast<int32_t>(viewport->viewPos.x & bitmask);
+    x = x / viewport->zoom;
+    x += viewport->pos.x;
+
+    auto y = top - static_cast<int32_t>(viewport->viewPos.y & bitmask);
+    y = y / viewport->zoom;
+    y += viewport->pos.y;
+
+    rct_drawpixelinfo dpi1;
+    dpi1.DrawingEngine = dpi->DrawingEngine;
+    dpi1.bits = dpi->bits + (x - dpi->x) + ((y - dpi->y) * (dpi->width + dpi->pitch));
+    dpi1.x = left;
+    dpi1.y = top;
+    dpi1.width = width;
+    dpi1.height = height;
+    dpi1.pitch = (dpi->width + dpi->pitch) - (width / viewport->zoom);
+    dpi1.zoom_level = viewport->zoom;
+    dpi1.remX = std::max(0, dpi->x - x);
+    dpi1.remY = std::max(0, dpi->y - y);
+
+    // make sure, the compare operation is done in int32_t to avoid the loop becoming an infiniteloop.
+    // this as well as the [x += 32] in the loop causes signed integer overflow -> undefined behaviour.
+    auto rightBorder = dpi1.x + dpi1.width;
+    auto alignedX = floor2(dpi1.x, 32);
+
+    _paintColumns.clear();
+
+    bool useMultithreading = gConfigGeneral.multithreading;
+    if (useMultithreading && _paintJobs == nullptr)
+    {
+        _paintJobs = std::make_unique<ParallelWorker>();
+    }
+    else if (useMultithreading == false && _paintJobs != nullptr)
+    {
+        _paintJobs.reset();
+    }
+
+    // Create space to record sessions and keep track which index is being drawn
+    size_t index = 0;
+    if (recorded_sessions != nullptr)
+    {
+        auto columnSize = rightBorder - alignedX;
+        auto columnCount = (columnSize + 31) / 32;
+        recorded_sessions->resize(columnCount);
+    }
+
+    // Splits the area into 32 pixel columns and renders them
+    for (x = alignedX; x < rightBorder; x += 32, index++)
+    {
+        paint_session* session = PaintSessionAlloc(&dpi1, viewFlags);
+        _paintColumns.push_back(session);
+
+        rct_drawpixelinfo& dpi2 = session->DPI;
+        if (x >= dpi2.x)
+        {
+            auto leftPitch = x - dpi2.x;
+            dpi2.width -= leftPitch;
+            dpi2.bits += leftPitch / dpi2.zoom_level;
+            dpi2.pitch += leftPitch / dpi2.zoom_level;
+            dpi2.x = x;
+        }
+
+        auto paintRight = dpi2.x + dpi2.width;
+        if (paintRight >= x + 32)
+        {
+            auto rightPitch = paintRight - x - 32;
+            paintRight -= rightPitch;
+            dpi2.pitch += rightPitch / dpi2.zoom_level;
+        }
+        dpi2.width = paintRight - dpi2.x;
+    }
+
+    if (useMultithreading)
+    {
+        _paintJobs->ForEach(_paintColumns, [](auto& column) { viewport_fill_column(column, nullptr, 0); });
+    }
+    else
+    {
+        std::for_each(
+            _paintColumns.begin(), _paintColumns.end(), [](auto& column) { viewport_fill_column(column, nullptr, 0); });
+    }
+
+    std::for_each(_paintColumns.begin(), _paintColumns.end(), [](auto& column) { viewport_paint_column(column); });
+}
+#endif
 
 static void viewport_paint_weather_gloom(rct_drawpixelinfo* dpi)
 {
