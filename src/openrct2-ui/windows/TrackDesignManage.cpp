@@ -139,7 +139,7 @@ static void window_track_manage_mouseup(rct_window* w, rct_widgetindex widgetInd
         case WIDX_RENAME:
             window_text_input_raw_open(
                 w, widgetIndex, STR_TRACK_DESIGN_RENAME_TITLE, STR_TRACK_DESIGN_RENAME_DESC, {},
-                _trackDesignFileReference->name, 127);
+                _trackDesignFileReference->name.c_str(), 127);
             break;
         case WIDX_DELETE:
             window_track_delete_prompt_open();
@@ -170,7 +170,7 @@ static void window_track_manage_textinput(rct_window* w, rct_widgetindex widgetI
         return;
     }
 
-    if (track_repository_rename(_trackDesignFileReference->path, text))
+    if (track_repository_rename(_trackDesignFileReference->path.c_str(), text))
     {
         window_close_by_class(WC_TRACK_DELETE_PROMPT);
         window_close(w);
@@ -188,7 +188,7 @@ static void window_track_manage_textinput(rct_window* w, rct_widgetindex widgetI
  */
 static void window_track_manage_paint(rct_window* w, rct_drawpixelinfo* dpi)
 {
-    Formatter::Common().Add<char*>(_trackDesignFileReference->name);
+    Formatter::Common().Add<char*>(_trackDesignFileReference->name.c_str());
     WindowDrawWidgets(w, dpi);
 }
 
@@ -226,7 +226,7 @@ static void window_track_delete_prompt_mouseup(rct_window* w, rct_widgetindex wi
             break;
         case WIDX_PROMPT_DELETE:
             window_close(w);
-            if (track_repository_delete(_trackDesignFileReference->path))
+            if (track_repository_delete(_trackDesignFileReference->path.c_str()))
             {
                 window_close_by_class(WC_MANAGE_TRACK_DESIGN);
                 window_track_design_list_reload_tracks();
@@ -248,7 +248,7 @@ static void window_track_delete_prompt_paint(rct_window* w, rct_drawpixelinfo* d
     WindowDrawWidgets(w, dpi);
 
     auto ft = Formatter();
-    ft.Add<const char*>(_trackDesignFileReference->name);
+    ft.Add<const char*>(_trackDesignFileReference->name.c_str());
     DrawTextWrapped(
         dpi, { w->windowPos.x + (WW_DELETE_PROMPT / 2), w->windowPos.y + ((WH_DELETE_PROMPT / 2) - 9) }, (WW_DELETE_PROMPT - 4),
         STR_ARE_YOU_SURE_YOU_WANT_TO_PERMANENTLY_DELETE_TRACK, ft, { TextAlignment::CENTRE });

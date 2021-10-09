@@ -133,7 +133,7 @@ static void window_track_place_clear_mini_preview()
  */
 rct_window* window_track_place_open(const track_design_file_ref* tdFileRef)
 {
-    _trackDesign = track_design_open(tdFileRef->path);
+    _trackDesign = track_design_open(tdFileRef->path.c_str());
     if (_trackDesign == nullptr)
     {
         return nullptr;

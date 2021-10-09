@@ -194,8 +194,8 @@ public:
             if (entryIsNotSeparate || String::Equals(item.ObjectEntry, entry, true))
             {
                 track_design_file_ref ref;
-                ref.name = String::Duplicate(GetNameFromTrackPath(item.Path));
-                ref.path = String::Duplicate(item.Path);
+                ref.name = GetNameFromTrackPath(item.Path);
+                ref.path = item.Path;
                 refs.push_back(ref);
             }
         }

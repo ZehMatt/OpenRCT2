@@ -12,15 +12,14 @@
 #include "../common.h"
 
 #include <memory>
+#include <string>
+#include <vector>
 
 struct track_design_file_ref
 {
-    utf8* name;
-    utf8* path;
+    std::string name;
+    std::string path;
 };
-
-#include <string>
-#include <vector>
 
 namespace OpenRCT2
 {
