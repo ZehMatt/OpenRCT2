@@ -6249,15 +6249,14 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
     CoordsXY pos = peep->NextLoc;
 
     auto* surfaceElement = map_get_surface_element_at(pos);
+    if (surfaceElement == nullptr)
+    {
+        return false;
+    }
 
     // Check for walls.
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
-        if (tileElement == nullptr)
-        {
-            return false;
-        }
-
         do
         {
             if (skipGhosts && tileElement->IsGhost())
@@ -6286,16 +6285,15 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
             return false;
         }
         surfaceElement = map_get_surface_element_at(pos);
+        if (surfaceElement == nullptr)
+        {
+            return false;
+        }
     }
 
     // Check for walls.
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
-        if (tileElement == nullptr)
-        {
-            return false;
-        }
-
         do
         {
             if (skipGhosts && tileElement->IsGhost())
@@ -6395,16 +6393,15 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
             return false;
         }
         surfaceElement = map_get_surface_element_at(pos);
+        if (surfaceElement == nullptr)
+        {
+            return false;
+        }
     }
 
     // TODO: extract loop A
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
-        if (tileElement == nullptr)
-        {
-            return false;
-        }
-
         do
         {
             if (skipGhosts && tileElement->IsGhost())
@@ -6503,16 +6500,15 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
             return false;
         }
         surfaceElement = map_get_surface_element_at(pos);
+        if (surfaceElement == nullptr)
+        {
+            return false;
+        }
     }
 
     // TODO: extract loop A
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
-        if (tileElement == nullptr)
-        {
-            return false;
-        }
-
         do
         {
             if (skipGhosts && tileElement->IsGhost())
