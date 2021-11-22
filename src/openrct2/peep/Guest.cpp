@@ -6246,311 +6246,339 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
     // as that may lead to a desync.
     const auto skipGhosts = network_get_mode() != NETWORK_MODE_NONE;
 
-    TileElement* tileElement;
+    int32_t x{};
+    int32_t y{};
 
-    auto surfaceElement = map_get_surface_element_at(peep->NextLoc);
+    auto* surfaceElement = map_get_surface_element_at(peep->NextLoc);
 
-    tileElement = reinterpret_cast<TileElement*>(surfaceElement);
-    if (tileElement == nullptr)
+    // Check for walls.
     {
-        return false;
-    }
-
-    do
-    {
-        if (skipGhosts && tileElement->IsGhost())
-            continue;
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
-            continue;
-        if (tileElement->GetDirection() != edge)
-            continue;
-        auto wallEntry = tileElement->AsWall()->GetEntry();
-        if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
-            continue;
-        if (peep->NextLoc.z + (4 * COORDS_Z_STEP) <= tileElement->GetBaseZ())
-            continue;
-        if (peep->NextLoc.z + (1 * COORDS_Z_STEP) >= tileElement->GetClearanceZ())
-            continue;
-
-        return false;
-    } while (!(tileElement++)->IsLastForTile());
-
-    uint16_t x = peep->NextLoc.x + CoordsDirectionDelta[edge].x;
-    uint16_t y = peep->NextLoc.y + CoordsDirectionDelta[edge].y;
-    if (!map_is_location_valid({ x, y }))
-    {
-        return false;
-    }
-
-    surfaceElement = map_get_surface_element_at(CoordsXY{ x, y });
-
-    tileElement = reinterpret_cast<TileElement*>(surfaceElement);
-    if (tileElement == nullptr)
-    {
-        return false;
-    }
-
-    do
-    {
-        if (skipGhosts && tileElement->IsGhost())
-            continue;
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
-            continue;
-        if (direction_reverse(tileElement->GetDirection()) != edge)
-            continue;
-        auto wallEntry = tileElement->AsWall()->GetEntry();
-        if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
-            continue;
-        // TODO: Check whether this shouldn't be <=, as the other loops use. If so, also extract as loop A.
-        if (peep->NextLoc.z + (4 * COORDS_Z_STEP) >= tileElement->GetBaseZ())
-            continue;
-        if (peep->NextLoc.z + (1 * COORDS_Z_STEP) >= tileElement->GetClearanceZ())
-            continue;
-
-        return false;
-    } while (!(tileElement++)->IsLastForTile());
-
-    // TODO: Extract loop B
-    tileElement = reinterpret_cast<TileElement*>(surfaceElement);
-    do
-    {
-        if (skipGhosts && tileElement->IsGhost())
-            continue;
-        if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
-            continue;
-        if (peep->NextLoc.z + (6 * COORDS_Z_STEP) < tileElement->GetBaseZ())
-            continue;
-
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_TRACK)
+        auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
+        if (tileElement == nullptr)
         {
-            if (peep_should_watch_ride(tileElement))
-            {
-                return loc_690FD0(peep, rideToView, rideSeatToView, tileElement);
-            }
+            return false;
         }
 
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_LARGE_SCENERY)
+        do
         {
-            const auto* sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
-            if (sceneryEntry == nullptr || !(sceneryEntry->flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
-            {
+            if (skipGhosts && tileElement->IsGhost())
                 continue;
-            }
-
-            *rideSeatToView = 0;
-            if (tileElement->GetClearanceZ() >= peep->NextLoc.z + (8 * COORDS_Z_STEP))
-            {
-                *rideSeatToView = 0x02;
-            }
-
-            *rideToView = RIDE_ID_NULL;
-
-            return true;
-        }
-    } while (!(tileElement++)->IsLastForTile());
-
-    // TODO: Extract loop C
-    tileElement = reinterpret_cast<TileElement*>(surfaceElement);
-    do
-    {
-        if (skipGhosts && tileElement->IsGhost())
-            continue;
-        if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
-            continue;
-        if (peep->NextLoc.z + (6 * COORDS_Z_STEP) < tileElement->GetBaseZ())
-            continue;
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_SURFACE)
-            continue;
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_PATH)
-            continue;
-
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_WALL)
-        {
+            if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
+                continue;
+            if (tileElement->GetDirection() != edge)
+                continue;
             auto wallEntry = tileElement->AsWall()->GetEntry();
             if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
-            {
                 continue;
-            }
-        }
+            if (peep->NextLoc.z + (4 * COORDS_Z_STEP) <= tileElement->GetBaseZ())
+                continue;
+            if (peep->NextLoc.z + (1 * COORDS_Z_STEP) >= tileElement->GetClearanceZ())
+                continue;
 
-        return false;
-    } while (!(tileElement++)->IsLastForTile());
-
-    x += CoordsDirectionDelta[edge].x;
-    y += CoordsDirectionDelta[edge].y;
-    if (!map_is_location_valid({ x, y }))
-    {
-        return false;
+            return false;
+        } while (!(tileElement++)->IsLastForTile());
     }
 
-    surfaceElement = map_get_surface_element_at(CoordsXY{ x, y });
-
-    // TODO: extract loop A
-    tileElement = reinterpret_cast<TileElement*>(surfaceElement);
-
-    if (tileElement == nullptr)
+    // Advance one tile into direction of edge
     {
-        return false;
+        x = peep->NextLoc.x + CoordsDirectionDelta[edge].x;
+        y = peep->NextLoc.y + CoordsDirectionDelta[edge].y;
+        if (!map_is_location_valid({ x, y }))
+        {
+            return false;
+        }
+        surfaceElement = map_get_surface_element_at({ x, y });
     }
 
-    do
+    // Check for walls.
     {
-        if (skipGhosts && tileElement->IsGhost())
-            continue;
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
-            continue;
-        if (direction_reverse(tileElement->GetDirection()) != edge)
-            continue;
-        auto wallEntry = tileElement->AsWall()->GetEntry();
-        if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
-            continue;
-        if (peep->NextLoc.z + (6 * COORDS_Z_STEP) <= tileElement->GetBaseZ())
-            continue;
-        if (peep->NextLoc.z >= tileElement->GetClearanceZ())
-            continue;
-
-        return false;
-    } while (!(tileElement++)->IsLastForTile());
-
-    // TODO: Extract loop B
-    tileElement = reinterpret_cast<TileElement*>(surfaceElement);
-    do
-    {
-        if (skipGhosts && tileElement->IsGhost())
-            continue;
-        if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
-            continue;
-        if (peep->NextLoc.z + (8 * COORDS_Z_STEP) < tileElement->GetBaseZ())
-            continue;
-
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_TRACK)
+        auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
+        if (tileElement == nullptr)
         {
-            if (peep_should_watch_ride(tileElement))
-            {
-                return loc_690FD0(peep, rideToView, rideSeatToView, tileElement);
-            }
+            return false;
         }
 
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_LARGE_SCENERY)
+        do
         {
-            auto* sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
-            if (!(sceneryEntry == nullptr || sceneryEntry->flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
-            {
+            if (skipGhosts && tileElement->IsGhost())
                 continue;
-            }
-
-            *rideSeatToView = 0;
-            if (tileElement->GetClearanceZ() >= peep->NextLoc.z + (8 * COORDS_Z_STEP))
-            {
-                *rideSeatToView = 0x02;
-            }
-
-            *rideToView = RIDE_ID_NULL;
-
-            return true;
-        }
-    } while (!(tileElement++)->IsLastForTile());
-
-    // TODO: Extract loop C
-    tileElement = reinterpret_cast<TileElement*>(surfaceElement);
-    do
-    {
-        if (skipGhosts && tileElement->IsGhost())
-            continue;
-        if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
-            continue;
-        if (peep->NextLoc.z + (8 * COORDS_Z_STEP) < tileElement->GetBaseZ())
-            continue;
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_SURFACE)
-            continue;
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_PATH)
-            continue;
-
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_WALL)
-        {
+            if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
+                continue;
+            if (direction_reverse(tileElement->GetDirection()) != edge)
+                continue;
             auto wallEntry = tileElement->AsWall()->GetEntry();
             if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
-            {
                 continue;
-            }
-        }
+            // TODO: Check whether this shouldn't be <=, as the other loops use. If so, also extract as loop A.
+            if (peep->NextLoc.z + (4 * COORDS_Z_STEP) >= tileElement->GetBaseZ())
+                continue;
+            if (peep->NextLoc.z + (1 * COORDS_Z_STEP) >= tileElement->GetClearanceZ())
+                continue;
 
-        return false;
-    } while (!(tileElement++)->IsLastForTile());
-
-    x += CoordsDirectionDelta[edge].x;
-    y += CoordsDirectionDelta[edge].y;
-    if (!map_is_location_valid({ x, y }))
-    {
-        return false;
+            return false;
+        } while (!(tileElement++)->IsLastForTile());
     }
-
-    surfaceElement = map_get_surface_element_at(CoordsXY{ x, y });
-
-    // TODO: extract loop A
-    tileElement = reinterpret_cast<TileElement*>(surfaceElement);
-    if (tileElement == nullptr)
-    {
-        return false;
-    }
-
-    do
-    {
-        if (skipGhosts && tileElement->IsGhost())
-            continue;
-        if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
-            continue;
-        if (direction_reverse(tileElement->GetDirection()) != edge)
-            continue;
-        auto wallEntry = tileElement->AsWall()->GetEntry();
-        if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
-            continue;
-        if (peep->NextLoc.z + (8 * COORDS_Z_STEP) <= tileElement->GetBaseZ())
-            continue;
-        if (peep->NextLoc.z >= tileElement->GetClearanceZ())
-            continue;
-
-        return false;
-    } while (!(tileElement++)->IsLastForTile());
 
     // TODO: Extract loop B
-    tileElement = reinterpret_cast<TileElement*>(surfaceElement);
-    do
     {
-        if (skipGhosts && tileElement->IsGhost())
-            continue;
-        if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
-            continue;
-        if (peep->NextLoc.z + (10 * COORDS_Z_STEP) < tileElement->GetBaseZ())
-            continue;
-
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_TRACK)
+        auto* tileElement = reinterpret_cast<TileElement*>(surfaceElement);
+        do
         {
-            if (peep_should_watch_ride(tileElement))
-            {
-                return loc_690FD0(peep, rideToView, rideSeatToView, tileElement);
-            }
-        }
-
-        if (tileElement->GetType() == TILE_ELEMENT_TYPE_LARGE_SCENERY)
-        {
-            const auto* sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
-            if (sceneryEntry == nullptr || !(sceneryEntry->flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
-            {
+            if (skipGhosts && tileElement->IsGhost())
                 continue;
-            }
+            if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
+                continue;
+            if (peep->NextLoc.z + (6 * COORDS_Z_STEP) < tileElement->GetBaseZ())
+                continue;
 
-            *rideSeatToView = 0;
-            if (tileElement->GetClearanceZ() >= peep->NextLoc.z + (8 * COORDS_Z_STEP))
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_TRACK)
             {
-                *rideSeatToView = 0x02;
+                if (peep_should_watch_ride(tileElement))
+                {
+                    return loc_690FD0(peep, rideToView, rideSeatToView, tileElement);
+                }
             }
 
-            *rideToView = RIDE_ID_NULL;
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_LARGE_SCENERY)
+            {
+                const auto* sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
+                if (sceneryEntry == nullptr || !(sceneryEntry->flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
+                {
+                    continue;
+                }
 
-            return true;
+                *rideSeatToView = 0;
+                if (tileElement->GetClearanceZ() >= peep->NextLoc.z + (8 * COORDS_Z_STEP))
+                {
+                    *rideSeatToView = 0x02;
+                }
+
+                *rideToView = RIDE_ID_NULL;
+
+                return true;
+            }
+        } while (!(tileElement++)->IsLastForTile());
+    }
+
+    // TODO: Extract loop C
+    {
+        auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
+        do
+        {
+            if (skipGhosts && tileElement->IsGhost())
+                continue;
+            if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
+                continue;
+            if (peep->NextLoc.z + (6 * COORDS_Z_STEP) < tileElement->GetBaseZ())
+                continue;
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_SURFACE)
+                continue;
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_PATH)
+                continue;
+
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_WALL)
+            {
+                auto wallEntry = tileElement->AsWall()->GetEntry();
+                if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
+                {
+                    continue;
+                }
+            }
+
+            return false;
+        } while (!(tileElement++)->IsLastForTile());
+    }
+
+    // Advance.
+    {
+        x += CoordsDirectionDelta[edge].x;
+        y += CoordsDirectionDelta[edge].y;
+        if (!map_is_location_valid({ x, y }))
+        {
+            return false;
         }
-    } while (!(tileElement++)->IsLastForTile());
+
+        surfaceElement = map_get_surface_element_at(CoordsXY{ x, y });
+    }
+
+    // TODO: extract loop A
+    {
+        auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
+        if (tileElement == nullptr)
+        {
+            return false;
+        }
+
+        do
+        {
+            if (skipGhosts && tileElement->IsGhost())
+                continue;
+            if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
+                continue;
+            if (direction_reverse(tileElement->GetDirection()) != edge)
+                continue;
+            auto wallEntry = tileElement->AsWall()->GetEntry();
+            if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
+                continue;
+            if (peep->NextLoc.z + (6 * COORDS_Z_STEP) <= tileElement->GetBaseZ())
+                continue;
+            if (peep->NextLoc.z >= tileElement->GetClearanceZ())
+                continue;
+
+            return false;
+        } while (!(tileElement++)->IsLastForTile());
+    }
+
+    // TODO: Extract loop B
+    {
+        auto* tileElement = reinterpret_cast<TileElement*>(surfaceElement);
+        do
+        {
+            if (skipGhosts && tileElement->IsGhost())
+                continue;
+            if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
+                continue;
+            if (peep->NextLoc.z + (8 * COORDS_Z_STEP) < tileElement->GetBaseZ())
+                continue;
+
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_TRACK)
+            {
+                if (peep_should_watch_ride(tileElement))
+                {
+                    return loc_690FD0(peep, rideToView, rideSeatToView, tileElement);
+                }
+            }
+
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_LARGE_SCENERY)
+            {
+                auto* sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
+                if (!(sceneryEntry == nullptr || sceneryEntry->flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
+                {
+                    continue;
+                }
+
+                *rideSeatToView = 0;
+                if (tileElement->GetClearanceZ() >= peep->NextLoc.z + (8 * COORDS_Z_STEP))
+                {
+                    *rideSeatToView = 0x02;
+                }
+
+                *rideToView = RIDE_ID_NULL;
+
+                return true;
+            }
+        } while (!(tileElement++)->IsLastForTile());
+    }
+
+    // TODO: Extract loop C
+    {
+        auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
+        do
+        {
+            if (skipGhosts && tileElement->IsGhost())
+                continue;
+            if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
+                continue;
+            if (peep->NextLoc.z + (8 * COORDS_Z_STEP) < tileElement->GetBaseZ())
+                continue;
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_SURFACE)
+                continue;
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_PATH)
+                continue;
+
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_WALL)
+            {
+                auto wallEntry = tileElement->AsWall()->GetEntry();
+                if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
+                {
+                    continue;
+                }
+            }
+
+            return false;
+        } while (!(tileElement++)->IsLastForTile());
+    }
+
+    // Advance
+    {
+        x += CoordsDirectionDelta[edge].x;
+        y += CoordsDirectionDelta[edge].y;
+        if (!map_is_location_valid({ x, y }))
+        {
+            return false;
+        }
+
+        surfaceElement = map_get_surface_element_at(CoordsXY{ x, y });
+    }
+
+    // TODO: extract loop A
+    {
+        auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
+        if (tileElement == nullptr)
+        {
+            return false;
+        }
+
+        do
+        {
+            if (skipGhosts && tileElement->IsGhost())
+                continue;
+            if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
+                continue;
+            if (direction_reverse(tileElement->GetDirection()) != edge)
+                continue;
+            auto wallEntry = tileElement->AsWall()->GetEntry();
+            if (wallEntry == nullptr || (wallEntry->flags2 & WALL_SCENERY_2_IS_OPAQUE))
+                continue;
+            if (peep->NextLoc.z + (8 * COORDS_Z_STEP) <= tileElement->GetBaseZ())
+                continue;
+            if (peep->NextLoc.z >= tileElement->GetClearanceZ())
+                continue;
+
+            return false;
+        } while (!(tileElement++)->IsLastForTile());
+    }
+
+    // TODO: Extract loop B
+    {
+        auto* tileElement = reinterpret_cast<TileElement*>(surfaceElement);
+        do
+        {
+            if (skipGhosts && tileElement->IsGhost())
+                continue;
+            if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
+                continue;
+            if (peep->NextLoc.z + (10 * COORDS_Z_STEP) < tileElement->GetBaseZ())
+                continue;
+
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_TRACK)
+            {
+                if (peep_should_watch_ride(tileElement))
+                {
+                    return loc_690FD0(peep, rideToView, rideSeatToView, tileElement);
+                }
+            }
+
+            if (tileElement->GetType() == TILE_ELEMENT_TYPE_LARGE_SCENERY)
+            {
+                const auto* sceneryEntry = tileElement->AsLargeScenery()->GetEntry();
+                if (sceneryEntry == nullptr || !(sceneryEntry->flags & LARGE_SCENERY_FLAG_PHOTOGENIC))
+                {
+                    continue;
+                }
+
+                *rideSeatToView = 0;
+                if (tileElement->GetClearanceZ() >= peep->NextLoc.z + (8 * COORDS_Z_STEP))
+                {
+                    *rideSeatToView = 0x02;
+                }
+
+                *rideToView = RIDE_ID_NULL;
+
+                return true;
+            }
+        } while (!(tileElement++)->IsLastForTile());
+    }
 
     return false;
 }
