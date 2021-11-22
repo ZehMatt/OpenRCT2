@@ -6242,6 +6242,10 @@ bool loc_690FD0(Peep* peep, ride_id_t* rideToView, uint8_t* rideSeatToView, Tile
  */
 static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideToView, uint8_t* rideSeatToView)
 {
+    // Ghosts are purely this-client-side and should not cause any interaction,
+    // as that may lead to a desync.
+    const auto skipGhosts = network_get_mode() != NETWORK_MODE_NONE;
+
     TileElement* tileElement;
 
     auto surfaceElement = map_get_surface_element_at(peep->NextLoc);
@@ -6254,13 +6258,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
 
     do
     {
-        // Ghosts are purely this-client-side and should not cause any interaction,
-        // as that may lead to a desync.
-        if (network_get_mode() != NETWORK_MODE_NONE)
-        {
-            if (tileElement->IsGhost())
-                continue;
-        }
+        if (skipGhosts && tileElement->IsGhost())
+            continue;
         if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
             continue;
         if (tileElement->GetDirection() != edge)
@@ -6293,13 +6292,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
 
     do
     {
-        // Ghosts are purely this-client-side and should not cause any interaction,
-        // as that may lead to a desync.
-        if (network_get_mode() != NETWORK_MODE_NONE)
-        {
-            if (tileElement->IsGhost())
-                continue;
-        }
+        if (skipGhosts && tileElement->IsGhost())
+            continue;
         if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
             continue;
         if (direction_reverse(tileElement->GetDirection()) != edge)
@@ -6320,14 +6314,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
     tileElement = reinterpret_cast<TileElement*>(surfaceElement);
     do
     {
-        // Ghosts are purely this-client-side and should not cause any interaction,
-        // as that may lead to a desync.
-        if (network_get_mode() != NETWORK_MODE_NONE)
-        {
-            if (tileElement->IsGhost())
-                continue;
-        }
-
+        if (skipGhosts && tileElement->IsGhost())
+            continue;
         if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
             continue;
         if (peep->NextLoc.z + (6 * COORDS_Z_STEP) < tileElement->GetBaseZ())
@@ -6365,13 +6353,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
     tileElement = reinterpret_cast<TileElement*>(surfaceElement);
     do
     {
-        // Ghosts are purely this-client-side and should not cause any interaction,
-        // as that may lead to a desync.
-        if (network_get_mode() != NETWORK_MODE_NONE)
-        {
-            if (tileElement->IsGhost())
-                continue;
-        }
+        if (skipGhosts && tileElement->IsGhost())
+            continue;
         if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
             continue;
         if (peep->NextLoc.z + (6 * COORDS_Z_STEP) < tileElement->GetBaseZ())
@@ -6412,13 +6395,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
 
     do
     {
-        // Ghosts are purely this-client-side and should not cause any interaction,
-        // as that may lead to a desync.
-        if (network_get_mode() != NETWORK_MODE_NONE)
-        {
-            if (tileElement->IsGhost())
-                continue;
-        }
+        if (skipGhosts && tileElement->IsGhost())
+            continue;
         if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
             continue;
         if (direction_reverse(tileElement->GetDirection()) != edge)
@@ -6438,13 +6416,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
     tileElement = reinterpret_cast<TileElement*>(surfaceElement);
     do
     {
-        // Ghosts are purely this-client-side and should not cause any interaction,
-        // as that may lead to a desync.
-        if (network_get_mode() != NETWORK_MODE_NONE)
-        {
-            if (tileElement->IsGhost())
-                continue;
-        }
+        if (skipGhosts && tileElement->IsGhost())
+            continue;
         if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
             continue;
         if (peep->NextLoc.z + (8 * COORDS_Z_STEP) < tileElement->GetBaseZ())
@@ -6482,13 +6455,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
     tileElement = reinterpret_cast<TileElement*>(surfaceElement);
     do
     {
-        // Ghosts are purely this-client-side and should not cause any interaction,
-        // as that may lead to a desync.
-        if (network_get_mode() != NETWORK_MODE_NONE)
-        {
-            if (tileElement->IsGhost())
-                continue;
-        }
+        if (skipGhosts && tileElement->IsGhost())
+            continue;
         if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
             continue;
         if (peep->NextLoc.z + (8 * COORDS_Z_STEP) < tileElement->GetBaseZ())
@@ -6528,13 +6496,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
 
     do
     {
-        // Ghosts are purely this-client-side and should not cause any interaction,
-        // as that may lead to a desync.
-        if (network_get_mode() != NETWORK_MODE_NONE)
-        {
-            if (tileElement->IsGhost())
-                continue;
-        }
+        if (skipGhosts && tileElement->IsGhost())
+            continue;
         if (tileElement->GetType() != TILE_ELEMENT_TYPE_WALL)
             continue;
         if (direction_reverse(tileElement->GetDirection()) != edge)
@@ -6554,13 +6517,8 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
     tileElement = reinterpret_cast<TileElement*>(surfaceElement);
     do
     {
-        // Ghosts are purely this-client-side and should not cause any interaction,
-        // as that may lead to a desync.
-        if (network_get_mode() != NETWORK_MODE_NONE)
-        {
-            if (tileElement->IsGhost())
-                continue;
-        }
+        if (skipGhosts && tileElement->IsGhost())
+            continue;
         if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
             continue;
         if (peep->NextLoc.z + (10 * COORDS_Z_STEP) < tileElement->GetBaseZ())
