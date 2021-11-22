@@ -6246,10 +6246,9 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
     // as that may lead to a desync.
     const auto skipGhosts = network_get_mode() != NETWORK_MODE_NONE;
 
-    int32_t x{};
-    int32_t y{};
+    CoordsXY pos = peep->NextLoc;
 
-    auto* surfaceElement = map_get_surface_element_at(peep->NextLoc);
+    auto* surfaceElement = map_get_surface_element_at(pos);
 
     // Check for walls.
     {
@@ -6281,13 +6280,12 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
 
     // Advance one tile into direction of edge
     {
-        x = peep->NextLoc.x + CoordsDirectionDelta[edge].x;
-        y = peep->NextLoc.y + CoordsDirectionDelta[edge].y;
-        if (!map_is_location_valid({ x, y }))
+        pos += CoordsDirectionDelta[edge];
+        if (!map_is_location_valid(pos))
         {
             return false;
         }
-        surfaceElement = map_get_surface_element_at({ x, y });
+        surfaceElement = map_get_surface_element_at(pos);
     }
 
     // Check for walls.
@@ -6391,14 +6389,12 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
 
     // Advance.
     {
-        x += CoordsDirectionDelta[edge].x;
-        y += CoordsDirectionDelta[edge].y;
-        if (!map_is_location_valid({ x, y }))
+        pos += CoordsDirectionDelta[edge];
+        if (!map_is_location_valid(pos))
         {
             return false;
         }
-
-        surfaceElement = map_get_surface_element_at(CoordsXY{ x, y });
+        surfaceElement = map_get_surface_element_at(pos);
     }
 
     // TODO: extract loop A
@@ -6501,14 +6497,12 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
 
     // Advance
     {
-        x += CoordsDirectionDelta[edge].x;
-        y += CoordsDirectionDelta[edge].y;
-        if (!map_is_location_valid({ x, y }))
+        pos += CoordsDirectionDelta[edge];
+        if (!map_is_location_valid(pos))
         {
             return false;
         }
-
-        surfaceElement = map_get_surface_element_at(CoordsXY{ x, y });
+        surfaceElement = map_get_surface_element_at(pos);
     }
 
     // TODO: extract loop A
