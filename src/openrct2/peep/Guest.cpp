@@ -6254,7 +6254,9 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         return false;
     }
 
-    // Check for walls.
+    // false: direction == edge,
+    // false: (z + 32) > baseZ,
+    // false: (z + 8) < clearZ,
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
         do
@@ -6291,7 +6293,9 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         }
     }
 
-    // Check for walls.
+    // false: reverse(direction) == edge,
+    // false: (z + 32) < baseZ,
+    // false: (z + 8) < clearZ,
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
         do
@@ -6356,16 +6360,18 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         } while (!(tileElement++)->IsLastForTile());
     }
 
-    // TODO: Extract loop C
+    // false: type != (Wall | Path | Surface)
+    // false: (z + 48) > baseZ,
+    // false: (clearZ + 8) > z,
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
         do
         {
             if (skipGhosts && tileElement->IsGhost())
                 continue;
-            if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
-                continue;
             if (peep->NextLoc.z + (6 * COORDS_Z_STEP) < tileElement->GetBaseZ())
+                continue;
+            if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
                 continue;
             if (tileElement->GetType() == TILE_ELEMENT_TYPE_SURFACE)
                 continue;
@@ -6399,7 +6405,9 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         }
     }
 
-    // TODO: extract loop A
+    // false: reverse(direction) == edge,
+    // false: (z + 48) > baseZ,
+    // false: z < clearZ,
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
         do
@@ -6463,16 +6471,18 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         } while (!(tileElement++)->IsLastForTile());
     }
 
-    // TODO: Extract loop C
+    // false: type != (Wall | Path | Surface)
+    // false: (z + 64) > baseZ,
+    // false: (clearZ + 8) > z,
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
         do
         {
             if (skipGhosts && tileElement->IsGhost())
                 continue;
-            if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
-                continue;
             if (peep->NextLoc.z + (8 * COORDS_Z_STEP) < tileElement->GetBaseZ())
+                continue;
+            if (tileElement->GetClearanceZ() + (1 * COORDS_Z_STEP) < peep->NextLoc.z)
                 continue;
             if (tileElement->GetType() == TILE_ELEMENT_TYPE_SURFACE)
                 continue;
@@ -6506,7 +6516,9 @@ static bool peep_find_ride_to_look_at(Peep* peep, uint8_t edge, ride_id_t* rideT
         }
     }
 
-    // TODO: extract loop A
+    // false: reverse(direction) == edge,
+    // false: (z + 64) > baseZ,
+    // false: (clearZ + 8) > z,
     {
         auto* tileElement = reinterpret_cast<const TileElement*>(surfaceElement);
         do
