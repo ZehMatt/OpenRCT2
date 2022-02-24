@@ -2,10 +2,17 @@
 
 rem Invokes a tool within a Visual Studio prompt
 rem Uses %PLATFORM% to set architecture of prompt
+@echo off
+setlocal enabledelayedexpansion
 
-set "vspath=%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise"
+for /f "usebackq tokens=*" %%i in (`vswhere -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe`) do (
+  "%%i" %*
+  exit /b !errorlevel!
+)
+
+set "vspath=%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Enterprise"
 if exist "%vspath%" goto found
-set "vspath=%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community"
+set "vspath=%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community"
 if exist "%vspath%" goto found
 
 :notfound
