@@ -16,21 +16,10 @@ using PaintStructSequenceMapping = std::array<std::vector<uint32_t>, 4>;
 
 struct VehicleKey
 {
-    uint32_t SpriteDirection;
-    uint32_t Pitch;
-    uint32_t NumPeeps;
-
-    VehicleKey()
-        : SpriteDirection(0)
-        , Pitch(0)
-        , NumPeeps(0)
-    {
-    }
+    uint32_t SpriteDirection{ 0 };
+    uint32_t Pitch{ 0 };
+    uint32_t NumPeeps{ 0 };
 };
-
-bool operator==(const VehicleKey& lhs, const VehicleKey& rhs);
-
-bool operator==(const PaintStructDescriptorKey& lhs, const PaintStructDescriptorKey& rhs);
 
 struct PaintStructKey
 {
@@ -106,7 +95,7 @@ struct BoundBoxEntryValue
     BoundBoxXYZ Boundbox;
 };
 
-using BoundBoxTree = TreeContainer<PaintStructKey, std::shared_ptr<BoundBoxEntryValue>>;
+using BoundBoxTree = TreeContainer<PaintStructKey, BoundBoxEntryValue>;
 struct BoundBoxEntry
 {
     std::string Id;
@@ -118,10 +107,6 @@ struct ImageIdOffset
 {
     std::string Id;
     ImageIdTree Entries;
-
-    ImageIdOffset()
-    {
-    }
 };
 
 using PaintStructEdgesTable = std::vector<edge_t>;

@@ -20,11 +20,6 @@ PaintStructDescriptor::PaintStructDescriptor()
 {
 }
 
-bool operator==(const VehicleKey& lhs, const VehicleKey& rhs)
-{
-    return lhs.SpriteDirection == rhs.SpriteDirection && lhs.Pitch == rhs.Pitch && lhs.NumPeeps == rhs.NumPeeps;
-}
-
 const std::optional<uint32_t>& PaintStructKey::Get(uint32_t location) const
 {
     return *_fields[location];
@@ -193,9 +188,8 @@ void PaintStructDescriptor::Paint(
                     {
                         for (const auto& bb : *boundBoxes)
                         {
-                            auto Offset = bb->Coords;
-                            auto newOffset = Offset + CoordsXYZ{ 0, 0, height };
-                            auto newBoundBox = bb->Boundbox;
+                            auto newOffset = bb.Coords + CoordsXYZ{ 0, 0, height };
+                            auto newBoundBox = bb.Boundbox;
                             newBoundBox.offset.z += height;
 
                             if (type == PaintType::AddImageAsParent)

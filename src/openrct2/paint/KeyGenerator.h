@@ -12,19 +12,15 @@ template<class KeyType> class KeyRange
 template<class KeyType> class KeyGenerator
 {
 public:
-    KeyGenerator()
-    {
-        std::fill(_fieldPresent.begin(), _fieldPresent.end(), false);
-    }
     void Initialize(const std::vector<KeyType>& keyDescs, const KeyRange<KeyType>& keyRange);
 
     std::vector<uint32_t> GetParams(const KeyType& key) const;
     std::vector<KeyType> GenerateKeys(const KeyType& key) const;
 private:
     using ElementsType = std::array<std::vector<uint32_t>, KeyType::NumArgs>;
-    std::array<bool, KeyType::NumArgs> _fieldPresent;
+    std::array<bool, KeyType::NumArgs> _fieldPresent{};
 
-    const KeyRange<KeyType>* _keysRange;
+    const KeyRange<KeyType>* _keysRange{};
 };
 
 template<class KeyType>
