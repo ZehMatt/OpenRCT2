@@ -73,9 +73,9 @@ jobs:
         run: |
           BRANCH=$(echo $GITHUB_REF | cut -d'/' -f 3)
           if [[ $BRANCH == 'develop' ]]; then
-             echo "CONFIGURATION=ReleaseLTCG" >> "$GITHUB_ENV"
-          else
              echo "CONFIGURATION=Release" >> "$GITHUB_ENV"
+          else
+             echo "CONFIGURATION=ReleaseLTCG" >> "$GITHUB_ENV"
           fi
       - name: Checkout
         uses: actions/checkout@v3
