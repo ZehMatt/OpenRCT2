@@ -196,9 +196,10 @@ private:
     uint8_t Ownership;
     uint8_t SurfaceStyle;
     uint8_t EdgeStyle;
+    uint8_t SurfaceFlags;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-private-field"
-    uint8_t Pad0B[5];
+    uint8_t Pad0B[4];
 #pragma clang diagnostic pop
 
 public:
