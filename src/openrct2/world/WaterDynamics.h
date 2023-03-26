@@ -1,9 +1,16 @@
 #pragma once
 
-namespace OpenRCT2::World::WaterDynamics
-{
-    void reset();
+#include "Location.hpp"
 
-    void update();
-    
-} // namespace OpenRCT2::World::WaterDynamics
+class WaterDynamics
+{
+private:
+    TileCoordsXY _iterator{};
+
+public:
+    static WaterDynamics& Get();
+
+    void Reset();
+
+    void Tick();
+};

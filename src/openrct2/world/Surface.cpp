@@ -51,12 +51,12 @@ void SurfaceElement::SetEdgeStyle(uint32_t newStyle)
 
 int32_t SurfaceElement::GetWaterHeight() const
 {
-    return WaterHeight * WATER_HEIGHT_STEP;
+    return WaterHeight;
 }
 
 void SurfaceElement::SetWaterHeight(int32_t newWaterHeight)
 {
-    WaterHeight = newWaterHeight / WATER_HEIGHT_STEP;
+    WaterHeight = newWaterHeight;
 }
 
 bool SurfaceElement::CanGrassGrow() const

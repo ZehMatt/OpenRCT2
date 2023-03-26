@@ -647,7 +647,7 @@ static void ViewportSurfaceDrawTileSideBottom(
     if (cornerHeight1 <= neighbourCornerHeight1 && cornerHeight2 <= neighbourCornerHeight2)
     {
         // The edge is not visible behind the neighbour's slope
-        return;
+        //return;
     }
 
     auto baseImageId = GetEdgeImage(edgeStyle, 0);

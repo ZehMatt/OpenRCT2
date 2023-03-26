@@ -41,6 +41,7 @@
 #include "world/MapAnimation.h"
 #include "world/Park.h"
 #include "world/Scenery.h"
+#include "world/WaterDynamics.h"
 
 #include <algorithm>
 #include <chrono>
@@ -353,6 +354,8 @@ void GameState::UpdateLogic(LogicTimings* timings)
     report_time(LogicTimePart::RideMeasurments);
     News::UpdateCurrentItem();
     report_time(LogicTimePart::News);
+
+    WaterDynamics::Get().Tick();
 
     MapAnimationInvalidateAll();
     report_time(LogicTimePart::MapAnimation);

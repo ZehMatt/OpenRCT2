@@ -73,6 +73,7 @@
 #include "ui/WindowManager.h"
 #include "util/Util.h"
 #include "world/Park.h"
+#include "world/WaterDynamics.h"
 
 #include <algorithm>
 #include <cmath>
@@ -653,6 +654,7 @@ namespace OpenRCT2
                 GameFixSaveVars();
                 MapAnimationAutoCreate();
                 EntityTweener::Get().Reset();
+                WaterDynamics::Get().Reset();
                 gScreenAge = 0;
                 gLastAutoSaveUpdate = AUTOSAVE_PAUSE;
 
