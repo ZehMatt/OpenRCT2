@@ -582,6 +582,7 @@
     <ClInclude Include="world\TileInspector.h" />
     <ClInclude Include="world\TilePointerIndex.hpp" />
     <ClInclude Include="world\Wall.h" />
+    <ClInclude Include="world\WaterDynamics.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\resources\OpenRCT2.rc" />
@@ -1039,6 +1040,7 @@
     <ClCompile Include="..\thirdparty\duktape\duktape.cpp">
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
+    <ClCompile Include="world\WaterDynamics.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
