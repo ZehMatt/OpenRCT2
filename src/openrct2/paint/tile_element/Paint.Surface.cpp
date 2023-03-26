@@ -39,6 +39,8 @@
 #include <cstring>
 #include <iterator>
 
+#pragma optimize("", off)
+
 static constexpr const uint8_t Byte97B444[] = {
     0, 2, 1, 3, 8, 10, 9, 11, 4, 6, 5, 7, 12, 14, 13, 15, 0, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 16, 0, 18, 15, 0,
 };
@@ -649,6 +651,11 @@ static void ViewportSurfaceDrawTileSideBottom(
     }
 
     auto baseImageId = GetEdgeImage(edgeStyle, 0);
+    if (isWater)
+    {
+        baseImageId = ImageId(SPR_EDGE_ICE_BASE).WithTransparency(FilterPaletteID::PaletteGlassAquamarine);
+    }
+
     if (session.ViewFlags & VIEWPORT_FLAG_UNDERGROUND_INSIDE)
     {
         baseImageId = GetEdgeImage(edgeStyle, 1);
