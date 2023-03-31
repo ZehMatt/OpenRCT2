@@ -1,0 +1,134 @@
+name: PR Testing
+on:
+  pull_request:
+    types: [labeled, synchronize]
+jobs:
+  comment-on-checks-pass:
+    name: 'PR Testing'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract PR info
+        id: pr-info
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = context.payload.pull_request.number;
+            // Get the current PR.
+            console.log("Fetching PR info");
+            var pull = await github.rest.pulls.get({
+                owner: owner,
+                repo: repo,
+                pull_number: prNumber
+            }).then(response => response.data);
+            // Labels.
+            var labels = pull.labels.map(label => label.name).join(",");
+            // Find the build workflow.
+            console.log("Fetching workflows");
+            var workflows = await github.rest.actions.listRepoWorkflows({
+                owner: owner,
+                repo: repo,
+            }).then(response => {
+                return response.data.workflows.filter(workflow => workflow.name == 'CI');
+            })
+            if(workflows.length == 0) {
+                console.log("Unable to find workflow 'CI'");
+                return;
+            }
+            const workflowId = workflows[0].id;
+            // Find the run for the last commit and the righ workflow.
+            var runs = await github.rest.actions.listWorkflowRunsForRepo({
+                owner: owner,
+                repo: repo,
+                head_sha: pull.head.sha,
+                event: 'pull_request',
+            }).then(response => {
+                return response.data.workflow_runs.filter(run => run.workflow_id == workflowId);
+            });
+            if(runs.length == 0)
+            {
+                console.log("No build run found");
+                return;
+            }
+            const buildRun = runs[0];
+            const suiteId = buildRun.check_suite_id;
+            core.setOutput("labels", labels);
+            core.setOutput("head_sha", pull.head.sha);
+            core.setOutput("suite_id", suiteId);
+            core.setOutput("run_id", buildRun.id);
+            core.setOutput("run_status", buildRun.status);
+            
+      - name: Comment about testing
+        if: ${{ contains(steps.pr-info.outputs.labels, 'testing required') && steps.pr-info.outputs.run_status != 'completed' }}
+        uses: unsplash/comment-on-pr@a9bf050e744c8282dee4bb0dbcf063186d8316c4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          msg: |
+            This pull request has been marked as 'testing required', we encourage everyone to participate in testing the builds. The download 
+            links will be made available as soon the build workflow successfully completes.
+          check_for_duplicate_msg: false
+          delete_prev_regex_msg: "^This pull request has been marked as 'testing required'\\s*"
+
+      - name: Wait for status checks
+        if: ${{ contains(steps.pr-info.outputs.labels, 'testing required') }}
+        id: status-checks
+        uses: "WyriHaximus/github-action-wait-for-status@v1.7.1"
+        with:
+          ignoreActions: "PR Testing"
+          checkInterval: 15
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          
+      - name: Extract artifact info
+        if: ${{ contains(steps.pr-info.outputs.labels, 'testing required') && steps.status-checks.outputs.status == 'success' }}
+        id: workflow-info
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const suiteId = ${{steps.pr-info.outputs.suite_id}};
+            const runId = ${{steps.pr-info.outputs.run_id}};
+            const headSha = '${{steps.pr-info.outputs.head_sha}}';
+            // Fetch artifacts
+            console.log("Fetching artifacts info");
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: owner,
+                repo: repo,
+                run_id: runId,
+            }).then(response => response.data.artifacts);
+            // Build list of downloads.
+            var downloadLinks = artifacts.map(entry => {
+                return `- [${entry.name}](https://github.com/${owner}/${repo}/suites/${suiteId}/artifacts/${entry.id})`
+            }).join("\n");
+            console.log(downloadLinks);
+            core.setOutput("downloads", downloadLinks);
+
+      - name: Provide download links
+        if: ${{ contains(steps.pr-info.outputs.labels, 'testing required') && steps.status-checks.outputs.status == 'success' }}
+        uses: unsplash/comment-on-pr@a9bf050e744c8282dee4bb0dbcf063186d8316c4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          msg: |
+            This pull request has been marked as 'testing required', we encourage everyone to participate in testing by downloading
+            and testing the available builds below. If any issues are found during testing, please report them directly here on this PR. 
+            Please find the following download links for testing purposes:
+            ${{ steps.workflow-info.outputs.downloads }}
+          check_for_duplicate_msg: false
+          delete_prev_regex_msg: "^This pull request has been marked as 'testing required'\\s*"
+          
+      - name: Comment build failure
+        if: ${{ contains(steps.pr-info.outputs.labels, 'testing required') && steps.status-checks.outputs.status == 'failure' }}
+        uses: unsplash/comment-on-pr@a9bf050e744c8282dee4bb0dbcf063186d8316c4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          msg: |
+            This pull request has been marked as 'testing required', we encourage everyone to participate in testing the builds. One or more 
+            builds are currently failing. The download links will be made available once all builds complete successfully.
+          check_for_duplicate_msg: false
+          delete_prev_regex_msg: "^This pull request has been marked as 'testing required'\\s*"
+ 
