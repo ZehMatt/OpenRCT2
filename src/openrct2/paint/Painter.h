@@ -38,7 +38,6 @@ namespace OpenRCT2
             std::shared_ptr<Ui::IUiContext> const _uiContext;
             std::vector<std::unique_ptr<PaintSession>> _paintSessionPool;
             std::vector<PaintSession*> _freePaintSessions;
-            PaintEntryPool _paintStructPool;
             time_t _lastSecond = 0;
             int32_t _currentFPS = 0;
             int32_t _frames = 0;

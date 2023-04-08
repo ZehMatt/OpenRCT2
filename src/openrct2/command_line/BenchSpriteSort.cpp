@@ -73,7 +73,6 @@ static std::vector<RecordedPaintSession> extract_paint_session(std::string_view 
     Platform::CoreInit();
     gOpenRCT2Headless = true;
     auto context = OpenRCT2::CreateContext();
-    std::vector<RecordedPaintSession> sessions;
     LOG_INFO("Starting...");
     if (context->Initialise())
     {
@@ -122,13 +121,14 @@ static std::vector<RecordedPaintSession> extract_paint_session(std::string_view 
         dpi.bits = static_cast<uint8_t*>(malloc(dpi.width * dpi.height));
 
         LOG_INFO("Obtaining sprite data...");
-        ViewportRender(&dpi, &viewport, { { 0, 0 }, { viewport.width, viewport.height } }, &sessions);
+        ViewportRender(&dpi, &viewport, { { 0, 0 }, { viewport.width, viewport.height } });
 
         free(dpi.bits);
         DrawingEngineDispose();
     }
-    LOG_INFO("Got %u paint sessions.", std::size(sessions));
-    return sessions;
+    // TODO: FIXME: Unpack the code from ViewportRender into better composite functions.
+    //LOG_INFO("Got %u paint sessions.", std::size(sessions));
+    return {};
 }
 
 // This function is based on BenchgfxRenderScreenshots

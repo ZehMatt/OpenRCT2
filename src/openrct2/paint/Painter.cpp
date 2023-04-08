@@ -156,7 +156,6 @@ PaintSession* Painter::CreateSession(DrawPixelInfo* dpi, uint32_t viewFlags)
     session->ViewFlags = viewFlags;
     session->QuadrantBackIndex = std::numeric_limits<uint32_t>::max();
     session->QuadrantFrontIndex = 0;
-    session->PaintEntryChain = _paintStructPool.Create();
     session->Flags = 0;
 
     std::fill(std::begin(session->Quadrants), std::end(session->Quadrants), nullptr);
@@ -168,6 +167,7 @@ PaintSession* Painter::CreateSession(DrawPixelInfo* dpi, uint32_t viewFlags)
     session->CurrentlyDrawnEntity = nullptr;
     session->CurrentlyDrawnTileElement = nullptr;
     session->SurfaceElement = nullptr;
+    session->PaintEntries.clear();
 
     return session;
 }
@@ -176,7 +176,6 @@ void Painter::ReleaseSession(PaintSession* session)
 {
     PROFILED_FUNCTION();
 
-    session->PaintEntryChain.Clear();
     _freePaintSessions.push_back(session);
 }
 
