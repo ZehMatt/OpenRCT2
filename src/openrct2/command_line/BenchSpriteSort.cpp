@@ -35,39 +35,6 @@
 #    include <iterator>
 #    include <vector>
 
-static void fixup_pointers(std::vector<RecordedPaintSession>& s)
-{
-    for (size_t i = 0; i < s.size(); i++)
-    {
-        auto& entries = s[i].Entries;
-        auto& quadrants = s[i].Session.Quadrants;
-        for (size_t j = 0; j < entries.size(); j++)
-        {
-            if (entries[j].AsBasic()->next_quadrant_ps == reinterpret_cast<PaintStruct*>(-1))
-            {
-                entries[j].AsBasic()->next_quadrant_ps = nullptr;
-            }
-            else
-            {
-                auto nextQuadrantPs = reinterpret_cast<size_t>(entries[j].AsBasic()->next_quadrant_ps) / sizeof(PaintEntry);
-                entries[j].AsBasic()->next_quadrant_ps = s[i].Entries[nextQuadrantPs].AsBasic();
-            }
-        }
-        for (size_t j = 0; j < std::size(quadrants); j++)
-        {
-            if (quadrants[j] == reinterpret_cast<PaintStruct*>(-1))
-            {
-                quadrants[j] = nullptr;
-            }
-            else
-            {
-                auto ps = reinterpret_cast<size_t>(quadrants[j]) / sizeof(PaintEntry);
-                quadrants[j] = entries[ps].AsBasic();
-            }
-        }
-    }
-}
-
 static std::vector<RecordedPaintSession> extract_paint_session(std::string_view parkFileName)
 {
     Platform::CoreInit();
@@ -139,7 +106,6 @@ static void BM_paint_session_arrange(benchmark::State& state, const std::vector<
     // Keep in mind we need bit-exact copy, as the lists use pointers.
     // Once sorted, just restore the copy with the original fixed-up version.
     RecordedPaintSession* local_s = new RecordedPaintSession[std::size(sessions)];
-    fixup_pointers(sessions);
     std::copy_n(sessions.cbegin(), std::size(sessions), local_s);
     for (auto _ : state)
     {
@@ -155,20 +121,6 @@ static void BM_paint_session_arrange(benchmark::State& state, const std::vector<
 
 static int command_line_for_bench_sprite_sort(int argc, const char** argv)
 {
-    {
-        // Register some basic "baseline" benchmark
-        std::vector<RecordedPaintSession> sessions(1);
-        for (auto& ps : sessions[0].Entries)
-        {
-            ps.AsBasic()->next_quadrant_ps = reinterpret_cast<PaintStruct*>(-1);
-        }
-        for (auto& quad : sessions[0].Session.Quadrants)
-        {
-            quad = reinterpret_cast<PaintStruct*>(-1);
-        }
-        benchmark::RegisterBenchmark("baseline", BM_paint_session_arrange, sessions);
-    }
-
     // Google benchmark does stuff to argv. It doesn't modify the pointees,
     // but it wants to reorder the pointers, so present a copy of them.
     std::vector<char*> argv_for_benchmark;

@@ -25,7 +25,6 @@ struct WindowBase;
 struct EntityBase;
 struct Guest;
 struct Staff;
-struct PaintEntry;
 
 // Flags must currenly retain their values to avoid breaking plugins.
 // Values can be changed when plugins move to using named constants.
