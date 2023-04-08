@@ -544,7 +544,7 @@ static void ViewportSurfaceSmoothenEdge(
 
     if (PaintAttachToPreviousPS(session, image_id, 0, 0))
     {
-        AttachedPaintStruct* out = session.LastAttachedPS;
+        auto* out = session.GetNode<AttachedPaintStruct>(session.LastAttachedPS);
         // set content and enable masking
         out->ColourImageId = GetSurfacePattern(neighbour.terrain, cl);
         out->IsMasked = true;
@@ -1010,7 +1010,7 @@ static void PaintPatrolArea(PaintSession& session, const SurfaceElement& element
         auto [localZ, localSurfaceShape] = SurfaceGetHeightAboveWater(element, height, surfaceShape);
         auto imageId = ImageId(SPR_TERRAIN_SELECTION_PATROL_AREA + Byte97B444[localSurfaceShape], *colour);
 
-        auto* backup = session.LastPS;
+        auto backup = session.LastPS;
         PaintAddImageAsParent(session, imageId, { 0, 0, localZ }, { 32, 32, 1 });
         session.LastPS = backup;
     }
@@ -1180,7 +1180,7 @@ void PaintSurface(PaintSession& session, uint8_t direction, uint16_t height, con
         {
             const CoordsXY& pos = session.MapPosition;
             const int32_t height2 = (TileElementHeight({ pos.x + 16, pos.y + 16 })) + 3;
-            PaintStruct* backup = session.LastPS;
+            auto backup = session.LastPS;
             PaintAddImageAsParent(session, ImageId(SPR_LAND_OWNERSHIP_AVAILABLE), { 16, 16, height2 }, { 1, 1, 0 });
             session.LastPS = backup;
         }
@@ -1197,7 +1197,7 @@ void PaintSurface(PaintSession& session, uint8_t direction, uint16_t height, con
         {
             const CoordsXY& pos = session.MapPosition;
             const int32_t height2 = TileElementHeight({ pos.x + 16, pos.y + 16 });
-            PaintStruct* backup = session.LastPS;
+            auto backup = session.LastPS;
             PaintAddImageAsParent(
                 session, ImageId(SPR_LAND_CONSTRUCTION_RIGHTS_AVAILABLE), { 16, 16, height2 + 3 }, { 1, 1, 0 });
             session.LastPS = backup;
@@ -1257,7 +1257,7 @@ void PaintSurface(PaintSession& session, uint8_t direction, uint16_t height, con
                 const auto fpId = FilterPaletteID::PaletteWaterMarker;
                 const auto image_id = ImageId(SPR_TERRAIN_SELECTION_CORNER + Byte97B444[local_surfaceShape], fpId);
 
-                PaintStruct* backup = session.LastPS;
+                auto backup = session.LastPS;
                 PaintAddImageAsParent(session, image_id, { 0, 0, local_height }, { 32, 32, 1 });
                 session.LastPS = backup;
             }

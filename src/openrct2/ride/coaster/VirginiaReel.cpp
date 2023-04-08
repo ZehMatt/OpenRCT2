@@ -260,8 +260,8 @@ static void PaintVirginiaReelTrack25DegUp(
     }
 
     auto imageId = session.TrackColours[SCHEME_TRACK].WithIndex(sprites[direction]);
-    PaintStruct* ps;
 
+    PaintNodeId ps = PaintNodeId::Invalid;
     if (direction & 1)
     {
         ps = PaintAddImageAsParent(session, imageId, { 0, 0, height }, { { 2, 0, height }, { 27, 32, 2 } });
@@ -312,7 +312,6 @@ static void PaintVirginiaReelTrackFlatTo25DegUp(
     }
 
     auto imageId = session.TrackColours[SCHEME_TRACK].WithIndex(sprites[direction]);
-    PaintStruct* ps;
     switch (direction)
     {
         case 0:
@@ -322,15 +321,15 @@ static void PaintVirginiaReelTrackFlatTo25DegUp(
             PaintUtilPushTunnelLeft(session, height, TUNNEL_SQUARE_FLAT);
             break;
         case 1:
-            ps = PaintAddImageAsParent(session, imageId, { 0, 0, height }, { { 2, 0, height }, { 27, 32, 2 } });
-            session.WoodenSupportsPrependTo = ps;
+            session.WoodenSupportsPrependTo = PaintAddImageAsParent(
+                session, imageId, { 0, 0, height }, { { 2, 0, height }, { 27, 32, 2 } });
 
             WoodenASupportsPaintSetup(session, 1, 2, height, session.TrackColours[SCHEME_SUPPORTS]);
             PaintUtilPushTunnelRight(session, height, TUNNEL_SQUARE_8);
             break;
         case 2:
-            ps = PaintAddImageAsParent(session, imageId, { 0, 0, height }, { { 0, 2, height }, { 32, 27, 2 } });
-            session.WoodenSupportsPrependTo = ps;
+            session.WoodenSupportsPrependTo = PaintAddImageAsParent(
+                session, imageId, { 0, 0, height }, { { 0, 2, height }, { 32, 27, 2 } });
 
             WoodenASupportsPaintSetup(session, 0, 3, height, session.TrackColours[SCHEME_SUPPORTS]);
             PaintUtilPushTunnelLeft(session, height, TUNNEL_SQUARE_8);
@@ -359,8 +358,8 @@ static void PaintVirginiaReelTrack25DegUpToFlat(
     }
 
     auto imageId = session.TrackColours[SCHEME_TRACK].WithIndex(sprites[direction]);
-    PaintStruct* ps;
 
+    PaintNodeId ps = PaintNodeId::Invalid;
     if (direction & 1)
     {
         ps = PaintAddImageAsParent(session, imageId, { 0, 0, height }, { { 2, 0, height }, { 27, 32, 2 } });

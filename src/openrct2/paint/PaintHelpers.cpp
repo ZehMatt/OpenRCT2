@@ -11,7 +11,7 @@
 #include "../ride/TrackPaint.h"
 #include "Paint.h"
 
-PaintStruct* PaintAddImageAsParentRotated(
+PaintNodeId PaintAddImageAsParentRotated(
     PaintSession& session, const uint8_t direction, const ImageId imageId, const CoordsXYZ& offset, const BoundBoxXYZ& boundBox)
 {
     if (direction & 1)
@@ -25,7 +25,7 @@ PaintStruct* PaintAddImageAsParentRotated(
     return PaintAddImageAsParent(session, imageId, offset, boundBox);
 }
 
-PaintStruct* PaintAddImageAsChildRotated(
+PaintNodeId PaintAddImageAsChildRotated(
     PaintSession& session, const uint8_t direction, const ImageId image_id, const CoordsXYZ& offset,
     const BoundBoxXYZ& boundBox)
 {

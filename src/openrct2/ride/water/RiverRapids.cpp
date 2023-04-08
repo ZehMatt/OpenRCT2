@@ -323,7 +323,7 @@ static void PaintRiverRapidsStation(
 static void PaintRiverRapidsTrack25Deg(PaintSession& session, uint8_t direction, int32_t height, const uint32_t sprites[4][2])
 {
     ImageId imageId;
-    PaintStruct* ps;
+    PaintNodeId ps;
 
     switch (direction)
     {
@@ -382,7 +382,7 @@ static void PaintRiverRapidsTrack25DegToFlatA(
     PaintSession& session, uint8_t direction, int32_t height, const uint32_t sprites[4][2])
 {
     ImageId imageId;
-    PaintStruct* ps;
+    PaintNodeId ps;
 
     switch (direction)
     {
@@ -442,7 +442,7 @@ static void PaintRiverRapidsTrack25DegToFlatB(
     PaintSession& session, uint8_t direction, int32_t height, const uint32_t sprites[4][2])
 {
     ImageId imageId;
-    PaintStruct* ps;
+    PaintNodeId ps;
 
     switch (direction)
     {

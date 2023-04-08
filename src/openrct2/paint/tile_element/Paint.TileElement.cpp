@@ -331,10 +331,10 @@ static void PaintTileElementBase(PaintSession& session, const CoordsXY& origCoor
 
             int32_t xOffset = static_cast<int32_t>(sy) * 10;
             int32_t yOffset = -22 + static_cast<int32_t>(sx) * 10;
-            PaintStruct* ps = PaintAddImageAsParent(
+            auto nodeId = PaintAddImageAsParent(
                 session, imageColourFlats, { xOffset, yOffset, segmentHeight },
                 { { xOffset + 1, yOffset + 16, segmentHeight }, { 10, 10, 1 } });
-            if (ps != nullptr)
+            if (auto* ps = session.GetNode<PaintStruct>(nodeId); ps != nullptr)
             {
                 ps->image_id = ps->image_id.WithTertiary(COLOUR_BORDEAUX_RED);
             }

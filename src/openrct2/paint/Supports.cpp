@@ -585,7 +585,7 @@ bool WoodenASupportsPaintSetup(
             auto bBox = Byte97B23C[special].bounding_box;
             bBox.offset.z += z;
 
-            if (Byte97B23C[special].var_6 == 0 || session.WoodenSupportsPrependTo == nullptr)
+            if (Byte97B23C[special].var_6 == 0 || session.WoodenSupportsPrependTo == PaintNodeId::Invalid)
             {
                 PaintAddImageAsParent(session, imageId, { 0, 0, z }, bBox);
                 hasSupports = true;
@@ -593,10 +593,10 @@ bool WoodenASupportsPaintSetup(
             else
             {
                 hasSupports = true;
-                auto* ps = PaintAddImageAsOrphan(session, imageId, { 0, 0, z }, bBox);
-                if (ps != nullptr)
+                auto nodeId = PaintAddImageAsOrphan(session, imageId, { 0, 0, z }, bBox);
+                if (nodeId != PaintNodeId::Invalid)
                 {
-                    session.WoodenSupportsPrependTo->children = ps;
+                    session.GetNode<PaintStruct>(session.WoodenSupportsPrependTo)->NextChildNode = nodeId;
                 }
             }
         }
@@ -757,18 +757,18 @@ bool WoodenBSupportsPaintSetup(
             auto boundBox = supportsDesc.bounding_box;
             boundBox.offset.z += baseHeight;
 
-            if (supportsDesc.var_6 == 0 || session.WoodenSupportsPrependTo == nullptr)
+            if (supportsDesc.var_6 == 0 || session.WoodenSupportsPrependTo == PaintNodeId::Invalid)
             {
                 PaintAddImageAsParent(session, imageId, { 0, 0, baseHeight }, boundBox);
                 _9E32B1 = true;
             }
             else
             {
-                auto* paintStruct = PaintAddImageAsOrphan(session, imageId, { 0, 0, baseHeight }, boundBox);
+                auto nodeId = PaintAddImageAsOrphan(session, imageId, { 0, 0, baseHeight }, boundBox);
                 _9E32B1 = true;
-                if (paintStruct != nullptr)
+                if (nodeId != PaintNodeId::Invalid)
                 {
-                    session.WoodenSupportsPrependTo->children = paintStruct;
+                    session.GetNode<PaintStruct>(session.WoodenSupportsPrependTo)->NextChildNode = nodeId;
                 }
             }
         }
@@ -1284,19 +1284,18 @@ bool PathASupportsPaintSetup(
         auto boundBox = supportsDesc.bounding_box;
         boundBox.offset.z += baseHeight;
 
-        if (supportsDesc.var_6 == 0 || session.WoodenSupportsPrependTo == nullptr)
+        if (supportsDesc.var_6 == 0 || session.WoodenSupportsPrependTo == PaintNodeId::Invalid)
         {
             PaintAddImageAsParent(session, imageTemplate.WithIndex(imageIndex), { 0, 0, baseHeight }, boundBox);
             hasSupports = true;
         }
         else
         {
-            PaintStruct* paintStruct = PaintAddImageAsOrphan(
-                session, imageTemplate.WithIndex(imageIndex), { 0, 0, baseHeight }, boundBox);
+            auto nodeId = PaintAddImageAsOrphan(session, imageTemplate.WithIndex(imageIndex), { 0, 0, baseHeight }, boundBox);
             hasSupports = true;
-            if (paintStruct != nullptr)
+            if (nodeId != PaintNodeId::Invalid)
             {
-                session.WoodenSupportsPrependTo->children = paintStruct;
+                session.GetNode<PaintStruct>(session.WoodenSupportsPrependTo)->NextChildNode = nodeId;
             }
         }
     }

@@ -162,10 +162,9 @@ static void PaintGoKartsTrack25DegUp(
     PaintSession& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
     const TrackElement& trackElement)
 {
-    ImageId imageId;
-    PaintStruct* ps;
-
-    imageId = session.TrackColours[SCHEME_TRACK].WithIndex(go_karts_track_pieces_25_deg_up[direction][0]);
+    ImageId imageId = session.TrackColours[SCHEME_TRACK].WithIndex(go_karts_track_pieces_25_deg_up[direction][0]);
+    
+    PaintNodeId ps = PaintNodeId::Invalid;
     if (direction == 0 || direction == 2)
     {
         ps = PaintAddImageAsParent(session, imageId, { 0, 0, height }, { { 0, 2, height }, { 32, 28, 1 } });
@@ -216,10 +215,9 @@ static void PaintGoKartsTrackFlatTo25DegUp(
     PaintSession& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
     const TrackElement& trackElement)
 {
-    ImageId imageId;
-    PaintStruct* ps;
+    ImageId imageId = session.TrackColours[SCHEME_TRACK].WithIndex(go_karts_track_pieces_flat_to_25_deg_up[direction][0]);
 
-    imageId = session.TrackColours[SCHEME_TRACK].WithIndex(go_karts_track_pieces_flat_to_25_deg_up[direction][0]);
+    PaintNodeId ps = PaintNodeId::Invalid;
     if (direction == 0 || direction == 2)
     {
         ps = PaintAddImageAsParent(session, imageId, { 0, 0, height }, { { 0, 2, height }, { 32, 28, 1 } });
@@ -270,10 +268,9 @@ static void PaintGoKartsTrack25DegUpToFlat(
     PaintSession& session, const Ride& ride, uint8_t trackSequence, uint8_t direction, int32_t height,
     const TrackElement& trackElement)
 {
-    ImageId imageId;
-    PaintStruct* ps;
-
-    imageId = session.TrackColours[SCHEME_TRACK].WithIndex(go_karts_track_pieces_25_deg_up_to_flat[direction][0]);
+    ImageId imageId = session.TrackColours[SCHEME_TRACK].WithIndex(go_karts_track_pieces_25_deg_up_to_flat[direction][0]);
+    
+    PaintNodeId ps = PaintNodeId::Invalid;
     if (direction == 0 || direction == 2)
     {
         ps = PaintAddImageAsParent(session, imageId, { 0, 0, height }, { { 0, 2, height }, { 32, 28, 1 } });

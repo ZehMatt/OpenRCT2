@@ -149,7 +149,7 @@ namespace HybridRC
             },
         };
 
-        auto* ps = PaintAddImageAsParentRotated(
+        auto ps = PaintAddImageAsParentRotated(
             session, direction, GetTrackColour(session).WithIndex(imageIds[trackElement.HasChain() ? 0 : 1][direction]),
             { 0, 0, height },
             { { boundBoxOffsets[direction].x, boundBoxOffsets[direction].y, boundBoxOffsets[direction].z },

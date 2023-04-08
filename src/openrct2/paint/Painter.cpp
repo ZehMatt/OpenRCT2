@@ -158,12 +158,12 @@ PaintSession* Painter::CreateSession(DrawPixelInfo* dpi, uint32_t viewFlags)
     session->QuadrantFrontIndex = 0;
     session->Flags = 0;
 
-    std::fill(std::begin(session->Quadrants), std::end(session->Quadrants), nullptr);
-    session->LastPS = nullptr;
-    session->LastAttachedPS = nullptr;
-    session->PSStringHead = nullptr;
-    session->LastPSString = nullptr;
-    session->WoodenSupportsPrependTo = nullptr;
+    std::fill(std::begin(session->Quadrants), std::end(session->Quadrants), PaintNodeId::Invalid);
+    session->LastPS = PaintNodeId::Invalid;
+    session->LastAttachedPS = PaintNodeId::Invalid;
+    session->PSStringHead = PaintNodeId::Invalid;
+    session->LastPSString = PaintNodeId::Invalid;
+    session->WoodenSupportsPrependTo = PaintNodeId::Invalid;
     session->CurrentlyDrawnEntity = nullptr;
     session->CurrentlyDrawnTileElement = nullptr;
     session->SurfaceElement = nullptr;

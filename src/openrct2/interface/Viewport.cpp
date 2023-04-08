@@ -878,10 +878,7 @@ static void ViewportPaintColumn(PaintSession& session)
         ViewportPaintWeatherGloom(&session.DPI);
     }
 
-    if (session.PSStringHead != nullptr)
-    {
-        PaintDrawMoneyStructs(&session.DPI, session.PSStringHead);
-    }
+    PaintDrawMoneyStructs(session);
 }
 
 /**
@@ -1761,7 +1758,7 @@ InteractionInfo SetInteractionInfoFromPaintSession(PaintSession* session, uint32
     DrawPixelInfo* dpi = &session->DPI;
     InteractionInfo info{};
 
-    while ((ps = ps->next_quadrant_ps) != nullptr)
+    while ((ps = session->GetNode<PaintStruct>(ps->NextQuadrantNode)) != nullptr)
     {
         PaintStruct* old_ps = ps;
         PaintStruct* next_ps = ps;
@@ -1775,12 +1772,13 @@ InteractionInfo SetInteractionInfoFromPaintSession(PaintSession* session, uint32
                     info = { ps };
                 }
             }
-            next_ps = ps->children;
+            next_ps = session->GetNode<PaintStruct>(ps->NextChildNode);
         }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnull-dereference"
-        for (AttachedPaintStruct* attached_ps = ps->attached_ps; attached_ps != nullptr; attached_ps = attached_ps->next)
+        for (AttachedPaintStruct* attached_ps = session->GetNode<AttachedPaintStruct>(ps->AttachedNode); attached_ps != nullptr;
+             attached_ps = session->GetNode<AttachedPaintStruct>(attached_ps->Next))
         {
             if (IsSpriteInteractedWith(dpi, attached_ps->image_id, { (attached_ps->x + ps->x), (attached_ps->y + ps->y) }))
             {

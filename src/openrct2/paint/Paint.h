@@ -17,25 +17,16 @@
 #include "../world/Map.h"
 #include "Boundbox.h"
 
-#include <deque>
 #include <mutex>
 #include <thread>
+#include <variant>
+#include <vector>
 
 struct EntityBase;
 struct TileElement;
 
 enum class RailingEntrySupportType : uint8_t;
 enum class ViewportInteractionItem : uint8_t;
-
-struct AttachedPaintStruct
-{
-    AttachedPaintStruct* next;
-    ImageId image_id;
-    ImageId ColourImageId;
-    int32_t x;
-    int32_t y;
-    bool IsMasked;
-};
 
 struct PaintStructBoundBox
 {
@@ -47,14 +38,32 @@ struct PaintStructBoundBox
     int32_t z_end;
 };
 
-struct PaintStruct
+enum class PaintNodeId : uint32_t
+{
+    Invalid = 0xFFFFFFFF,
+};
+
+struct PaintNodeBase
+{
+    PaintNodeId Id;
+    PaintNodeId Next;
+};
+
+struct AttachedPaintStruct : PaintNodeBase
+{
+    ImageId image_id;
+    ImageId ColourImageId;
+    int32_t x;
+    int32_t y;
+    bool IsMasked;
+};
+
+struct PaintStruct : PaintNodeBase
 {
     PaintStructBoundBox bounds;
-    AttachedPaintStruct* attached_ps;
-    PaintStruct* children;
-    PaintStruct* next_quadrant_ps;
-    TileElement* tileElement;
-    EntityBase* entity;
+    PaintNodeId AttachedNode;
+    PaintNodeId NextChildNode;
+    PaintNodeId NextQuadrantNode;
     ImageId image_id;
     int32_t x;
     int32_t y;
@@ -63,46 +72,41 @@ struct PaintStruct
     uint16_t quadrant_index;
     uint8_t SortFlags;
     ViewportInteractionItem sprite_type;
+    TileElement* tileElement;
+    EntityBase* entity;
 };
 
-struct PaintStringStruct
+struct PaintStringStruct : PaintNodeBase
 {
     StringId string_id;
-    PaintStringStruct* next;
     int32_t x;
     int32_t y;
     uint32_t args[4];
     uint8_t* y_offsets;
 };
 
-struct PaintEntry
+union PaintNode
 {
-private:
-    std::array<uint8_t, std::max({ sizeof(PaintStruct), sizeof(AttachedPaintStruct), sizeof(PaintStringStruct) })> data;
+    PaintStruct _PaintStruct;
+    AttachedPaintStruct _AttachedPaintStruct;
+    PaintStringStruct _PaintStringStruct;
 
-public:
-    PaintStruct* AsBasic()
+    template<typename T> T* get()
     {
-        auto* res = reinterpret_cast<PaintStruct*>(data.data());
-        ::new (res) PaintStruct();
-        return res;
-    }
-    AttachedPaintStruct* AsAttached()
-    {
-        auto* res = reinterpret_cast<AttachedPaintStruct*>(data.data());
-        ::new (res) AttachedPaintStruct();
-        return res;
-    }
-    PaintStringStruct* AsString()
-    {
-        auto* res = reinterpret_cast<PaintStringStruct*>(data.data());
-        ::new (res) PaintStringStruct();
-        return res;
+        if constexpr (std::is_same_v<T, PaintStruct>)
+        {
+            return &_PaintStruct;
+        }
+        else if constexpr (std::is_same_v<T, AttachedPaintStruct>)
+        {
+            return &_AttachedPaintStruct;
+        }
+        else if constexpr (std::is_same_v<T, PaintStringStruct>)
+        {
+            return &_PaintStringStruct;
+        }
     }
 };
-static_assert(sizeof(PaintEntry) >= sizeof(PaintStruct));
-static_assert(sizeof(PaintEntry) >= sizeof(AttachedPaintStruct));
-static_assert(sizeof(PaintEntry) >= sizeof(PaintStringStruct));
 
 struct SpriteBb
 {
@@ -133,18 +137,19 @@ static constexpr int32_t MaxPaintQuadrants = MAXIMUM_MAP_SIZE_TECHNICAL * 2;
 
 struct PaintSessionCore
 {
+    std::vector<PaintNode> PaintEntries;
     PaintStruct PaintHead;
-    PaintStruct* Quadrants[MaxPaintQuadrants];
-    PaintStruct* LastPS;
-    PaintStringStruct* PSStringHead;
-    PaintStringStruct* LastPSString;
-    AttachedPaintStruct* LastAttachedPS;
+    PaintNodeId Quadrants[MaxPaintQuadrants];
+    PaintNodeId LastPS;
+    PaintNodeId PSStringHead;
+    PaintNodeId LastPSString;
+    PaintNodeId LastAttachedPS;
     const TileElement* SurfaceElement;
     EntityBase* CurrentlyDrawnEntity;
     TileElement* CurrentlyDrawnTileElement;
     const TileElement* PathElementOnSameHeight;
     const TileElement* TrackElementOnSameHeight;
-    PaintStruct* WoodenSupportsPrependTo;
+    PaintNodeId WoodenSupportsPrependTo;
     CoordsXY SpritePosition;
     CoordsXY MapPosition;
     uint32_t ViewFlags;
@@ -168,36 +173,57 @@ struct PaintSession : public PaintSessionCore
 {
     DrawPixelInfo DPI;
 
-    std::deque<PaintEntry> PaintEntries;
+    template<typename T> T* AllocateNode()
+    {
+        const auto index = PaintEntries.size();
+        auto& entry = PaintEntries.emplace_back(PaintNode{});
+        auto* node = entry.get<T>();
+        node->Id = static_cast<PaintNodeId>(index);
+        node->Next = PaintNodeId::Invalid;
+        return node;
+    }
 
     PaintStruct* AllocateNormalPaintEntry() noexcept
     {
-        auto& entry = PaintEntries.emplace_back();
-        LastPS = entry.AsBasic();
-        return LastPS;
+        auto* node = AllocateNode<PaintStruct>();
+        LastPS = node->Id;
+        return node;
     }
 
     AttachedPaintStruct* AllocateAttachedPaintEntry() noexcept
     {
-        auto& entry = PaintEntries.emplace_back();
-        LastAttachedPS = entry.AsAttached();
-        return LastAttachedPS;
+        auto* node = AllocateNode<AttachedPaintStruct>();
+        LastAttachedPS = node->Id;
+        return node;
     }
 
     PaintStringStruct* AllocateStringPaintEntry() noexcept
     {
-        auto& entry = PaintEntries.emplace_back();
-        auto* string = entry.AsString();
-        if (LastPSString == nullptr)
+        auto* string = AllocateNode<PaintStringStruct>();
+        auto* last = GetNode<PaintStringStruct>(LastPSString);
+        if (last == nullptr)
         {
-            PSStringHead = string;
+            PSStringHead = string->Id;
         }
         else
         {
-            LastPSString->next = string;
+            last->Next = string->Id;
         }
-        LastPSString = string;
-        return LastPSString;
+
+        LastPSString = string->Id;
+        return string;
+    }
+
+    template<typename T> T* GetNode(PaintNodeId id) noexcept
+    {
+        if (id == PaintNodeId::Invalid)
+            return nullptr;
+        const auto index = static_cast<size_t>(id);
+        /*
+        if (index >= PaintEntries.size())
+            return nullptr;
+        */
+        return PaintEntries[index].get<T>();
     }
 };
 
@@ -215,8 +241,8 @@ struct FootpathPaintInfo
 
 struct RecordedPaintSession
 {
-    PaintSessionCore Session;
-    std::vector<PaintEntry> Entries;
+    PaintSession Session;
+    std::vector<PaintNode> Entries;
 };
 
 extern PaintSession gPaintSession;
@@ -236,7 +262,7 @@ extern bool gPaintBoundingBoxes;
 extern bool gPaintBlockedTiles;
 extern bool gPaintWidePathsAsGhost;
 
-PaintStruct* PaintAddImageAsParent(
+PaintNodeId PaintAddImageAsParent(
     PaintSession& session, const ImageId image_id, const CoordsXYZ& offset, const BoundBoxXYZ& boundBox);
 /**
  *  rct2: 0x006861AC, 0x00686337, 0x006864D0, 0x0068666B, 0x0098196C
@@ -250,26 +276,27 @@ PaintStruct* PaintAddImageAsParent(
  * @param z_offset (dx)
  * @return (ebp) PaintStruct on success (CF == 0), nullptr on failure (CF == 1)
  */
-inline PaintStruct* PaintAddImageAsParent(
+inline PaintNodeId PaintAddImageAsParent(
     PaintSession& session, const ImageId image_id, const CoordsXYZ& offset, const CoordsXYZ& boundBoxSize)
 {
     return PaintAddImageAsParent(session, image_id, offset, { offset, boundBoxSize });
 }
 
-[[nodiscard]] PaintStruct* PaintAddImageAsOrphan(
-    PaintSession& session, const ImageId image_id, const CoordsXYZ& offset, const BoundBoxXYZ& boundBox);
-PaintStruct* PaintAddImageAsChild(
+[[nodiscard]] PaintNodeId PaintAddImageAsOrphan(
     PaintSession& session, const ImageId image_id, const CoordsXYZ& offset, const BoundBoxXYZ& boundBox);
 
-PaintStruct* PaintAddImageAsChildRotated(
+PaintNodeId PaintAddImageAsChild(
+    PaintSession& session, const ImageId image_id, const CoordsXYZ& offset, const BoundBoxXYZ& boundBox);
+
+PaintNodeId PaintAddImageAsChildRotated(
     PaintSession& session, const uint8_t direction, const ImageId image_id, const CoordsXYZ& offset,
     const BoundBoxXYZ& boundBox);
 
-PaintStruct* PaintAddImageAsParentRotated(
+PaintNodeId PaintAddImageAsParentRotated(
     PaintSession& session, const uint8_t direction, const ImageId imageId, const CoordsXYZ& offset,
     const BoundBoxXYZ& boundBox);
 
-inline PaintStruct* PaintAddImageAsParentRotated(
+inline PaintNodeId PaintAddImageAsParentRotated(
     PaintSession& session, const uint8_t direction, const ImageId imageId, const CoordsXYZ& offset,
     const CoordsXYZ& boundBoxSize)
 {
@@ -287,6 +314,6 @@ void PaintFloatingMoneyEffect(
 PaintSession* PaintSessionAlloc(DrawPixelInfo* dpi, uint32_t viewFlags);
 void PaintSessionFree(PaintSession* session);
 void PaintSessionGenerate(PaintSession& session);
-void PaintSessionArrange(PaintSessionCore& session);
+void PaintSessionArrange(PaintSession& session);
 void PaintDrawStructs(PaintSession& session);
-void PaintDrawMoneyStructs(DrawPixelInfo* dpi, PaintStringStruct* ps);
+void PaintDrawMoneyStructs(PaintSession& session);

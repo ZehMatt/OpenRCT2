@@ -37,7 +37,7 @@ template<bool isClassic> ImageId WoodenRCGetTrackColour(const PaintSession& sess
 ImageId WoodenRCGetRailsColour(PaintSession& session);
 
 template<bool isClassic>
-PaintStruct* WoodenRCTrackPaint(
+PaintNodeId WoodenRCTrackPaint(
     PaintSession& session, uint8_t direction, ImageIndex imageIdTrack, ImageIndex imageIdRails, const CoordsXYZ& offset,
     const BoundBoxXYZ& boundBox)
 {
