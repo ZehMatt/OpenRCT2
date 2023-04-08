@@ -20858,5 +20858,59 @@
         "path": "palette_map/palette_map_glass_void.png",
 		"palette": "keep",
 		"forceBmp": true
+    },
+    {
+        "path": "effects/rain_trail_00.png",
+        "x_offset": -1,
+        "y_offset": -16,
+        "palette": "keep"
+    },
+    {
+        "path": "effects/rain_trail_01.png",
+        "x_offset": -1,
+        "y_offset": -16,
+        "palette": "keep"
+    },
+    {
+        "path": "effects/rain_trail_02.png",
+        "x_offset": -1,
+        "y_offset": -16,
+        "palette": "keep"
+    },
+    {
+        "path": "effects/rain_trail_03.png",
+        "x_offset": -1,
+        "y_offset": -16,
+        "palette": "keep"
+    },
+    {
+        "path": "effects/rain_hit_00.png",
+        "x_offset": -3,
+        "y_offset": -3,
+        "palette": "keep"
+    },
+    {
+        "path": "effects/rain_hit_01.png",
+        "x_offset": -3,
+        "y_offset": -3,
+        "palette": "keep"
+    },
+    {
+        "path": "effects/rain_hit_02.png",
+        "x_offset": -3,
+        "y_offset": -3,
+        "palette": "keep"
+    },
+    {
+        "path": "effects/rain_hit_03.png",
+        "x_offset": -3,
+        "y_offset": -3,
+        "palette": "keep"
+    },
+    {
+        "path": "effects/rain_hit_04.png",
+        "x_offset": -3,
+        "y_offset": -3,
+        "palette": "keep"
     }
 ]

@@ -20,6 +20,7 @@
 #include "../paint/Painter.h"
 #include "../profiling/Profiling.h"
 #include "../util/Math.hpp"
+#include "../world/weather/WeatherSystem.hpp"
 #include "Boundbox.h"
 #include "Paint.Entity.h"
 #include "tile_element/Paint.TileElement.h"
@@ -235,6 +236,8 @@ template<uint8_t direction> void PaintSessionGenerateRotate(PaintSession& sessio
 
         mapTile += nextVerticalTile;
     }
+
+    OpenRCT2::Weather::Paint(session, direction);
 }
 
 /**

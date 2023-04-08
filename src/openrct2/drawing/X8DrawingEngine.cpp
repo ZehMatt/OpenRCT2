@@ -47,70 +47,10 @@ void X8WeatherDrawer::Draw(
     DrawPixelInfo& dpi, int32_t x, int32_t y, int32_t width, int32_t height, int32_t xStart, int32_t yStart,
     const uint8_t* weatherpattern)
 {
-    const uint8_t* pattern = weatherpattern;
-    auto patternXSpace = *pattern++;
-    auto patternYSpace = *pattern++;
-
-    uint8_t patternStartXOffset = xStart % patternXSpace;
-    uint8_t patternStartYOffset = yStart % patternYSpace;
-
-    uint32_t pixelOffset = (dpi.pitch + dpi.width) * y + x;
-    uint8_t patternYPos = patternStartYOffset % patternYSpace;
-
-    uint8_t* screenBits = dpi.bits;
-
-    // Stores the colours of changed pixels
-    WeatherPixel* newPixels = &_weatherPixels[_weatherPixelsCount];
-    for (; height != 0; height--)
-    {
-        auto patternX = pattern[patternYPos * 2];
-        if (patternX != 0xFF)
-        {
-            if (_weatherPixelsCount < (_weatherPixelsCapacity - static_cast<uint32_t>(width)))
-            {
-                uint32_t finalPixelOffset = width + pixelOffset;
-
-                uint32_t xPixelOffset = pixelOffset;
-                xPixelOffset += (static_cast<uint8_t>(patternX - patternStartXOffset)) % patternXSpace;
-
-                auto patternPixel = pattern[patternYPos * 2 + 1];
-                for (; xPixelOffset < finalPixelOffset; xPixelOffset += patternXSpace)
-                {
-                    uint8_t current_pixel = screenBits[xPixelOffset];
-                    screenBits[xPixelOffset] = patternPixel;
-                    _weatherPixelsCount++;
-
-                    // Store colour and position
-                    *newPixels++ = { xPixelOffset, current_pixel };
-                }
-            }
-        }
-
-        pixelOffset += dpi.pitch + dpi.width;
-        patternYPos++;
-        patternYPos %= patternYSpace;
-    }
 }
 
 void X8WeatherDrawer::Restore(DrawPixelInfo* dpi)
 {
-    if (_weatherPixelsCount > 0)
-    {
-        uint32_t numPixels = (dpi->width + dpi->pitch) * dpi->height;
-        uint8_t* bits = dpi->bits;
-        for (uint32_t i = 0; i < _weatherPixelsCount; i++)
-        {
-            WeatherPixel weatherPixel = _weatherPixels[i];
-            if (weatherPixel.Position >= numPixels)
-            {
-                // Pixel out of bounds, bail
-                break;
-            }
-
-            bits[weatherPixel.Position] = weatherPixel.Colour;
-        }
-        _weatherPixelsCount = 0;
-    }
 }
 
 #ifdef __WARN_SUGGEST_FINAL_METHODS__

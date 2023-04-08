@@ -42,6 +42,7 @@
 #include "world/MapAnimation.h"
 #include "world/Park.h"
 #include "world/Scenery.h"
+#include "world/weather/WeatherSystem.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -74,6 +75,7 @@ void GameState::InitAll(const TileCoordsXY& mapSize)
     ResetDate();
     ClimateReset(ClimateType::CoolAndWet);
     News::InitQueue();
+    Weather::Reset();
 
     gInMapInitCode = false;
 
@@ -353,6 +355,8 @@ void GameState::UpdateLogic(LogicTimings* timings)
     report_time(LogicTimePart::RideMeasurments);
     News::UpdateCurrentItem();
     report_time(LogicTimePart::News);
+
+    Weather::Update();
 
     MapAnimationInvalidateAll();
     report_time(LogicTimePart::MapAnimation);
