@@ -11,7 +11,7 @@
 
 #include <vector>
 
-#pragma optimize("", off)
+//#pragma optimize("", off)
 
 namespace OpenRCT2::Weather::Rain
 {
