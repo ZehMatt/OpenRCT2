@@ -15,6 +15,8 @@
 template<DrawBlendOp TBlendOp, size_t TZoom>
 static void FASTCALL DrawRLESpriteMagnify(DrawPixelInfo& dpi, const DrawSpriteArgs& args)
 {
+    constexpr auto zoom = 1 << TZoom;
+    
     auto src0 = args.SourceImage.offset;
     auto dst0 = args.DestinationBits;
     auto srcX = args.SrcX;
@@ -22,7 +24,6 @@ static void FASTCALL DrawRLESpriteMagnify(DrawPixelInfo& dpi, const DrawSpriteAr
     auto width = args.Width;
     auto height = args.Height;
     auto& paletteMap = args.PalMap;
-    auto zoom = 1 << TZoom;
     auto dstLineWidth = (static_cast<size_t>(dpi.width) << TZoom) + dpi.pitch;
 
     // Move up to the first line of the image if source_y_start is negative. Why does this even occur?
@@ -74,7 +75,7 @@ static void FASTCALL DrawRLESpriteMagnify(DrawPixelInfo& dpi, const DrawSpriteAr
             auto dst = dstLineStart + (static_cast<size_t>(x) << TZoom);
             while (numPixels > 0)
             {
-                BlitPixels<TBlendOp>(src, dst, paletteMap, zoom, dstLineWidth);
+                BlitPixels<TBlendOp, zoom>(src, dst, paletteMap, dstLineWidth);
                 src++;
                 dst += zoom;
                 numPixels--;
@@ -178,32 +179,38 @@ static void FASTCALL DrawRLESpriteMinify(DrawPixelInfo& dpi, const DrawSpriteArg
     }
 }
 
-template<DrawBlendOp TBlendOp> static void FASTCALL DrawRLESprite(DrawPixelInfo& dpi, const DrawSpriteArgs& args)
+template<DrawBlendOp TBlendOp, int8_t TZoom> static void FASTCALL DrawRLESprite(DrawPixelInfo& dpi, const DrawSpriteArgs& args)
 {
-    auto zoom_level = static_cast<int8_t>(dpi.zoom_level);
-    switch (zoom_level)
+    if constexpr (TZoom < 0)
     {
-        case -2:
-            DrawRLESpriteMagnify<TBlendOp, 2>(dpi, args);
-            break;
-        case -1:
-            DrawRLESpriteMagnify<TBlendOp, 1>(dpi, args);
-            break;
-        case 0:
-            DrawRLESpriteMinify<TBlendOp, 0>(dpi, args);
-            break;
-        case 1:
-            DrawRLESpriteMinify<TBlendOp, 1>(dpi, args);
-            break;
-        case 2:
-            DrawRLESpriteMinify<TBlendOp, 2>(dpi, args);
-            break;
-        case 3:
-            DrawRLESpriteMinify<TBlendOp, 3>(dpi, args);
-            break;
-        default:
-            assert(false);
-            break;
+        DrawRLESpriteMagnify<TBlendOp, -TZoom>(dpi, args);
+    }
+    else
+    {
+        DrawRLESpriteMinify<TBlendOp, TZoom>(dpi, args);
+    }
+}
+
+template<int8_t TZoom> static void GfxRleSpriteToBufferImpl(DrawPixelInfo& dpi, const DrawSpriteArgs& args)
+{
+    if (args.Image.HasPrimary())
+    {
+        if (args.Image.IsBlended())
+        {
+            DrawRLESprite<BLEND_TRANSPARENT | BLEND_SRC | BLEND_DST, TZoom>(dpi, args);
+        }
+        else
+        {
+            DrawRLESprite<BLEND_TRANSPARENT | BLEND_SRC, TZoom>(dpi, args);
+        }
+    }
+    else if (args.Image.IsBlended())
+    {
+        DrawRLESprite<BLEND_TRANSPARENT | BLEND_DST, TZoom>(dpi, args);
+    }
+    else
+    {
+        DrawRLESprite<BLEND_TRANSPARENT, TZoom>(dpi, args);
     }
 }
 
@@ -215,23 +222,19 @@ template<DrawBlendOp TBlendOp> static void FASTCALL DrawRLESprite(DrawPixelInfo&
  */
 void FASTCALL GfxRleSpriteToBuffer(DrawPixelInfo& dpi, const DrawSpriteArgs& args)
 {
-    if (args.Image.HasPrimary())
+    switch (static_cast<int8_t>(dpi.zoom_level))
     {
-        if (args.Image.IsBlended())
-        {
-            DrawRLESprite<BLEND_TRANSPARENT | BLEND_SRC | BLEND_DST>(dpi, args);
-        }
-        else
-        {
-            DrawRLESprite<BLEND_TRANSPARENT | BLEND_SRC>(dpi, args);
-        }
-    }
-    else if (args.Image.IsBlended())
-    {
-        DrawRLESprite<BLEND_TRANSPARENT | BLEND_DST>(dpi, args);
-    }
-    else
-    {
-        DrawRLESprite<BLEND_TRANSPARENT>(dpi, args);
+        case -2:
+            return GfxRleSpriteToBufferImpl<-2>(dpi, args);
+        case -1:
+            return GfxRleSpriteToBufferImpl<-1>(dpi, args);
+        case 0:
+            return GfxRleSpriteToBufferImpl<0>(dpi, args);
+        case 1:
+            return GfxRleSpriteToBufferImpl<1>(dpi, args);
+        case 2:
+            return GfxRleSpriteToBufferImpl<2>(dpi, args);
+        case 3:
+            return GfxRleSpriteToBufferImpl<3>(dpi, args);
     }
 }
