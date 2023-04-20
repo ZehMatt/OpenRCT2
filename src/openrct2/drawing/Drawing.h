@@ -463,18 +463,20 @@ template<DrawBlendOp TBlendOp> bool FASTCALL BlitPixel(const uint8_t* src, uint8
     }
 }
 
+template<DrawBlendOp TBlendOp, int8_t TZoom, size_t... TIndices>
+void FASTCALL BlitPixelsHelper(const uint8_t* src, uint8_t* dst, const PaletteMap& paletteMap, std::index_sequence<TIndices...>)
+{
+    (BlitPixel<TBlendOp>(src, dst + TIndices, paletteMap), ...);
+}
+
 template<DrawBlendOp TBlendOp, int8_t TZoom>
 void FASTCALL BlitPixels(const uint8_t* src, uint8_t* dst, const PaletteMap& paletteMap, size_t dstPitch)
 {
     const auto yDstSkip = dstPitch - TZoom;
     for (uint8_t yy = 0; yy < TZoom; yy++)
     {
-        for (uint8_t xx = 0; xx < TZoom; xx++)
-        {
-            BlitPixel<TBlendOp>(src, dst, paletteMap);
-            dst++;
-        }
-        dst += yDstSkip;
+        BlitPixelsHelper<TBlendOp, TZoom>(src, dst, paletteMap, std::make_index_sequence<TZoom>{});
+        dst += (TZoom + yDstSkip);
     }
 }
 
