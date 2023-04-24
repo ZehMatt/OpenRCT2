@@ -20862,25 +20862,25 @@
     {
         "path": "effects/rain_trail_00.png",
         "x_offset": -1,
-        "y_offset": -16,
+        "y_offset": -8,
         "palette": "keep"
     },
     {
         "path": "effects/rain_trail_01.png",
         "x_offset": -1,
-        "y_offset": -16,
+        "y_offset": -8,
         "palette": "keep"
     },
     {
         "path": "effects/rain_trail_02.png",
         "x_offset": -1,
-        "y_offset": -16,
+        "y_offset": -8,
         "palette": "keep"
     },
     {
         "path": "effects/rain_trail_03.png",
         "x_offset": -1,
-        "y_offset": -16,
+        "y_offset": -8,
         "palette": "keep"
     },
     {

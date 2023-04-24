@@ -11,7 +11,7 @@
 
 #include <vector>
 
-//#pragma optimize("", off)
+#pragma optimize("", off)
 
 namespace OpenRCT2::Weather::Rain
 {
@@ -39,7 +39,7 @@ namespace OpenRCT2::Weather::Rain
     static std::array<int, 128 * 128> _rainMap{};
 
     static constexpr size_t kMaxParticles = 20000;
-    static constexpr size_t kMaxSurfaceHits = 6000;
+    static constexpr size_t kMaxSurfaceHits = 20000;
 
     static constexpr uint32_t kRainRateChange = 10;
 
@@ -50,10 +50,10 @@ namespace OpenRCT2::Weather::Rain
     static constexpr uint32_t kDropCycleTime = kDropAnimateTime / kDropFrames;
 
     static constexpr CoordsXYZ kRainFallVectors[] = {
-        { 0, 0, -26 },
-        { 0, 0, -27 },
-        { 0, 0, -28 },
-        { 0, 0, -29 },
+        { 0, 0, -36 },
+        { 0, 0, -37 },
+        { 0, 0, -38 },
+        { 0, 0, -39 },
     };
 
     static int32_t _rainRate = 0;
@@ -161,20 +161,17 @@ namespace OpenRCT2::Weather::Rain
 
     static void UpdateRainRate()
     {
-        if (gClimateCurrent.Weather == WeatherType::Rain || gClimateCurrent.Weather == WeatherType::HeavyRain)
+        if (gClimateCurrent.Weather == WeatherType::Rain)
         {
-            if (gClimateCurrent.Level == WeatherLevel::Heavy)
-            {
-                _rainRateTarget = 150;
-            }
-            else if (gClimateCurrent.Level == WeatherLevel::Light)
-            {
-                _rainRateTarget = 20;
-            }
-            else
-            {
-                _rainRateTarget = 0;
-            }
+            _rainRateTarget = 10;
+        }
+        else if (gClimateCurrent.Weather == WeatherType::HeavyRain)
+        {
+            _rainRateTarget = 50;
+        }
+        else if (gClimateCurrent.Weather == WeatherType::Thunder)
+        {
+            _rainRateTarget = 100;
         }
         else
         {
@@ -212,7 +209,7 @@ namespace OpenRCT2::Weather::Rain
             if (_rainRate > _rainRateTarget)
                 _rainRate = _rainRate - std::min(std::abs(_rainRateTarget - _rainRate), 3);
             else if (_rainRate < _rainRateTarget)
-                _rainRate += 2;
+                _rainRate += 1;
 
             _rainTimer = 0;
         }
@@ -288,8 +285,19 @@ namespace OpenRCT2::Weather::Rain
             return;
 
         // Spawn new particles
-        size_t remainingCount = std::min<size_t>(_rainRate, kMaxParticles - _rainParticles.size());
-        for (size_t n = 0; n < remainingCount; n++)
+        size_t remainingCount = kMaxParticles - _rainParticles.size();
+        remainingCount *= _rainRate;
+        remainingCount /= 100;
+
+        size_t maxNewRainDrops = 200;
+        if (gClimateCurrent.Weather == WeatherType::Rain)
+            maxNewRainDrops = 200;
+        if (gClimateCurrent.Weather == WeatherType::HeavyRain)
+            maxNewRainDrops = 400;
+        if (gClimateCurrent.Weather == WeatherType::Thunder)
+            maxNewRainDrops = 600;
+        
+        for (size_t n = 0; n < std::min<size_t>(maxNewRainDrops, remainingCount); n++)
         {
             if (UtilRandMinMax(0, 99) > _rainRate)
                 continue;
@@ -297,14 +305,14 @@ namespace OpenRCT2::Weather::Rain
             const int32_t posX = UtilRandMinMax(0, mapSize.x);
             const int32_t posY = UtilRandMinMax(0, mapSize.y);
 
-            //const auto x1 = RemapValue(posX, 0, mapSize.x, 0, 128);
-            //const auto y1 = RemapValue(posY, 0, mapSize.y, 0, 128);
+            // const auto x1 = RemapValue(posX, 0, mapSize.x, 0, 128);
+            // const auto y1 = RemapValue(posY, 0, mapSize.y, 0, 128);
 
-            //const auto density = _rainMap[y1 * 128 + x1];
-            //if (UtilRandMinMax(0, 99) > density)
-                //continue;
+            // const auto density = _rainMap[y1 * 128 + x1];
+            // if (UtilRandMinMax(0, 99) > density)
+            // continue;
 
-            const int32_t spawnHeight = 1000;
+            const int32_t spawnHeight = 256 * 32;
 
             auto particle = RainParticle{ _nextRainId, { posX, posY, spawnHeight } };
             _nextRainId++;
@@ -338,18 +346,18 @@ namespace OpenRCT2::Weather::Rain
             case 0:
                 return 1;
             case 1:
-                return 2;
+                return 10;
             case 2:
-                return 3;
+                return 20;
             case 3:
-                return 4;
+                return 30;
             default:
                 break;
         }
         return 1;
     }
 
-    static void PaintRainTrails(PaintSession& session, int32_t imageDirection)
+    static void PaintRain(PaintSession& session, int32_t imageDirection)
     {
         const auto baseImage = GetRainTrailImage(session);
         const auto imageId = ImageId(baseImage).WithTransparency(FilterPaletteID::PaletteTranslucentWhite);
@@ -367,21 +375,24 @@ namespace OpenRCT2::Weather::Rain
             session.SpritePosition = pos;
             session.InteractionType = ViewportInteractionItem::None;
 
-            PaintAddImageAsParent(session, imageId, { 0, 0, pos.z }, { 4, 4, 24 });
+            PaintAddImageAsParent(session, imageId, { 0, 0, pos.z }, { 4, 4, 8 });
         }
     }
 
-    static void PaintRainDrops(PaintSession& session, int32_t imageDirection)
+    static void PaintRainHits(PaintSession& session, int32_t imageDirection)
     {
+        if (session.DPI.zoom_level > ZoomLevel{ 1 })
+            return;
+        
         const auto baseImage = ImageId(SPR_G2_EFFECT_RAIN_HIT_SURFACE_00)
                                    .WithTransparency(FilterPaletteID::PaletteTranslucentWhite);
 
-        const auto skipCount = GetSkipCount(session);
+        //const auto skipCount = GetSkipCount(session);
         for (size_t i = 0; i < _rainSurfaceHits.size(); i++)
         {
             const auto& particle = _rainSurfaceHits[i];
-            if (particle.Id % skipCount != 0)
-                continue;
+            //if (particle.Id % skipCount != 0)
+                //continue;
 
             const auto cycleIndex = particle.Ticks / kDropCycleTime;
             const auto& pos = particle.Pos;
@@ -425,8 +436,8 @@ namespace OpenRCT2::Weather::Rain
 
     void Paint(PaintSession& session, int32_t imageDirection)
     {
-        PaintRainTrails(session, imageDirection);
-        PaintRainDrops(session, imageDirection);
+        PaintRain(session, imageDirection);
+        PaintRainHits(session, imageDirection);
         // PaintRainMap(session, imageDirection);
     }
 
