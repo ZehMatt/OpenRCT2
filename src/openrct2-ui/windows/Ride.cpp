@@ -9,6 +9,8 @@
 
 #include "../interface/Theme.h"
 
+#pragma optimize("", off)
+
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -1003,8 +1005,9 @@ static void WindowRideDrawTabCustomer(DrawPixelInfo& dpi, WindowBase* w)
         const auto& widget = w->widgets[widgetIndex];
         int32_t spriteIndex = 0;
         if (w->page == WINDOW_RIDE_PAGE_CUSTOMER)
-            spriteIndex = w->picked_peep_frame & ~3;
-
+        {
+            spriteIndex = w->frame_no & ~3;
+        }
         spriteIndex += GetPeepAnimation(PeepSpriteType::Normal).base_image + 1;
 
         GfxDrawSprite(
@@ -1168,7 +1171,6 @@ static WindowBase* WindowRideOpen(const Ride& ride)
     w->vehicleIndex = 0;
     w->frame_no = 0;
     w->list_information_type = 0;
-    w->picked_peep_frame = 0;
     w->ride_colour = 0;
     WindowRideDisableTabs(w);
     w->min_width = 316;
@@ -1436,7 +1438,6 @@ static void WindowRideSetPage(WindowBase* w, int32_t page)
 
     w->page = page;
     w->frame_no = 0;
-    w->picked_peep_frame = 0;
 
     // There doesn't seem to be any need for this call, and it can sometimes modify the reported number of cars per train, so
     // I've removed it if (page == WINDOW_RIDE_PAGE_VEHICLE) { ride_update_max_vehicles(ride);
@@ -6955,9 +6956,9 @@ static void WindowRideCustomerResize(WindowBase* w)
  */
 static void WindowRideCustomerUpdate(WindowBase* w)
 {
-    w->picked_peep_frame++;
-    if (w->picked_peep_frame >= 24)
-        w->picked_peep_frame = 0;
+    w->frame_no++;
+    if (w->frame_no >= 24)
+        w->frame_no = 0;
 
     WindowEventInvalidateCall(w);
     WidgetInvalidate(*w, WIDX_TAB_10);

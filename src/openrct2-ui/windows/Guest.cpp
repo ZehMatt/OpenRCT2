@@ -180,7 +180,6 @@ public:
         page = WINDOW_GUEST_OVERVIEW;
         frame_no = 0;
         _marqueePosition = 0;
-        picked_peep_frame = 0;
         min_width = width;
         min_height = 157;
         max_width = 500;

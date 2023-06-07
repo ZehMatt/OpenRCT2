@@ -77,11 +77,7 @@ struct WindowBase
     };
     uint16_t frame_no{};              // updated every tic for motion in windows sprites
     uint16_t list_information_type{}; // 0 for none
-    union
-    {
-        int16_t picked_peep_frame; // Animation frame of picked peep in staff window and guest window
-        int16_t var_492;
-    };
+    int16_t var_492;
     union
     {
         uint16_t ride_colour;
