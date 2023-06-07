@@ -1054,6 +1054,7 @@ namespace OpenRCT2
             PROFILED_FUNCTION();
 
             const auto deltaTime = _timer.GetElapsedTimeAndRestart().count();
+            gCurrentFrameTime = deltaTime;
 
             // Make sure we catch the state change and reset it.
             bool useVariableFrame = ShouldRunVariableFrame();

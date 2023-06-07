@@ -88,6 +88,7 @@ bool gLoadKeepWindowsOpen = false;
 
 uint32_t gCurrentTicks;
 uint32_t gCurrentRealTimeTicks;
+float gCurrentFrameTime;
 
 #ifdef ENABLE_SCRIPTING
 static bool _mapChangedExpected;

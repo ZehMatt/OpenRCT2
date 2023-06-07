@@ -135,6 +135,7 @@ enum
 
 extern uint32_t gCurrentTicks;
 extern uint32_t gCurrentRealTimeTicks;
+extern float gCurrentFrameTime;
 
 extern uint16_t gCurrentDeltaTime;
 extern uint8_t gGamePaused;
