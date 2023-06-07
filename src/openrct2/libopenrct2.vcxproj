@@ -161,6 +161,7 @@
     <ClInclude Include="actions\WaterLowerAction.h" />
     <ClInclude Include="actions\WaterRaiseAction.h" />
     <ClInclude Include="actions\WaterSetHeightAction.h" />
+    <ClInclude Include="AnimationHelper.hpp" />
     <ClInclude Include="AssetPack.h" />
     <ClInclude Include="AssetPackManager.h" />
     <ClInclude Include="audio\audio.h" />
@@ -351,7 +352,7 @@
     <ClInclude Include="object\WaterEntry.h" />
     <ClInclude Include="object\WaterObject.h" />
     <ClInclude Include="OpenRCT2.h" />
-    <ClInclude Include="openrct2_pch.h" Condition="'$(UsePCH)'=='true'"/>
+    <ClInclude Include="openrct2_pch.h" Condition="'$(UsePCH)'=='true'" />
     <ClInclude Include="paint\Boundbox.h" />
     <ClInclude Include="paint\Paint.Entity.h" />
     <ClInclude Include="paint\Paint.h" />
@@ -1049,7 +1050,8 @@
     <ClCompile Include="world\Wall.cpp" />
     <ClCompile Include="..\thirdparty\duktape\duktape.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <ForcedIncludeFiles></ForcedIncludeFiles>
+      <ForcedIncludeFiles>
+      </ForcedIncludeFiles>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
   </ItemGroup>
