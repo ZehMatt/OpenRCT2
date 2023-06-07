@@ -13,6 +13,7 @@
 #include <openrct2-ui/interface/Viewport.h>
 #include <openrct2-ui/interface/Widget.h>
 #include <openrct2-ui/windows/Window.h>
+#include <openrct2/AnimationHelper.hpp>
 #include <openrct2/Context.h>
 #include <openrct2/Game.h>
 #include <openrct2/Input.h>
@@ -33,6 +34,8 @@
 #include <openrct2/windows/Intent.h>
 #include <openrct2/world/Footpath.h>
 #include <openrct2/world/Park.h>
+
+using namespace OpenRCT2;
 
 static constexpr const StringId WINDOW_TITLE = STR_STRINGID;
 
@@ -126,6 +129,7 @@ class StaffWindow final : public Window
 private:
     EntertainerCostume _availableCostumes[static_cast<uint8_t>(EntertainerCostume::Count)]{};
     uint16_t _tabAnimationOffset = 0;
+    AnimationHelper<48, 16> _staffPickupAnimation;
 
 public:
     void Initialise(EntityId entityId)
@@ -664,17 +668,17 @@ private:
         gPickupPeepX = screenCoords.x - 1;
         gPickupPeepY = screenCoords.y + 16;
 
-        picked_peep_frame++;
-        picked_peep_frame %= 48;
-
         auto staff = GetStaff();
         if (staff == nullptr)
         {
             return;
         }
 
+        // Update image for picked up peep.
+        _staffPickupAnimation.Update(gCurrentFrameTime);
+
         auto baseImageId = GetPeepAnimation(staff->SpriteType, PeepActionSpriteType::Ui).base_image;
-        baseImageId += picked_peep_frame >> 2;
+        baseImageId += _staffPickupAnimation.GetFrame() >> 2;
         gPickupPeepImage = ImageId(baseImageId, staff->TshirtColour, staff->TrousersColour);
     }
 
