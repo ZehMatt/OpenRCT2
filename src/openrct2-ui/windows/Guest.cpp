@@ -12,6 +12,7 @@
 #include <openrct2-ui/interface/Viewport.h>
 #include <openrct2-ui/interface/Widget.h>
 #include <openrct2-ui/windows/Window.h>
+#include <openrct2/AnimationHelper.hpp>
 #include <openrct2/Context.h>
 #include <openrct2/Game.h>
 #include <openrct2/GameState.h>
@@ -35,6 +36,8 @@
 #include <openrct2/windows/Intent.h>
 #include <openrct2/world/Footpath.h>
 #include <openrct2/world/Park.h>
+
+using namespace OpenRCT2;
 
 static constexpr const StringId WINDOW_TITLE = STR_STRINGID;
 static constexpr const int32_t WH = 157;
@@ -168,6 +171,7 @@ private:
     uint16_t _beingWatchedTimer = 0;
     uint16_t _guestAnimationFrame = 0;
     int16_t _pickedPeepX = LOCATION_NULL; // entity->x gets set to 0x8000 on pickup, this is the old value
+    AnimationHelper<48, 16> _guestPickupAnimation;
 
 public:
     void OnOpen() override
@@ -930,11 +934,6 @@ private:
 
         gPickupPeepX = screenCoords.x - 1;
         gPickupPeepY = screenCoords.y + 16;
-        picked_peep_frame++;
-        if (picked_peep_frame >= 48)
-        {
-            picked_peep_frame = 0;
-        }
 
         const auto peep = GetGuest();
         if (peep == nullptr)
@@ -942,8 +941,10 @@ private:
             return;
         }
 
+        _guestPickupAnimation.Update(gCurrentFrameTime);
+
         auto baseImageId = GetPeepAnimation(peep->SpriteType, PeepActionSpriteType::Ui).base_image;
-        baseImageId += picked_peep_frame >> 2;
+        baseImageId += _guestPickupAnimation.GetFrame() >> 2;
         gPickupPeepImage = ImageId(baseImageId, peep->TshirtColour, peep->TrousersColour);
     }
 
