@@ -289,7 +289,7 @@ struct SpriteBoundBox2
     ImageIndex ImageIdA;
     ImageIndex ImageIdB;
     CoordsXYZ offset;
-    ::BoundBoxXYZ BoundBox;
+    BoundBoxXYZ BoundBox;
 };
 
 bool TrackPaintUtilHasFence(

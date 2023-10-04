@@ -18,7 +18,11 @@ struct BoundBoxXY
     CoordsXY offset{};
     CoordsXY length{};
 
-    constexpr BoundBoxXY() = default;
+    constexpr BoundBoxXY()
+        : offset{}
+        , length{}
+    {
+    }
     constexpr BoundBoxXY(CoordsXY _offset, CoordsXY _length)
         : offset(_offset)
         , length(_length)
@@ -31,7 +35,11 @@ struct BoundBoxXYZ
     CoordsXYZ offset{};
     CoordsXYZ length{};
 
-    constexpr BoundBoxXYZ() = default;
+    constexpr BoundBoxXYZ()
+        : offset{}
+        , length{}
+    {
+    }
     constexpr BoundBoxXYZ(CoordsXYZ _offset, CoordsXYZ _length)
         : offset(_offset)
         , length(_length)

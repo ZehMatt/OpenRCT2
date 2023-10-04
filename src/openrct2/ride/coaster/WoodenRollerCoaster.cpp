@@ -8823,11 +8823,11 @@ static void WoodenRCTrackDiagBrakes(
             { {}, {} }, // direction 2
             {
                 // direction 3
-                {
+                SpriteBoundBox2{
                     WoodenRCDiagBrakeImages[3],
                     24916, // diagonal vertical trim image
                     { -16, -16, 0 },
-                    { { -16, -16, 0 }, { 32, 32, 2 } },
+                    BoundBoxXYZ{ { -16, -16, 0 }, { 32, 32, 2 } },
                 },
                 {},
             },
@@ -8836,17 +8836,17 @@ static void WoodenRCTrackDiagBrakes(
             // sequence 1
             {
                 // direction 0
-                {
+                SpriteBoundBox2{
                     WoodenRCDiagBrakeImages[0],
                     24913, // diagonal horizontal trim image
                     { -16, -16, 0 },
-                    { { -16, -16, 0 }, { 32, 32, 2 } },
+                    BoundBoxXYZ{ { -16, -16, 0 }, { 32, 32, 2 } },
                 },
-                {
+                SpriteBoundBox2{
                     24051, // diagonal horizontal railing image
                     24917, // diagonal horizontal foreground trim image
                     { -16, -16, 0 },
-                    { { -16, -16, 27 }, { 32, 32, 0 } },
+                    BoundBoxXYZ{ { -16, -16, 27 }, { 32, 32, 0 } },
                 },
             },
             { {}, {} }, // direction 1
@@ -8859,17 +8859,17 @@ static void WoodenRCTrackDiagBrakes(
             { {}, {} }, // direction 1
             {
                 // direction 2
-                {
+                SpriteBoundBox2{
                     WoodenRCDiagBrakeImages[2],
                     24913, // diagonal vertical trim image
                     { -16, -16, 0 },
-                    { { -16, -16, 0 }, { 32, 32, 2 } },
+                    BoundBoxXYZ{ { -16, -16, 0 }, { 32, 32, 2 } },
                 },
-                {
+                SpriteBoundBox2{
                     24051, // diagonal vertical railing image
                     24917, // diagonal vertical foreground trim image
                     { -16, -16, 0 },
-                    { { -16, -16, 27 }, { 32, 32, 0 } },
+                    BoundBoxXYZ{ { -16, -16, 27 }, { 32, 32, 0 } },
                 },
             },
             { {}, {} }, // direction 3
@@ -8879,11 +8879,11 @@ static void WoodenRCTrackDiagBrakes(
             { {}, {} }, // direction 0
             {
                 // direction 1
-                {
+                SpriteBoundBox2{
                     WoodenRCDiagBrakeImages[1],
                     24916, // diagonal vertical trim image
                     { -16, -16, 0 },
-                    { { -16, -16, 0 }, { 32, 32, 2 } },
+                    BoundBoxXYZ{ { -16, -16, 0 }, { 32, 32, 2 } },
                 },
                 {},
             },
