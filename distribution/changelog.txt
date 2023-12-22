@@ -8,7 +8,7 @@
 - Feature: [#20853] [Plugin] Add “BaseTileElement.owner” which is saved in the park file.
 - Feature: [OpenMusic#46] Added Mystic ride music style.
 - Feature: [OpenMusic#50] Added Rock style 4 ride music.
-- Change: [#20790] Default ride price set to free if park charges for entry.
+- Change: [#20790] Default ride price set to free if park charges for entry
 - Change: [#20880] Restore removed default coaster colours.
 - Fix: [#12299] Placing ride entrances/exits ignores the Disable Clearance Checks cheat.
 - Fix: [#13473] Guests complain that the default Circus price is too high.
