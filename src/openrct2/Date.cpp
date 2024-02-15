@@ -17,6 +17,8 @@
 
 #include <algorithm>
 
+#define THIS_SHOULD_FAIL_HARD 5555
+
 using namespace OpenRCT2;
 
 constexpr int32_t MONTH_TICKS_INCREMENT = 4;
