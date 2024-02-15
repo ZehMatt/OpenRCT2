@@ -1,0 +1,18 @@
+name: clang-tidy-review
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ZedThree/clang-tidy-review@v0.14.0
+      id: review
+      with:
+        config_file: .clang-tidy
+        apt_packages: clang-16, libssl-dev, pkg-config, libcurl4-openssl-dev, libfontconfig1-dev, libzip-dev, libicu-dev, libsdl2-dev, libspeexdsp-dev, libflac-dev, libvorbis-dev, nlohmann-json3-dev
+        cmake_command: cmake . -B build -DCMAKE_C_COMPILER=/usr/bin/clang-16 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-16 -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=on -DDISABLE_DISCORD_RPC=on -DWITH_TESTS=off
+        build_dir: build
+        annotations: true
+        split_workflow: true
+    - uses: ZedThree/clang-tidy-review/upload@v0.14.0
