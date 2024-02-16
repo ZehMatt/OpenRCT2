@@ -1,4 +1,4 @@
-name: clang-tidy-annotate
+name: clang-tidy-post
 
 on:
   workflow_run:
@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: ZedThree/clang-tidy-review/post@v0.14.0
-        id: annotate
+        id: post
         with:
           lgtm_comment_body: ''
-          annotations: true
-          max_comments: 10
-      - if: steps.annotate.outputs.total_comments != 0
+          annotations: false
+          max_comments: 25
+      - if: steps.post.outputs.total_comments != 0
         # Fail if there are any annotations.
         run: exit 1
