@@ -1,0 +1,35 @@
+name: clang-tidy-test
+on:
+  pull_request:
+    paths-ignore:
+      - '.editorconfig'
+      - '.gitattributes'
+      - '.github/*_TEMPLATE/**'
+      - '.github/workflows/localisation.yml'
+      - '.gitignore'
+      - '.vscode/**'
+
+jobs:
+  clang-tidy-test:
+    runs-on: ubuntu-latest
+    container: openrct2/openrct2-build:12-jammy
+    # This job requires a pull request event to run.
+    if: github.event_name == 'pull_request'
+    steps:
+    - uses: actions/checkout@v4
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+          key: linux-clang
+    - name: Setup CCache environment
+      run: |
+        export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+    - name: Get clang-tidy
+      run: |
+        apt-get update
+        apt-get install -y clang-tidy
+    - uses: ZehMatt/clang-tidy-test@master
+      id: check
+      with:
+        build_dir: 'build'
+        cmake_args: '-G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug -DDISABLE_DISCORD_RPC=ON -DDISABLE_NETWORK=ON -DDISABLE_HTTP=ON -DDISABLE_FLAC=ON -DDISABLE_VORBIS=ON -DDISABLE_OPENGL=ON'

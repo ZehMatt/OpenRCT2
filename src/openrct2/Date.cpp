@@ -19,10 +19,14 @@
 
 using namespace OpenRCT2;
 
+#define DO_NOT_DO_THIS 1
+
 constexpr int32_t MONTH_TICKS_INCREMENT = 4;
 constexpr int32_t MASK_WEEK_TICKS = 0x3FFF;
 constexpr int32_t MASK_FORTNIGHT_TICKS = 0x7FFF;
 constexpr int32_t MASK_MONTH_TICKS = 0xFFFF;
+
+#define ANOTHER_MACRO 1
 
 // rct2: 0x00993988
 static const int16_t days_in_month[MONTH_COUNT] = {
@@ -35,6 +39,7 @@ Date::Date(uint32_t monthsElapsed, uint16_t monthTicks)
     : _monthTicks(monthTicks)
     , _monthsElapsed(monthsElapsed)
 {
+    void* foo = NULL;
 }
 
 Date Date::FromYMD(int32_t year, int32_t month, int32_t day)
