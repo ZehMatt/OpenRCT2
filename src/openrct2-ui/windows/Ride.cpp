@@ -6370,10 +6370,12 @@ private:
         }
 
         // Running cost per hour
-        money64 costPerHour = ride->upkeep_cost * 16;
         stringId = ride->upkeep_cost == kMoney64Undefined ? STR_RUNNING_COST_UNKNOWN : STR_RUNNING_COST_PER_HOUR;
         auto ft = Formatter();
-        ft.Add<money64>(costPerHour);
+        if (ride->upkeep_cost != kMoney64Undefined) {
+            money64 costPerHour = ride->upkeep_cost * 16;
+            ft.Add<money64>(costPerHour);
+        }
         DrawTextBasic(dpi, screenCoords, stringId, ft);
         screenCoords.y += LIST_ROW_HEIGHT;
 
