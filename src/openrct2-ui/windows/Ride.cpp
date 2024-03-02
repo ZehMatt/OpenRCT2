@@ -6372,7 +6372,8 @@ private:
         // Running cost per hour
         stringId = ride->upkeep_cost == kMoney64Undefined ? STR_RUNNING_COST_UNKNOWN : STR_RUNNING_COST_PER_HOUR;
         auto ft = Formatter();
-        if (ride->upkeep_cost != kMoney64Undefined) {
+        if (ride->upkeep_cost != kMoney64Undefined)
+        {
             money64 costPerHour = ride->upkeep_cost * 16;
             ft.Add<money64>(costPerHour);
         }
