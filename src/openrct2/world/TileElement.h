@@ -289,6 +289,9 @@ public:
     bool IsWide() const;
     void SetWide(bool isWide);
 
+    bool IsThinJunction() const;
+    void SetThinJunction(bool isThinJunction);
+
     bool IsQueue() const;
     void SetIsQueue(bool isQueue);
     bool HasQueueBanner() const;

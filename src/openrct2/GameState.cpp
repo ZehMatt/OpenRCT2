@@ -306,6 +306,7 @@ namespace OpenRCT2
         ContextBroadcastIntent(&removeProvisionalIntent);
 
         MapUpdatePathWideFlags();
+        MapUpdatePathThinJunctionFlags();
         PeepUpdateAll();
         auto restoreProvisionalIntent = Intent(INTENT_ACTION_RESTORE_PROVISIONAL_ELEMENTS);
         ContextBroadcastIntent(&restoreProvisionalIntent);

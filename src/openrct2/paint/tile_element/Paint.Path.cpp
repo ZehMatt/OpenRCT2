@@ -828,6 +828,11 @@ void PaintPath(PaintSession& session, uint16_t height, const PathElement& tileEl
         imageTemplate = ImageId().WithRemap(FilterPaletteID::PaletteGhost);
     }
 
+    if (tileElement.IsThinJunction())
+    {
+        imageTemplate = ImageId().WithRemap(FilterPaletteID::PaletteGhost);
+    }
+
     PaintPatrolAreas(session, tileElement);
     PaintHeightMarkers(session, tileElement);
 

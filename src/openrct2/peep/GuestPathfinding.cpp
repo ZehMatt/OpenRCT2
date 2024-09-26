@@ -33,9 +33,9 @@ RideId gPeepPathFindQueueRideIndex;
 
 namespace OpenRCT2::PathFinding
 {
-    static int8_t _peepPathFindNumJunctions;
-    static int8_t _peepPathFindMaxJunctions;
-    static int32_t _peepPathFindTilesChecked;
+    static thread_local int8_t _peepPathFindNumJunctions;
+    static thread_local int8_t _peepPathFindMaxJunctions;
+    static thread_local int32_t _peepPathFindTilesChecked;
 
     static int32_t GuestSurfacePathFinding(Peep& peep);
 
@@ -43,11 +43,13 @@ namespace OpenRCT2::PathFinding
      * The magic number 16 is the largest value returned by
      * PeepPathfindGetMaxNumberJunctions() which should eventually
      * be declared properly. */
-    static struct
+    struct PeepPathFindHistory
     {
         TileCoordsXYZ location;
         Direction direction;
-    } _peepPathFindHistory[16];
+    };
+
+    static thread_local PeepPathFindHistory _peepPathFindHistory[16];
 
     enum class PathSearchResult
     {
@@ -580,37 +582,7 @@ namespace OpenRCT2::PathFinding
      */
     static bool PathIsThinJunction(PathElement* path, const TileCoordsXYZ& loc)
     {
-        PROFILED_FUNCTION();
-
-        uint32_t edges = path->GetEdges();
-
-        int32_t testEdge = UtilBitScanForward(edges);
-        if (testEdge == -1)
-            return false;
-
-        bool isThinJunction = false;
-        int32_t thinCount = 0;
-        do
-        {
-            auto nextFootpathResult = FootpathElementNextInDirection(loc, path, testEdge);
-
-            /* Ignore non-paths (e.g. ride entrances, shops), wide paths
-             * and ride queues (per ignoreQueues) when counting
-             * neighbouring tiles. */
-            if (nextFootpathResult != PathSearchResult::Failed && nextFootpathResult != PathSearchResult::Wide
-                && nextFootpathResult != PathSearchResult::RideQueue)
-            {
-                thinCount++;
-            }
-
-            if (thinCount > 2)
-            {
-                isThinJunction = true;
-                break;
-            }
-            edges &= ~(1 << testEdge);
-        } while ((testEdge = UtilBitScanForward(edges)) != -1);
-        return isThinJunction;
+        return path->IsThinJunction();
     }
 
     static int32_t CalculateHeuristicPathingScore(const TileCoordsXYZ& loc1, const TileCoordsXYZ& loc2)

@@ -1350,6 +1350,18 @@ void PathElement::SetWide(bool isWide)
         Type |= FOOTPATH_ELEMENT_TYPE_FLAG_IS_WIDE;
 }
 
+bool PathElement::IsThinJunction() const
+{
+    return (Flags2 & FOOTPATH_ELEMENT_FLAGS2_IS_THIN_JUNCTION) != 0;
+}
+
+void PathElement::SetThinJunction(bool isThinJunction)
+{
+    Flags2 &= ~FOOTPATH_ELEMENT_FLAGS2_IS_THIN_JUNCTION;
+    if (isThinJunction)
+        Flags2 |= FOOTPATH_ELEMENT_FLAGS2_IS_THIN_JUNCTION;
+}
+
 bool PathElement::HasAddition() const
 {
     return Additions != 0;

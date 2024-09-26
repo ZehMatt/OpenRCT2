@@ -782,6 +782,206 @@ void MapUpdatePathWideFlags()
     }
 }
 
+enum class PathSearchResult
+{
+    DeadEnd,      // Path is a dead end, i.e. < 2 edges.
+    Wide,         // Path with wide flag set.
+    Thin,         // Path is simple.
+    Junction,     // Path is a junction, i.e. > 2 edges.
+    RideQueue,    // Queue path connected to a ride.
+    RideEntrance, // Map element is a ride entrance.
+    RideExit,     // Map element is a ride exit.
+    ParkExit,     // Park entrance / exit (map element is a park entrance/exit).
+    ShopEntrance, // Map element is a shop entrance.
+    Other,        // Path is other than the above.
+    Loop,         // Loop detected.
+    LimitReached, // Search limit reached without reaching path end.
+    Failed,       // No path element found.
+};
+
+static bool IsValidPathZAndDirection(TileElement* tileElement, int32_t currentZ, int32_t currentDirection)
+{
+    if (tileElement->AsPath()->IsSloped())
+    {
+        int32_t slopeDirection = tileElement->AsPath()->GetSlopeDirection();
+        if (slopeDirection == currentDirection)
+        {
+            if (currentZ != tileElement->BaseHeight)
+                return false;
+        }
+        else
+        {
+            slopeDirection = DirectionReverse(slopeDirection);
+            if (slopeDirection != currentDirection)
+                return false;
+            if (currentZ != tileElement->BaseHeight + 2)
+                return false;
+        }
+    }
+    else
+    {
+        if (currentZ != tileElement->BaseHeight)
+            return false;
+    }
+    return true;
+}
+
+static PathSearchResult FootpathElementNextInDirection(TileCoordsXYZ loc, PathElement* pathElement, Direction chosenDirection)
+{
+    TileElement* nextTileElement;
+
+    if (pathElement->IsSloped())
+    {
+        if (pathElement->GetSlopeDirection() == chosenDirection)
+        {
+            loc.z += 2;
+        }
+    }
+
+    loc += TileDirectionDelta[chosenDirection];
+    nextTileElement = MapGetFirstElementAt(loc);
+    do
+    {
+        if (nextTileElement == nullptr)
+            break;
+        if (nextTileElement->IsGhost())
+            continue;
+        if (nextTileElement->GetType() != TileElementType::Path)
+            continue;
+        if (!IsValidPathZAndDirection(nextTileElement, loc.z, chosenDirection))
+            continue;
+        if (nextTileElement->AsPath()->IsWide())
+            return PathSearchResult::Wide;
+        // Only queue tiles that are connected to a ride are returned as ride queues.
+        if (nextTileElement->AsPath()->IsQueue() && !nextTileElement->AsPath()->GetRideIndex().IsNull())
+            return PathSearchResult::RideQueue;
+
+        return PathSearchResult::Other;
+    } while (!(nextTileElement++)->IsLastForTile());
+
+    return PathSearchResult::Failed;
+}
+
+/**
+ * Returns if the path as xzy is a 'thin' junction.
+ * A junction is considered 'thin' if it has more than 2 edges
+ * leading to/from non-wide path elements; edges leading to/from non-path
+ * elements (e.g. ride/shop entrances) or ride queues are not counted,
+ * since entrances and ride queues coming off a path should not result in
+ * the path being considered a junction.
+ */
+static bool PathIsThinJunction(PathElement* path, const TileCoordsXYZ& loc)
+{
+    PROFILED_FUNCTION();
+
+    uint32_t edges = path->GetEdges();
+
+    int32_t testEdge = UtilBitScanForward(edges);
+    if (testEdge == -1)
+        return false;
+
+    bool isThinJunction = false;
+    int32_t thinCount = 0;
+    do
+    {
+        auto nextFootpathResult = FootpathElementNextInDirection(loc, path, testEdge);
+
+        /* Ignore non-paths (e.g. ride entrances, shops), wide paths
+         * and ride queues (per ignoreQueues) when counting
+         * neighbouring tiles. */
+        if (nextFootpathResult != PathSearchResult::Failed && nextFootpathResult != PathSearchResult::Wide
+            && nextFootpathResult != PathSearchResult::RideQueue)
+        {
+            thinCount++;
+        }
+
+        if (thinCount > 2)
+        {
+            isThinJunction = true;
+            break;
+        }
+        edges &= ~(1 << testEdge);
+    } while ((testEdge = UtilBitScanForward(edges)) != -1);
+
+    return isThinJunction;
+}
+
+void MapUpdatePathThinJunctionFlags()
+{
+    PROFILED_FUNCTION();
+
+    if (gScreenFlags & (SCREEN_FLAGS_TRACK_DESIGNER | SCREEN_FLAGS_TRACK_MANAGER))
+    {
+        return;
+    }
+
+    const int32_t kPracticalMapSizeBigX = GetGameState().MapSize.x * kCoordsXYStep;
+    const int32_t kPracticalMapSizeBigY = GetGameState().MapSize.y * kCoordsXYStep;
+
+    CoordsXY& loopPosition = GetGameState().PathThinJunctionTileLoopPosition;
+    for (int32_t i = 0; i < 256; i++)
+    {
+        for (auto* pathElement : TileElementsView<PathElement>(loopPosition))
+        {
+            if (pathElement->IsGhost())
+                continue;
+
+            if (pathElement->IsWide())
+                continue;
+
+            if (PathIsThinJunction(pathElement, TileCoordsXYZ{ loopPosition, pathElement->BaseHeight }))
+            {
+                pathElement->SetThinJunction(true);
+            }
+        }
+
+        // Next x, y tile
+        loopPosition.x += kCoordsXYStep;
+        if (loopPosition.x >= kPracticalMapSizeBigX)
+        {
+            loopPosition.x = 0;
+            loopPosition.y += kCoordsXYStep;
+            if (loopPosition.y >= kPracticalMapSizeBigY)
+            {
+                loopPosition.y = 0;
+            }
+        }
+    }
+}
+
+void MapComputePathThinJunctionFlags()
+{
+    PROFILED_FUNCTION();
+
+    if (gScreenFlags & (SCREEN_FLAGS_TRACK_DESIGNER | SCREEN_FLAGS_TRACK_MANAGER))
+    {
+        return;
+    }
+
+    const int32_t kPracticalMapSizeBigX = GetGameState().MapSize.x * kCoordsXYStep;
+    const int32_t kPracticalMapSizeBigY = GetGameState().MapSize.y * kCoordsXYStep;
+
+    for (int32_t x = 0; x < kPracticalMapSizeBigX; x += kCoordsXYStep)
+    {
+        for (int32_t y = 0; y < kPracticalMapSizeBigY; y += kCoordsXYStep)
+        {
+            for (auto* pathElement : TileElementsView<PathElement>(CoordsXY{ x, y }))
+            {
+                if (pathElement->IsGhost())
+                    continue;
+
+                if (pathElement->IsWide())
+                    continue;
+
+                if (PathIsThinJunction(pathElement, TileCoordsXYZ{ CoordsXY{ x, y }, pathElement->BaseHeight }))
+                {
+                    pathElement->SetThinJunction(true);
+                }
+            }
+        }
+    }
+}
+
 /**
  *
  *  rct2: 0x006A7B84

@@ -61,6 +61,7 @@
 #include "Staff.h"
 
 #include <cassert>
+#include <execution>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -205,39 +206,58 @@ void PeepUpdateAll()
     constexpr auto kTicks128Mask = 128u - 1u;
     const auto currentTicksMasked = currentTicks & kTicks128Mask;
 
-    uint32_t index = 0;
-    // Warning this loop can delete peeps
-    for (auto peep : EntityList<Guest>())
+    // Collect all guests into a vector for parallel execution
+    std::vector<Guest*> guests;
+    for (auto* peep : EntityList<Guest>())
     {
+        guests.push_back(peep);
+    }
+
+    // Collect all staff into a vector for parallel execution
+    std::vector<Staff*> staffList;
+    for (auto* staff : EntityList<Staff>())
+    {
+        staffList.push_back(staff);
+    }
+
+    std::vector<uint32_t> indices(guests.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    // Parallel update for Guests
+    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](uint32_t index) {
+        auto* peep = guests[index];
+
+        // Ensure we only update every 128 ticks for certain conditions
         if ((index & kTicks128Mask) == currentTicksMasked)
         {
             peep->Tick128UpdateGuest(index);
         }
 
-        // 128 tick can delete so double check its not deleted
+        // Safely check and update peep
         if (peep->Type == EntityType::Guest)
         {
             peep->Update();
         }
+    });
 
-        index++;
-    }
+    // Parallel update for Staff
+    indices.resize(staffList.size());
+    std::iota(indices.begin(), indices.end(), 0);
 
-    for (auto staff : EntityList<Staff>())
-    {
+    std::for_each(std::execution::par, indices.begin(), indices.end(), [&](uint32_t index) {
+        auto* staff = staffList[index];
+
         if ((index & kTicks128Mask) == currentTicksMasked)
         {
             staff->Tick128UpdateStaff();
         }
 
-        // 128 tick can delete so double check its not deleted
+        // Safely check and update staff
         if (staff->Type == EntityType::Staff)
         {
             staff->Update();
         }
-
-        index++;
-    }
+    });
 }
 
 /*
@@ -1324,8 +1344,8 @@ void PeepUpdateCrowdNoise()
     }
 
     // This function doesn't account for the fact that the screen might be so big that 100 peeps could potentially be very
-    // spread out and therefore not produce any crowd noise. Perhaps a more sophisticated solution would check how many peeps
-    // were in close proximity to each other.
+    // spread out and therefore not produce any crowd noise. Perhaps a more sophisticated solution would check how many
+    // peeps were in close proximity to each other.
 
     // Allows queuing peeps to make half as much noise, and at least 6 peeps must be visible for any crowd noise
     visiblePeeps = (visiblePeeps / 2) - 6;

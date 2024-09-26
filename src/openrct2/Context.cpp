@@ -811,6 +811,7 @@ namespace OpenRCT2
                 gFirstTimeSaving = true;
                 GameFixSaveVars();
                 MapAnimationAutoCreate();
+                MapComputePathThinJunctionFlags();
                 EntityTweener::Get().Reset();
                 gScreenAge = 0;
                 gLastAutoSaveUpdate = kAutosavePause;

@@ -105,6 +105,7 @@ namespace OpenRCT2
 
         uint16_t GrassSceneryTileLoopPosition;
         CoordsXY WidePathTileLoopPosition;
+        CoordsXY PathThinJunctionTileLoopPosition;
 
         colour_t StaffHandymanColour;
         colour_t StaffMechanicColour;

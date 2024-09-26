@@ -147,6 +147,8 @@ uint8_t MapGetHighestLandHeight(const MapRange& range);
 uint8_t MapGetLowestLandHeight(const MapRange& range);
 bool MapCoordIsConnected(const TileCoordsXYZ& loc, uint8_t faceDirection);
 void MapUpdatePathWideFlags();
+void MapUpdatePathThinJunctionFlags();
+void MapComputePathThinJunctionFlags();
 bool MapIsLocationValid(const CoordsXY& coords);
 bool MapIsEdge(const CoordsXY& coords);
 bool MapCanBuildAt(const CoordsXYZ& loc);
