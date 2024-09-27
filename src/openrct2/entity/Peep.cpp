@@ -61,6 +61,7 @@
 #include "Staff.h"
 
 #include <cassert>
+#include <execution>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -205,10 +206,17 @@ void PeepUpdateAll()
     constexpr auto kTicks128Mask = 128u - 1u;
     const auto currentTicksMasked = currentTicks & kTicks128Mask;
 
-    uint32_t index = 0;
-    // Warning this loop can delete peeps
-    for (auto peep : EntityList<Guest>())
+    std::vector<Guest*> guestList;
+    for (auto* peep : EntityList<Guest>())
     {
+        guestList.push_back(peep);
+    }
+
+    std::vector<uint32_t> guestIndices(guestList.size());
+    std::iota(guestIndices.begin(), guestIndices.end(), 0);
+
+    std::for_each(std::execution::par_unseq, guestIndices.begin(), guestIndices.end(), [&](uint32_t index) {
+        auto* peep = guestList[index];
         if ((index & kTicks128Mask) == currentTicksMasked)
         {
             peep->Tick128UpdateGuest(index);
@@ -219,13 +227,22 @@ void PeepUpdateAll()
         {
             peep->Update();
         }
+    });
 
-        index++;
+    std::vector<Staff*> staffList;
+    for (auto* peep : EntityList<Staff>())
+    {
+        staffList.push_back(peep);
     }
 
-    for (auto staff : EntityList<Staff>())
-    {
-        if ((index & kTicks128Mask) == currentTicksMasked)
+    std::vector<uint32_t> staffIndices(staffList.size());
+    std::iota(staffIndices.begin(), staffIndices.end(), 0);
+
+    std::for_each(std::execution::par_unseq, staffIndices.begin(), staffIndices.end(), [&](uint32_t index) {
+        auto* staff = staffList[index];
+
+        const auto index2 = static_cast<uint32_t>(guestList.size() + index);
+        if ((index2 & kTicks128Mask) == currentTicksMasked)
         {
             staff->Tick128UpdateStaff();
         }
@@ -235,9 +252,7 @@ void PeepUpdateAll()
         {
             staff->Update();
         }
-
-        index++;
-    }
+    });
 }
 
 /*

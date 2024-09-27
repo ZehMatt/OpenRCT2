@@ -33,9 +33,9 @@ RideId gPeepPathFindQueueRideIndex;
 
 namespace OpenRCT2::PathFinding
 {
-    static int8_t _peepPathFindNumJunctions;
-    static int8_t _peepPathFindMaxJunctions;
-    static int32_t _peepPathFindTilesChecked;
+    static thread_local int8_t _peepPathFindNumJunctions;
+    static thread_local int8_t _peepPathFindMaxJunctions;
+    static thread_local int32_t _peepPathFindTilesChecked;
 
     static int32_t GuestSurfacePathFinding(Peep& peep);
 
@@ -43,7 +43,7 @@ namespace OpenRCT2::PathFinding
      * The magic number 16 is the largest value returned by
      * PeepPathfindGetMaxNumberJunctions() which should eventually
      * be declared properly. */
-    static struct
+    static thread_local struct
     {
         TileCoordsXYZ location;
         Direction direction;
